@@ -8,4 +8,4 @@
 5.  Install ROS Kinetic following instructions here: http://wiki.ros.org/kinetic/Installation/Ubuntu
 6.  Install Teamviewer following instructions here: https://community.teamviewer.com/t5/Knowledge-Base/Installation-of-TeamViewer-on-a-Ubuntu-system/ta-p/45
 7.  Install git by typing: sudo apt install git
-8.  
+8.  Install vim by typing: sudo apt install vim 
