@@ -13,4 +13,11 @@
 10.	Install CPU load monitoring by typing: `sudo apt install indicator-multiload`
 11.	Install ros_control package by typing: `sudo apt-get install ros-kinetic-ros-control ros-kinetic-ros-controllers`
 12.	Install hebiros following instructions here: http://wiki.ros.org/hebiros
-13. 
+13. Install glxinfo by typing: `sudo apt install mesa-utils`
+
+## Kinect
+14. Install libfreenect2 https://github.com/OpenKinect/libfreenect2; follow the Installation instruction for Linux in README
+15. Increase usb memory to 256 by typing: `sudo sh -c 'echo 256 > /sys/module/usbcore/parameters/usbfs_memory_mb'`
+16. Install iai_kinect2 by following instructions here: https://github.com/code-iai/iai_kinect2
+17.	Install terminator by typing: `sudo apt install terminator`
+18. Install ssh by typing: `sudo apt install openssh-server`
