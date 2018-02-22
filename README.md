@@ -21,3 +21,4 @@
 16. Install iai_kinect2 by following instructions here: https://github.com/code-iai/iai_kinect2
 17.	Install terminator by typing: `sudo apt install terminator`
 18. Install ssh by typing: `sudo apt install openssh-server`
+19. Install sshpass by typing: `sudo apt install sshpass`
