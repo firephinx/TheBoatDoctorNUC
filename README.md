@@ -33,3 +33,17 @@
 22. Setup VNC server following instructions here: https://help.ubuntu.com/community/VNC/Servers
 23. Type `gsettings set org.gnome.Vino require-encryption false` in order to allow VNC server to connect to vino.
 24. Download and install VNC Viewer from here: https://www.realvnc.com/en/connect/download/viewer/
+
+## Starting ROS Serial
+1. Start a new roscore on the NUC. 
+2. Type `startrosserial` in any terminal window.
+
+## ROS Serial Options
+1. To turn on the LEDs, type `ledon` in any terminal.
+2. To turn off the LEDs, type `ledoff` in any terminal.
+3. To turn on the pump, type `pumpon` in any terminal.
+4. To turn off the pump, type `pumpoff` in any terminal.
+5. To turn off everything, type `stop` in any terminal.
+
+## Issues accessing the Internet
+1. Disconnect from TheBoatDoctorEthernet if you encounter any trouble with accessing the internet.
