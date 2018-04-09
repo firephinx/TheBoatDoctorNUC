@@ -45,6 +45,10 @@ def calc_ik_horz(l3, coord, z_arm_min, z_arm_max):
     z_gan += 1
   while(z - z_gan < z_arm_min):
     z_gan -=1
+  if (z_gan > z_gan_max):
+    z_gan = z_gan_max
+  if (z_gan < z_gan_min):
+    z_gan = z_gan_min
   z_arm = z - z_gan
 
   # calc angles based on position
