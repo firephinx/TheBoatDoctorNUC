@@ -1,0 +1,8 @@
+<launch>
+        <param name="/robot_description" type="str" textfile="$(find myrobot_description)/urdf/robot.urdf" />	
+	<node pkg="tf" type="static_transform_publisher" name="laser" args="0 0 0 0 0 0 1  /map /world  100"/> 
+	<node pkg="robot_state_publisher" type="robot_state_publisher" name="rob_st_pub"/>
+        <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+		<param name="_use_gui" value="true"/>
+	</node>	
+</launch>

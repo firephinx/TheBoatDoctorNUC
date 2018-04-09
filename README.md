@@ -22,3 +22,13 @@
 17.	Install terminator by typing: `sudo apt install terminator`
 18. Install ssh by typing: `sudo apt install openssh-server`
 19. Install sshpass by typing: `sudo apt install sshpass`
+
+## python pip 
+20. sudo apt install python-pip
+
+## tensorflow 
+21. pip install tensorflow 
+
+## VNC Server
+22. Setup VNC server following instructions here: https://help.ubuntu.com/community/VNC/Servers
+23. Download and install VNC Viewer from here: https://www.realvnc.com/en/connect/download/viewer/

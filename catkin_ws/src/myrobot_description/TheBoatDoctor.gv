@@ -1,0 +1,11 @@
+digraph G {
+node [shape=box];
+"world" [label="world"];
+"Locomotion" [label="Locomotion"];
+"XGantry" [label="XGantry"];
+node [shape=ellipse, color=blue, fontcolor=blue];
+"world" -> "joint_world_locomotion" [label="xyz: 0 0 0 \nrpy: 0 -0 0"]
+"joint_world_locomotion" -> "Locomotion"
+"Locomotion" -> "joint_XGantry" [label="xyz: 0 0 0.8 \nrpy: 0 -0 0"]
+"joint_XGantry" -> "XGantry"
+}

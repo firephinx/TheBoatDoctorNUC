@@ -1,0 +1,9 @@
+digraph G {
+"me_link" -> "me_rgb_optical_frame"[label="Broadcaster: /kinect2\nAverage rate: 99.131 Hz\nMost recent transform: 1519098281.119 ( 0.006 sec old)\nBuffer length: 4.973 sec\n"];
+"me_rgb_optical_frame" -> "me_ir_optical_frame"[label="Broadcaster: /kinect2\nAverage rate: 99.131 Hz\nMost recent transform: 1519098281.119 ( 0.006 sec old)\nBuffer length: 4.973 sec\n"];
+"me_link" -> "kinect_base_link5"[label="Broadcaster: /kinect_base_link5\nAverage rate: 10.194 Hz\nMost recent transform: 1519098281.199 ( -0.074 sec old)\nBuffer length: 4.905 sec\n"];
+edge [style=invis];
+ subgraph cluster_legend { style=bold; color=black; label ="view_frames Result";
+"Recorded at time: 1519098281.125"[ shape=plaintext ] ;
+ }->"me_link";
+}

@@ -1,0 +1,33 @@
+<launch>
+        <param name="/robot_description" type="str" textfile="$(find myrobot_description)/urdf/robot_cali.urdf" />	
+		<node pkg="tf" type="static_transform_publisher" name="bring_to_map" args="0 0 0 0 0 0 1  /map /world  100"/> 
+		
+		<!-- get transformation from kinect optical origin to physical kinect point -->
+		
+
+		<!-- adjust realworld calibration --> 
+		<node pkg="tf" type="static_transform_publisher" name="kinectCAD_to_KinectCAD2" args="0.11 0.08 0.18 0 0 0  /Kinectv2 /Kinectv2_adjust  100"/>
+
+
+
+		<!-- First transformation CAD model coordiante to a custom defined measure coordinate-->		
+		<node pkg="tf" type="static_transform_publisher" name="kinectCAD_to_kinectMeasure" args="0 0 0 1.57 0 2.0412  /Kinectv2_adjust /Kinectv2_measure  100"/>
+
+
+		<!-- Second optivavl sensor to physical curstom point on Kinect: calibrated via AR marker -->
+		<node pkg="tf" type="static_transform_publisher" name="kinectMeasure_to_optical" args="0.044 -0.0515 -0.0013 1.57 0 0  /Kinectv2_measure /my_base_rgb_optical_frame  100"/> 
+
+		
+
+		<node pkg="tf" type="static_transform_publisher" name="kinect_base" args="0.044 -0.0515 -0.0013 1.57 0 0  /Kinectv2_measure /my_base_link  100"/>
+
+
+		<!-- Define mid point of ZGantry as robot reference point for IK -->
+		<node pkg="tf" type="static_transform_publisher" name="ZGantry_midPoint" args="0 0 0.278085 0 1.57 0  /XGantry /IK_reference  100"/> 
+
+
+		<node pkg="robot_state_publisher" type="robot_state_publisher" name="rob_st_pub"/>
+        <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+		<param name="_use_gui" value="true"/>
+	</node>	
+</launch>
