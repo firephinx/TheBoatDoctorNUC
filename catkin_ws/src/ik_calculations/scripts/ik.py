@@ -99,11 +99,12 @@ def calc_ik_vert(l3, coord, z_arm_min, z_arm_max):
   z_gan = z - z_temp
   return np.array([y_base, x_base, 0, x_gan, z_gan, theta1, theta2])
 
+############### Tong: Please add constrains (max and min avaliable distance) on X_motion and Z_motion
 def ik_pipeline():
   # coordinates from camera in mm
-  x_cam = -300
-  y_cam = -400
-  z_cam = 500
+  x_cam = -500    ## Tong changed, was -300 
+  y_cam = -300     ## Tong changed, was -400 
+  z_cam = 200    ## Tong changed, was  500
   cam_coord = np.array([x_cam, y_cam, z_cam])
   # current world coordinates in ik view
   x_world = 0

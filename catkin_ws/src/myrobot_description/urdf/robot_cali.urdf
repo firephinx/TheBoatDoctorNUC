@@ -25,7 +25,7 @@
 	<joint name="joint_world_locomotion" type="fixed">
 		<parent link="world" />
 		<child link="Locomotion" />
-		<origin rpy="0 0 1.57" xyz="0 0 0.1464" />
+		<origin rpy="0 0 1.57" xyz="0 0 0.1718" />
 		<axis xyz="0 0 1" />
 	</joint>
 
