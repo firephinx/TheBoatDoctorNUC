@@ -1,7 +1,7 @@
 import numpy as np
 import math
 
-# arm lengths
+# arm lengths in inches
 l1 = 6.5
 l2 = 7
 l3_vert = 2.5
@@ -9,7 +9,7 @@ l3_horz = 4.5
 base_height = 6
 base_width = 2
 
-# Limits
+# Limits in inches
 x_gan_min = 0
 x_gan_max = 16
 z_gan_min = 0.5
@@ -21,6 +21,9 @@ z_arm_max_horz = 2.5
 
 def mm_to_in(n):
   return n*0.0393701
+
+def in_to_m(n):
+  return n*0.0254
 
 def cam_to_ik(cam_coord):
   r_y_90 = np.array([ [0, 0, 1], [0, 1, 0], [-1, 0, 0] ])
@@ -69,7 +72,7 @@ def calc_ik_horz(l3, coord, z_arm_min, z_arm_max):
 
   x_base = x - x_temp - x_gan
   z_gan = z - z_temp
-  return np.array([y_base, x_base, 0, x_gan, z_gan, theta1, theta2])
+  return np.array([in_to_m(y_base), in_to_m(x_base), 0, in_to_m(x_gan), in_to_m(z_gan), theta1, theta2])
 
 def calc_ik_vert(l3, coord, z_arm_min, z_arm_max):
   # position given is relative to base
@@ -81,6 +84,10 @@ def calc_ik_vert(l3, coord, z_arm_min, z_arm_max):
     z_gan += 1
   while(z - z_gan < z_arm_min):
     z_gan -=1
+  if (z_gan > z_gan_max):
+    z_gan = z_gan_max
+  if (z_gan < z_gan_min):
+    z_gan = z_gan_min
   z_arm = z - z_gan
   
   # calc angles based on position
@@ -101,7 +108,7 @@ def calc_ik_vert(l3, coord, z_arm_min, z_arm_max):
 
   x_base = x - x_temp - x_gan
   z_gan = z - z_temp
-  return np.array([y_base, x_base, 0, x_gan, z_gan, theta1, theta2])
+  return np.array([in_to_m(y_base), in_to_m(x_base), 0, in_to_m(x_gan), in_to_m(z_gan), theta1, theta2])
 
 ############### Tong: Please add constrains (max and min avaliable distance) on X_motion and Z_motion
 def ik_pipeline():
@@ -133,10 +140,8 @@ def ik_pipeline():
   #print(ik_coord)
   if (vert):
     ik_vals = calc_ik_vert(l3_vert, ik_coord, z_arm_min_vert, z_arm_max_vert)
-    #print(calc_ik_vert(l3_vert, ik_coord, z_arm_min_vert, z_arm_max_vert))
   else:
     ik_vals = calc_ik_vert(l3_horz, ik_coord, z_arm_min_horz, z_arm_max_horz)
-    #print(calc_ik_horz(l3_horz, ik_coord, z_arm_min_horz, z_arm_max_horz))
   if(tt_rot):
     temp = -ik_vals[1]
     ik_vals[1] = ik_vals[0]
