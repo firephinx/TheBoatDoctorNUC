@@ -26,8 +26,13 @@
 		<node pkg="tf" type="static_transform_publisher" name="ZGantry_midPoint" args="0 0 0.278085 0 1.57 0  /XGantry /IK_reference  100"/> 
 
 
-		<node pkg="robot_state_publisher" type="robot_state_publisher" name="rob_st_pub"/>
+		<node pkg="robot_state_publisher" type="robot_state_publisher" name="rob_st_pub">
+			<remap from="joint_states" to="joint_states_IK"/>
+		</node>
+
+
+
         <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
 		<param name="_use_gui" value="true"/>
-	</node>	
+		</node>	
 </launch>

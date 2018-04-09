@@ -43,8 +43,8 @@ import ik
 import numpy as np
 
 def talker():
-    pub = rospy.Publisher('joint_states', JointState, queue_size=10)
-    rospy.init_node('joint_state_publisher', anonymous=True)
+    pub = rospy.Publisher('joint_states_IK', JointState, queue_size=10)  ### Tong: added "_IK" for topic name 
+    rospy.init_node('joint_state_publisher_IK', anonymous=True)  ### Tong: added "_IK" for node name 
     rate = rospy.Rate(10) # 10hz
     while not rospy.is_shutdown():
         ik_vals = ik.ik_pipeline()
@@ -62,5 +62,6 @@ def talker():
 if __name__ == '__main__':
     try:
         talker()
+       	rospy.spin()   ## Tong added 
     except rospy.ROSInterruptException:
         pass
