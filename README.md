@@ -31,4 +31,5 @@
 
 ## VNC Server
 22. Setup VNC server following instructions here: https://help.ubuntu.com/community/VNC/Servers
-23. Download and install VNC Viewer from here: https://www.realvnc.com/en/connect/download/viewer/
+23. Type `gsettings set org.gnome.Vino require-encryption false` in order to allow VNC server to connect to vino.
+24. Download and install VNC Viewer from here: https://www.realvnc.com/en/connect/download/viewer/
