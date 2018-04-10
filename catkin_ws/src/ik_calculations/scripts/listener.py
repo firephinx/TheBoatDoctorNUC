@@ -38,9 +38,13 @@
 
 import rospy
 from std_msgs.msg import String
+from sensor_msgs import Range
 
-def callback(data):
-    rospy.loginfo(rospy.get_caller_id() + 'I heard %s', data.data)
+def ultrasonic_callback(data):
+    rospy.loginfo(rospy.get_caller_id(), data.range)
+
+def kinect_callback(data):
+    rospy.loginfo(rospy.get_caller_id(), data.data)
 
 def listener():
 
@@ -51,7 +55,10 @@ def listener():
     # run simultaneously.
     rospy.init_node('listener', anonymous=True)
 
-    rospy.Subscriber('chatter', String, callback)
+    # rostopic TheBoatDoctor/right/ultrasonic type: sensor_msgs/Range
+    # topic Kinect
+    rospy.Subscriber('TheBoatDoctor/right/ultrasonic', Range, ultrasonic_callback)
+    rospy.Subscriber('Kinect', String, kinect_callback)
 
     # spin() simply keeps python from exiting until this node is stopped
     rospy.spin()
