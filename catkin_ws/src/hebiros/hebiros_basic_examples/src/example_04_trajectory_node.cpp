@@ -13,7 +13,6 @@
 
 using namespace hebiros;
 
-
 //Global variable and callback function used to store feedback data
 sensor_msgs::JointState feedback;
 
@@ -52,22 +51,15 @@ void trajectory_feedback(const TrajectoryFeedbackConstPtr& feedback)
 int main(int argc, char **argv) {
 
   //Initialize ROS node
-  ros::init(argc, argv, "example_06_trajectory_node");
+  ros::init(argc, argv, "hebiros_node");
   ros::NodeHandle n;
   ros::Rate loop_rate(200);
 
-  std::string group_name = "my_group";
-  int num_joints = 3;
-  int num_waypoints = 5;
+  std::string group_name = "TheBoatDoctor";
 
   //Create a client which uses the service to create a group
   ros::ServiceClient add_group_client = n.serviceClient<AddGroupFromNamesSrv>(
     "/hebiros/add_group_from_names");
-
-  //Create a subscriber to receive feedback from a group
-  //Register feedback_callback as a callback which runs when feedback is received
-  ros::Subscriber feedback_subscriber = n.subscribe(
-    "/hebiros/"+group_name+"/feedback/joint_state", 100, feedback_callback);
 
   AddGroupFromNamesSrv add_group_srv;
 
@@ -78,6 +70,14 @@ int main(int argc, char **argv) {
   //Call the add_group_from_urdf service to create a group until it succeeds
   //Specific topics and services will now be available under this group's namespace
   while(!add_group_client.call(add_group_srv)) {}
+
+  //Create a subscriber to receive feedback from a group
+  //Register feedback_callback as a callback which runs when feedback is received
+  ros::Subscriber feedback_subscriber = n.subscribe(
+    "/hebiros/"+group_name+"/feedback/joint_state", 100, feedback_callback);
+
+  int num_joints = 3;
+  int num_waypoints = 2;
 
   feedback.position.reserve(3);
 
@@ -99,19 +99,19 @@ int main(int argc, char **argv) {
 
   double nan = std::numeric_limits<float>::quiet_NaN();
   //Set the times to reach each waypoint in seconds
-  std::vector<double> times = {0, 5, 10, 15, 20};
+  std::vector<double> times = {0, 5};
   std::vector<std::string> names = {"The Boat Doctor/elbow", "The Boat Doctor/wrist", "The Boat Doctor/end effector"};
   //Set positions, velocities, and accelerations for each waypoint and each joint
   //The following vectors have one joint per row and one waypoint per column
-  std::vector<std::vector<double>> positions = {{feedback.position[0], 0, M_PI_2, 0,      0},
-                                                {feedback.position[1], 0, M_PI_2, M_PI_2, 0},
-                                                {feedback.position[2], 0, 0,      M_PI_2, 0}};
-  std::vector<std::vector<double>> velocities = {{0, nan, nan, nan, 0},
-                                                 {0, nan, nan, nan, 0},
-                                                 {0, nan, nan, nan, 0}};
-  std::vector<std::vector<double>> accelerations = {{0, nan, nan, nan, 0},
-                                                    {0, nan, nan, nan, 0},
-                                                    {0, nan, nan, nan, 0}};
+  std::vector<std::vector<double>> positions = {{feedback.position[0], feedback.position[0]},
+                                                {feedback.position[1], feedback.position[1]},
+                                                {feedback.position[2], feedback.position[2]}};
+  std::vector<std::vector<double>> velocities = {{0, 0},
+                                                 {0, 0},
+                                                 {0, 0}};
+  std::vector<std::vector<double>> accelerations = {{0, 0},
+                                                    {0, 0},
+                                                    {0, 0}};
 
   //Construct the goal using the TrajectoryGoal format
   for (int i = 0; i < num_waypoints; i++) {
@@ -135,12 +135,3 @@ int main(int argc, char **argv) {
 
   return 0;
 }
-
-
-
-
-
-
-
-
-

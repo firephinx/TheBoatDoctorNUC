@@ -20,20 +20,11 @@ int main(int argc, char **argv) {
   ros::NodeHandle n;
   ros::Rate loop_rate(200);
 
-  std::string group_name = "my_group";
+  std::string group_name = "TheBoatDoctor";
 
   //Create a client which uses the service to create a group
   ros::ServiceClient add_group_client = n.serviceClient<AddGroupFromNamesSrv>(
     "/hebiros/add_group_from_names");
-
-  //Create a subscriber to receive feedback from a group
-  //Register feedback_callback as a callback which runs when feedback is received
-  ros::Subscriber feedback_subscriber = n.subscribe(
-    "/hebiros/"+group_name+"/feedback/joint_state", 100, feedback_callback);
-
-  //Create a publisher to send desired commands to a group
-  ros::Publisher command_publisher = n.advertise<sensor_msgs::JointState>(
-    "/hebiros/"+group_name+"/command/joint_state", 100);
 
   AddGroupFromNamesSrv add_group_srv;
 
@@ -45,6 +36,15 @@ int main(int argc, char **argv) {
   //Specific topics and services will now be available under this group's namespace
   while(!add_group_client.call(add_group_srv)) {}
 
+  //Create a subscriber to receive feedback from a group
+  //Register feedback_callback as a callback which runs when feedback is received
+  ros::Subscriber feedback_subscriber = n.subscribe(
+    "/hebiros/"+group_name+"/feedback/joint_state", 100, feedback_callback);
+
+  //Create a publisher to send desired commands to a group
+  ros::Publisher command_publisher = n.advertise<sensor_msgs::JointState>(
+    "/hebiros/"+group_name+"/command/joint_state", 100);
+
   //Construct a JointState to command the modules
   //This may potentially contain a name, position, velocity, and effort for each module
   sensor_msgs::JointState command_msg;
@@ -52,18 +52,14 @@ int main(int argc, char **argv) {
   command_msg.name.push_back("The Boat Doctor/wrist");
   command_msg.name.push_back("The Boat Doctor/end effector");
 
-  command_msg.effort.resize(3);
+  command_msg.position.resize(3);
 
   feedback.position.reserve(3);
 
-  double spring_constant = -10;
-
   while(ros::ok()) {
-
-    //Apply Hooke's Law: F = -k * x to all modules and publish as a command
-    command_msg.effort[0] = spring_constant * feedback.position[0];
-    command_msg.effort[1] = spring_constant * feedback.position[1];
-    command_msg.effort[2] = spring_constant * feedback.position[2];
+    command_msg.position[0] = feedback.position[0];
+    command_msg.position[1] = feedback.position[1];
+    command_msg.position[2] = feedback.position[2];
     command_publisher.publish(command_msg);
 
     ros::spinOnce();
