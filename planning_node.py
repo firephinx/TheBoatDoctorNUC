@@ -2,25 +2,34 @@
 
 def move_to_station(station):
     if (station == "A"):
-        coords = [53, 10]
+        coords = [53, 12]
     elif (station == "B"):
-        coords = [43, 10]
+        coords = [43, 12]
     elif (station == "C"):
-        coords = [30, 10]
+        coords = [30, 12]
     elif (station == "D"):
-        coords = [18, 10]
+        coords = [18, 12]
     elif (station == "E"):
-        coords = [9, 10]
+        coords = [9, 12]
     elif (station == "F"):
-        coords = [10, 9]
+        coords = [12, 9]
     elif (station == "G"):
-        coords = [10, 18]
+        coords = [12, 18]
     elif (station == "H"):
-        coords = [10, 30]
+        coords = [12, 30]
     else :
         coords = [9, 9]
     # Move the base to the coordiantes
-    
+
+def move_turntable(station):
+    if(station == "G" or station == "H"):
+        # Ensure the turntable is at 90 degrees
+    elif(station == "F"):
+        # ensure the turntable is at -45 degrees
+    elif (station == "E"):
+        #ensure the turntable is at 45 degrees
+    else:
+        #ensure the turntable is at 0
 
 if __name__ == '__main__':
     pathname = "all_stations.txt"
