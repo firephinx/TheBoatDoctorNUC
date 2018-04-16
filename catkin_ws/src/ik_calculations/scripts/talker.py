@@ -52,7 +52,7 @@ def talker():
         msg.header = Header()
         msg.header.stamp = rospy.Time.now()
         msg.name = ['turntable', 'X_motion', 'Z_motion', 'motor_1', 'motor_2', 'motor_3']
-        msg.position = [ik_vals[2], ik_vals[3], ik_vals[4], ik_vals[5], ik_vals[6], 0]
+        msg.position = [0, ik_vals[1], ik_vals[2], ik_vals[3], ik_vals[4], 0]
         msg.velocity = []
         msg.effort = []
         rospy.loginfo(msg)
