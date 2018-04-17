@@ -90,6 +90,5 @@ class TheBoatDoctorController:
 				x_gantry_ind = i
 			elif(joint_state_msg.name[i] == 'Z_motion'):
 				z_gantry_ind = i
-			else:
-				i = i + 1
+			i = i + 1
 		return [joint_state_msg.position[x_gantry_ind], joint_state_msg.position[z_gantry_ind]]

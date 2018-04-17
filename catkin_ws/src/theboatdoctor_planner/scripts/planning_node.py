@@ -20,16 +20,16 @@ def get_station_base_coords(station):
     elif (station == "D"):
         base_coords = [0.4572, 0.3048, 0.0]
     elif (station == "E"):
-        base_coords = [0.2286, 0.3048, 0.0]
+        base_coords = [0.3048, 0.3048, 0.0]
     elif (station == "F"):
-        base_coords = [0.3048, 0.2286, 0.0]
+        base_coords = [0.3048, 0.3048, 0.0]
     elif (station == "G"):
         base_coords = [0.3048, 0.4572, 0.0]
     elif (station == "H"):
         base_coords = [0.3048, 0.762, 0.0]
     else :
-        base_coords = [0.2286, 0.2286, 0.0]
-    # Move the base to the coordiantes
+        base_coords = [0.3048, 0.3048, 0.0]
+    # Move the base to the coordinates
     return base_coords
 
 def get_station_turntable_theta(station):
@@ -121,10 +121,10 @@ if __name__ == '__main__':
             joint_angles_for_intermediate_positions = numpy.zeros(4,6)
 
             for i in xrange(3):
-                joint_angles_for_goal_positions[i] = tbd_ik.solve_ik(goal_positions[i])
+                joint_angles_for_goal_positions[i] = tbd_ik.solve_ik(goal_positions[i], station_orientation)
 
             for i in xrange(4):
-                joint_angles_for_intermediate_positions[i] = tbd_ik.solve_ik(intermediate_positions[i])
+                joint_angles_for_intermediate_positions[i] = tbd_ik.solve_ik(intermediate_positions[i], station_orientation)
 
             trajectory = numpy.zeros(11,6)
             trajectory[0] = joint_angles_for_intermediate_positions[0]
@@ -158,10 +158,10 @@ if __name__ == '__main__':
             joint_angles_for_goal_position = numpy.zeros(1,6)
             joint_angles_for_intermediate_positions = numpy.zeros(2,6)
 
-            joint_angles_for_goal_position = tbd_ik.solve_ik(station_object_position_in_3d)
+            joint_angles_for_goal_position = tbd_ik.solve_ik(station_object_position_in_3d, station_orientation)
 
             for i in xrange(2):
-                joint_angles_for_intermediate_positions[i] = tbd_ik.solve_ik(intermediate_positions[i])
+                joint_angles_for_intermediate_positions[i] = tbd_ik.solve_ik(intermediate_positions[i], station_orientation)
 
             trajectory = numpy.zeros(5,6)
             trajectory[0] = joint_angles_for_intermediate_positions[0]
@@ -170,6 +170,5 @@ if __name__ == '__main__':
             trajectory[3] = joint_angles_for_intermediate_positions[1]
             trajectory[4] = joint_angles_for_intermediate_positions[0]
 
-        
 
     f.close()
