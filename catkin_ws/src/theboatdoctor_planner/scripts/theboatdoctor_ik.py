@@ -4,8 +4,8 @@ import numpy as np
 import math
 
 # Helper functions
-def mm_to_in(n):
-	return n*0.0393701
+def m_to_in(n):
+	return n*39.3701
 
 def in_to_m(n):
 		return n*0.0254
@@ -44,9 +44,9 @@ class TheBoatDoctorIK:
 		cam_coord = np.array([x_cam, z_cam])
 
 		if(station_orientation == "vertical"):
-			return calc_ik_vert(cam_to_ik(mm_to_in(cam_coord)))
+			return calc_ik_vert(cam_to_ik(m_to_in(cam_coord)))
 		elif(station_orientation == "horizontal"):
-            return calc_ik_horz(cam_to_ik(mm_to_in(cam_coord)))
+            return calc_ik_horz(cam_to_ik(m_to_in(cam_coord)))
         else:
             print("Station orientation was not provided.")
             return [0,0,0,0,0,0]
