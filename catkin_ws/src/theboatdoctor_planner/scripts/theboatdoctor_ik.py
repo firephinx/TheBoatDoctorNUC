@@ -40,13 +40,14 @@ class TheBoatDoctorIK:
 
         # coordinates from camera in mm
         x_cam = desired_end_effector_location[0]
+        y_cam = desired_end_effector_location[1]
         z_cam = desired_end_effector_location[2]
-        cam_coord = np.array([x_cam, z_cam])
+        cam_coord = np.array([x_cam, y_cam, z_cam])
 
         if(station_orientation == "vertical"):
-            return calc_ik_vert(cam_to_ik(m_to_in(cam_coord)))
+            return self.calc_ik_vert(cam_to_ik(m_to_in(cam_coord)))
         elif(station_orientation == "horizontal"):
-            return calc_ik_horz(cam_to_ik(m_to_in(cam_coord)))
+            return self.calc_ik_horz(cam_to_ik(m_to_in(cam_coord)))
         else:
             print("Station orientation was not provided.")
             return [0,0,0,0,0,0]
@@ -54,8 +55,8 @@ class TheBoatDoctorIK:
     def calc_ik_horz(self, desired_end_effector_location):
         # position given is relative to base
         z_gan = self.z_gan_min
-        z = coord[1]
-        x = coord[0]
+        z = desired_end_effector_location[2]
+        x = desired_end_effector_location[0]
         while(z - z_gan > self.z_arm_max_horz):
             z_gan += 1
         while(z - z_gan < self.z_arm_min_horz):
@@ -84,16 +85,16 @@ class TheBoatDoctorIK:
 
         x_base = x - x_temp - x_gan
         z_gan = z - z_temp
-        return np.array([in_to_m(x_base), in_to_m(x_gan), in_to_m(z_gan), theta1, theta2])
+        return np.array([0, in_to_m(x_base), in_to_m(x_gan), in_to_m(z_gan), theta1, theta2])
 
     def calc_ik_vert(self, desired_end_effector_location):
         # position given is relative to base
         z_gan = self.z_gan_min
-        z = coord[1]
-        x = coord[0]
-        while(z - z_gan > z_arm_max_vert):
+        z = desired_end_effector_location[2]
+        x = desired_end_effector_location[0]
+        while(z - z_gan > self.z_arm_max_vert):
             z_gan += 1
-        while(z - z_gan < z_arm_min_vert):
+        while(z - z_gan < self.z_arm_min_vert):
             z_gan -=1
         if (z_gan > self.z_gan_max):
             z_gan = self.z_gan_max
@@ -119,4 +120,4 @@ class TheBoatDoctorIK:
 
         x_base = x - x_temp - x_gan
         z_gan = z - z_temp
-        return np.array([in_to_m(x_base), in_to_m(x_gan), in_to_m(z_gan), theta1, theta2])  
+        return np.array([0, in_to_m(x_base), in_to_m(x_gan), in_to_m(z_gan), theta1, theta2])  

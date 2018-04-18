@@ -122,8 +122,8 @@ if __name__ == '__main__':
             intermediate_positions[2][2] = intermediate_positions[2][2] - 0.075
             intermediate_positions[3][2] = intermediate_positions[3][2] - 0.075
 
-            joint_angles_for_goal_positions = numpy.zeros(3,6)
-            joint_angles_for_intermediate_positions = numpy.zeros(4,6)
+            joint_angles_for_goal_positions = numpy.zeros([3,6])
+            joint_angles_for_intermediate_positions = numpy.zeros([4,6])
 
             for i in xrange(3):
                 joint_angles_for_goal_positions[i] = tbd_ik.solve_ik(goal_positions[i], station_orientation)
@@ -131,7 +131,7 @@ if __name__ == '__main__':
             for i in xrange(4):
                 joint_angles_for_intermediate_positions[i] = tbd_ik.solve_ik(intermediate_positions[i], station_orientation)
 
-            trajectory = numpy.zeros(11,6)
+            trajectory = numpy.zeros([11,6])
             trajectory[0] = joint_angles_for_intermediate_positions[0]
             trajectory[1] = joint_angles_for_intermediate_positions[1]
             trajectory[2] = joint_angles_for_goal_positions[0]
@@ -145,8 +145,8 @@ if __name__ == '__main__':
             trajectory[10] = joint_angles_for_intermediate_positions[0]
 
         else:
-            intermediate_positions = [station_object_position_in_3d,
-                                      station_object_position_in_3d]
+            intermediate_positions = numpy.array([station_object_position_in_3d,
+                                                  station_object_position_in_3d])
 
             if(station_orientation == "vertical"):
                 intermediate_positions[0][0] = intermediate_positions[0][0] + 0.05
@@ -160,15 +160,15 @@ if __name__ == '__main__':
                 print("Station orientation was not provided.")
                 break
 
-            joint_angles_for_goal_position = numpy.zeros(1,6)
-            joint_angles_for_intermediate_positions = numpy.zeros(2,6)
+            joint_angles_for_goal_position = numpy.zeros([1,6])
+            joint_angles_for_intermediate_positions = numpy.zeros([2,6])
 
             joint_angles_for_goal_position = tbd_ik.solve_ik(station_object_position_in_3d, station_orientation)
 
             for i in xrange(2):
                 joint_angles_for_intermediate_positions[i] = tbd_ik.solve_ik(intermediate_positions[i], station_orientation)
 
-            trajectory = numpy.zeros(5,6)
+            trajectory = numpy.zeros([5,6])
             trajectory[0] = joint_angles_for_intermediate_positions[0]
             trajectory[1] = joint_angles_for_intermediate_positions[1]
             trajectory[2] = joint_angles_for_goal_position
