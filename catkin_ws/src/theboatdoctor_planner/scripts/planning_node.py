@@ -73,18 +73,18 @@ if __name__ == '__main__':
         # Move the robot base so that it is directly facing the station.
         print("Station: " + station)
         station_base_coords = get_station_base_coords(station)
-        done_moving_robot_base_to_station_flag = tbd_controller.move_robot_base(station_base_coords)
-        while(done_moving_robot_base_to_station_flag != True):
-            done_moving_robot_base_to_station_flag = tbd_controller.move_robot_base(station_base_coords)
+        done_moving_robot_base_flag = tbd_controller.move_robot_base(station_base_coords)
+        while(done_moving_robot_base_flag != True):
+            done_moving_robot_base_flag = tbd_controller.move_robot_base(station_base_coords)
 
         cur_base_pos = tbd_controller.get_current_position()
         print("Base Position: [" + str(cur_base_pos[0]) + ", " + str(cur_base_pos[1]) + "]")
 
         # Turn the turntable an appropriate amount to face the station.
         station_turntable_theta = get_station_turntable_theta(station)
-        done_turning_turntable_to_station_flag = tbd_controller.turn_turntable(station_turntable_theta)
-        while(done_turning_turntable_to_station_flag != True):
-            done_turning_turntable_to_station_flag = tbd_controller.turn_turntable(station_turntable_theta)
+        done_turning_turntable_flag = tbd_controller.turn_turntable(station_turntable_theta)
+        while(done_turning_turntable_flag != True):
+            done_turning_turntable_flag = tbd_controller.turn_turntable(station_turntable_theta)
 
         cur_turntable_theta = tbd_controller.get_current_turntable_position()
         print("Turntable Position: " + str(cur_turntable_theta))
@@ -178,10 +178,17 @@ if __name__ == '__main__':
 
             print("X Gantry: " + str(trajectory[0][1]))
             print("Z Gantry: " + str(trajectory[0][2]))
-            done_moving_gantry_to_station_flag = tbd_controller.move_gantry([trajectory[0][1],trajectory[0][2]])
-            while(done_moving_gantry_to_station_flag != True):
-                done_moving_gantry_to_station_flag = tbd_controller.move_gantry([trajectory[0][1],trajectory[0][2]])
+            done_moving_gantry_flag = tbd_controller.move_gantry([trajectory[0][1],trajectory[0][2]])
+            while(done_moving_gantry_flag != True):
+                done_moving_gantry_flag = tbd_controller.move_gantry([trajectory[0][1],trajectory[0][2]])
 
+            print("Elbow Angle: " + str(trajectory[0][3]))
+            print("Wrist Angle: " + str(trajectory[0][4]))
+            print("End Effector Angle: " + str(trajectory[0][5]))
+            done_moving_arm_flag = tbd_controller.move_arm([trajectory[0][3],trajectory[0][4],trajectory[0][5]])
+            while(done_moving_arm_flag != True):
+                done_moving_arm_flag = tbd_controller.move_arm([trajectory[0][3],trajectory[0][4],trajectory[0][5]])
 
+            
 
     f.close()

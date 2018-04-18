@@ -20,6 +20,7 @@ class TheBoatDoctorController:
 		self.move_robot_base_pub = rospy.Publisher('/TheBoatDoctor/move_robot_base', Pose2D, queue_size=10);
 		self.move_gantry_pub = rospy.Publisher('/TheBoatDoctor/move_gantry', Pose2D, queue_size=10);
 		self.turn_turntable_pub = rospy.Publisher('/TheBoatDoctor/turn_turntable', Pose2D, queue_size=10);
+		self.move_arm_pub = rospy.Publisher('/TheBoatDoctor/move_arm', JointState, queue_size=10)
 		self.pump_pub = rospy.Publisher('/TheBoatDoctor/Pump_Switch', Bool, queue_size=1)
 		self.led_pub = rospy.Publisher('/TheBoatDoctor/LED_Switch', Bool, queue_size=1)
 
@@ -74,6 +75,14 @@ class TheBoatDoctorController:
 		self.turn_turntable_pub.publish(pose_2d_msg)
 		done_turning_turntable_msg = rospy.wait_for_message('/TheBoatDoctor/done_turning_turntable', Bool)
 		return done_turning_turntable_msg.data
+
+	def move_arm(self, desired_arm_angles):
+		joint_state_msg = JointState()
+		joint_state_msg.name = ['elbow','wrist','end effector']
+		joint_state_msg.position = [desired_arm_angles[0], desired_arm_angles[1], desired_arm_angles[2]]
+		self.move_arm_pub.publish(joint_state_msg)
+		done_moving_arm_msg = rospy.wait_for_message('TheBoatDoctor/done_moving_arm', Bool)
+		return done_moving_arm_msg.data
 
 	def get_current_position(self):
 		pose_2d_msg = rospy.wait_for_message('/TheBoatDoctor/ultrasonic_pose', Pose2D)

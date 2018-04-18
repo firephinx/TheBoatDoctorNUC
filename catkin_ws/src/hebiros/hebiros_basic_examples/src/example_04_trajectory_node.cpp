@@ -85,7 +85,7 @@ int main(int argc, char **argv) {
   ros::Subscriber feedback_subscriber = n.subscribe("/hebiros/"+group_name+"/feedback/joint_state", 100, feedback_callback);
 
   //Create a subscriber to receive the next trajectory point 
-  ros::Subscriber trajectory_point_subscriber = n.subscribe("/TheBoatDoctor/arm_joint_command", 100, trajectory_point_callback);
+  ros::Subscriber trajectory_point_subscriber = n.subscribe("/TheBoatDoctor/move_arm", 100, trajectory_point_callback);
   ros::Publisher trajectory_complete_publisher = n.advertise<std_msgs::Bool>("/TheBoatDoctor/done_moving_arm", 10);
 
   int num_joints = 3;
