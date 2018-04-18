@@ -1,5 +1,6 @@
 #include "ros/ros.h"
 #include "sensor_msgs/JointState.h"
+#include "std_msgs/Bool.h"
 #include "actionlib/client/simple_action_client.h"
 #include "hebiros/AddGroupFromNamesSrv.h"
 #include "hebiros/TrajectoryAction.h"
@@ -15,17 +16,17 @@ using namespace hebiros;
 
 //Global variable and callback function used to store feedback data
 sensor_msgs::JointState feedback;
-sensor_msgs::JointState waypoint;
+sensor_msgs::JointState trajectory_point;
 TrajectoryGoal goal;
-bool move_to_waypoint = false;
+bool move_to_trajectory_point = false;
 
 void feedback_callback(sensor_msgs::JointState data) {
   feedback = data;
 }
 
-void waypoint_callback(sensor_msgs::JointState data) {
-  waypoint = data;
-  move_to_waypoint = true;
+void trajectory_point_callback(sensor_msgs::JointState data) {
+  trajectory_point = data;
+  move_to_trajectory_point = true;
 }
 
 //Callback which is called once when the action goal completes
@@ -39,8 +40,8 @@ void trajectory_done(const actionlib::SimpleClientGoalState& state,
     std::cout << "  Velocity: " << result->final_state.velocity[i] << std::endl;
     std::cout << "  Effort: " << result->final_state.effort[i] << std::endl;
   }
-  
-  ros::shutdown();
+
+  move_to_trajectory_point = false;
 }
 
 //Callback which is called once when the action goal becomes active
@@ -83,8 +84,9 @@ int main(int argc, char **argv) {
   //Register feedback_callback as a callback which runs when feedback is received
   ros::Subscriber feedback_subscriber = n.subscribe("/hebiros/"+group_name+"/feedback/joint_state", 100, feedback_callback);
 
-  //Create a subscriber to receive the next waypoint 
-  ros::Subscriber waypoint_subscriber = n.subscribe("/TheBoatDoctor/arm_joint_command", 100, waypoint_callback);
+  //Create a subscriber to receive the next trajectory point 
+  ros::Subscriber trajectory_point_subscriber = n.subscribe("/TheBoatDoctor/arm_joint_command", 100, trajectory_point_callback);
+  ros::Publisher trajectory_complete_publisher = n.advertise<std_msgs::Bool>("/TheBoatDoctor/done_moving_arm", 10);
 
   int num_joints = 3;
   int num_waypoints = 2;
@@ -112,8 +114,8 @@ int main(int argc, char **argv) {
   std::vector<std::string> names = {"The Boat Doctor/elbow", "The Boat Doctor/wrist", "The Boat Doctor/end effector"};
   //Set positions, velocities, and accelerations for each waypoint and each joint
   //The following vectors have one joint per row and one waypoint per column
-  std::vector<std::vector<double>> positions = {{feedback.position[0], 0},
-                                                {feedback.position[1], 0},
+  std::vector<std::vector<double>> positions = {{feedback.position[0], -M_PI_2},
+                                                {feedback.position[1], -M_PI_2},
                                                 {feedback.position[2], 0}};
   std::vector<std::vector<double>> velocities = {{0, 0},
                                                  {0, 0},
@@ -139,6 +141,24 @@ int main(int argc, char **argv) {
 
   while(ros::ok()) {
     ros::spinOnce();
+    if(move_to_waypoint)
+    {
+      std::vector<std::vector<double>> trajectory_positions = {{feedback.position[0], trajectory_point.position[0]},
+                                                               {feedback.position[1], trajectory_point.position[1]},
+                                                               {feedback.position[2], trajectory_point.position[2]}};
+      for (int i = 0; i < num_waypoints; i++) {
+        for (int j = 0; j < num_joints; j++) {
+          waypoint.positions[j] = trajectory_positions[j][i];
+        }
+        goal.waypoints[i] = waypoint;
+      }
+
+      //Send the goal, executing the trajectory
+      client.sendGoal(goal, &trajectory_done, &trajectory_active, &trajectory_feedback);
+      std_msgs::Bool trajectory_complete_msg;
+      trajectory_complete_msg.data = true;
+      trajectory_complete_publisher.publish(trajectory_complete_msg);
+    }
     loop_rate.sleep();
   }
 
