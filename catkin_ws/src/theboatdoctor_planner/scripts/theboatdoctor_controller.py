@@ -5,6 +5,8 @@ from std_msgs.msg import Empty, String, Bool
 from geometry_msgs.msg import Pose2D, Twist
 from sensor_msgs.msg import JointState, Range, Imu
 
+import time
+
 class TheBoatDoctorController:
 	def __init__(self):
 		rospy.init_node('TheBoatDoctorController')
@@ -14,15 +16,13 @@ class TheBoatDoctorController:
 		self.current_arm_joint_position = [0.0,0.0,0.0]
 		self.front_ultrasonic_range = 0.0
 		self.right_ultrasonic_range = 0.0
-		self.done_homing_flag = False
-		self.done_moving_robot_base_flag = False
-		self.done_moving_gantry_flag = False
-		self.done_turning_turntable_flag = False
 
 		self.home_pub = rospy.Publisher('/TheBoatDoctor/Home', Empty, queue_size=1)
 		self.move_robot_base_pub = rospy.Publisher('/TheBoatDoctor/move_robot_base', Pose2D, queue_size=10);
 		self.move_gantry_pub = rospy.Publisher('/TheBoatDoctor/move_gantry', Pose2D, queue_size=10);
 		self.turn_turntable_pub = rospy.Publisher('/TheBoatDoctor/turn_turntable', Pose2D, queue_size=10);
+
+		rospy.sleep(1)
 
 	def front_ultrasonic_range_callback(self, range_msg):
 		self.front_ultrasonic_range = range_msg.range
@@ -38,32 +38,32 @@ class TheBoatDoctorController:
 	def home_robot(self):
 		empty_msg = Empty()
 		self.home_pub.publish(empty_msg)
-		self.done_homing_flag = rospy.wait_for_message('/TheBoatDoctor/done_homing', Bool)
-		return self.done_homing_flag
+		done_homing_msg = rospy.wait_for_message('/TheBoatDoctor/done_homing', Bool)
+		return done_homing_msg.data
 
 	def move_robot_base(self, desired_robot_base_position):
 		pose_2d_msg = Pose2D()
 		pose_2d_msg.x = desired_robot_base_position[0]
 		pose_2d_msg.y = desired_robot_base_position[1]
 		pose_2d_msg.theta = desired_robot_base_position[2]
-		self.cmd_pos_pub.publish(pose_2d_msg)
-		self.done_moving_robot_base_flag = rospy.wait_for_message('/TheBoatDoctor/done_moving_robot_base', Bool)
-		return self.done_moving_robot_base_flag
+		self.move_robot_base_pub.publish(pose_2d_msg)
+		done_moving_robot_base_msg = rospy.wait_for_message('/TheBoatDoctor/done_moving_robot_base', Bool)
+		return done_moving_robot_base_msg.data
 
 	def move_gantry(self, desired_gantry_position):
 		pose_2d_msg = Pose2D()
 		pose_2d_msg.x = desired_gantry_position[0]
 		pose_2d_msg.y = desired_gantry_position[1]
 		self.move_gantry_pub.publish(pose_2d_msg)
-		self.done_moving_gantry_flag = rospy.wait_for_message('/TheBoatDoctor/done_moving_gantry', Bool)
-		return self.done_moving_gantry_flag
+		done_moving_gantry_msg = rospy.wait_for_message('/TheBoatDoctor/done_moving_gantry', Bool)
+		return done_moving_gantry_msg.data
 		
 	def turn_turntable(self, desired_theta):
 		pose_2d_msg = Pose2D()
-		pose_2d_msg.data = desired_theta
+		pose_2d_msg.theta = desired_theta
 		self.turn_turntable_pub.publish(pose_2d_msg)
-		self.done_turning_turntable_flag = rospy.wait_for_message('/TheBoatDoctor/done_turning_turntable', Bool)
-		return self.done_turning_turntable_flag
+		done_turning_turntable_msg = rospy.wait_for_message('/TheBoatDoctor/done_turning_turntable', Bool)
+		return done_turning_turntable_msg.data
 
 	def get_current_position(self):
 		pose_2d_msg = rospy.wait_for_message('/TheBoatDoctor/ultrasonic_pose', Pose2D)

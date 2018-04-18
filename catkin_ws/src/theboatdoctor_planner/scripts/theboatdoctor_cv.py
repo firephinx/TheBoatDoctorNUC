@@ -15,7 +15,7 @@ import signal
 class TheBoatDoctorCV():
 	
 	def __init__(self,Type):
-		rospy.init_node('test', anonymous=False)
+		rospy.init_node('CV_node', anonymous=False)
 
 		self.data=None
 		self.firstCall=1

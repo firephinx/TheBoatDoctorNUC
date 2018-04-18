@@ -12,23 +12,24 @@ from theboatdoctor_cv import TheBoatDoctorCV
     
 def get_station_base_coords(station):
     if (station == "A"):
-        base_coords = [1.3462, 0.3048, 0.0]
+        #base_coords = [0.33, 1.25, 0.0]
+        base_coords = [0.33, 0.45, 0.0]
     elif (station == "B"):
-        base_coords = [1.0922, 0.3048, 0.0]
+        base_coords = [0.33, 1.00, 0.0]
     elif (station == "C"):
-        base_coords = [0.762, 0.3048, 0.0]
+        base_coords = [0.33, 0.762, 0.0]
     elif (station == "D"):
-        base_coords = [0.4572, 0.3048, 0.0]
+        base_coords = [0.33, 0.4572, 0.0]
     elif (station == "E"):
-        base_coords = [0.3048, 0.3048, 0.0]
+        base_coords = [0.33, 0.33, 0.0]
     elif (station == "F"):
-        base_coords = [0.3048, 0.3048, 0.0]
+        base_coords = [0.33, 0.33, 0.0]
     elif (station == "G"):
-        base_coords = [0.3048, 0.4572, 0.0]
+        base_coords = [0.4572, 0.33, 0.0]
     elif (station == "H"):
-        base_coords = [0.3048, 0.762, 0.0]
+        base_coords = [0.762, 0.33, 0.0]
     else :
-        base_coords = [0.3048, 0.3048, 0.0]
+        base_coords = [0.33, 0.33, 0.0]
     # Move the base to the coordinates
     return base_coords
 
@@ -56,7 +57,7 @@ if __name__ == '__main__':
     tbd_controller = TheBoatDoctorController()
     tbd_ik = TheBoatDoctorIK()
 
-    tbd_c.home_robot()
+    tbd_controller.home_robot()
 
     f = open(args.missionfilepathname, "r")
     commands = f.readlines()
@@ -72,7 +73,7 @@ if __name__ == '__main__':
         print("Station: " + station)
         station_base_coords = get_station_base_coords(station)
         done_moving_robot_base_to_station_flag = tbd_controller.move_robot_base(station_base_coords)
-        while(~done_moving_robot_base_to_station_flag):
+        while(done_moving_robot_base_to_station_flag != True):
             done_moving_robot_base_to_station_flag = tbd_controller.move_robot_base(station_base_coords)
 
         cur_base_pos = tbd_controller.get_current_position()
@@ -81,7 +82,7 @@ if __name__ == '__main__':
         # Turn the turntable an appropriate amount to face the station.
         station_turntable_theta = get_station_turntable_theta(station)
         done_turning_turntable_to_station_flag = tbd_controller.turn_turntable(station_turntable_theta)
-        while(~done_turning_turntable_to_station_flag):
+        while(done_turning_turntable_to_station_flag != True):
             done_turning_turntable_to_station_flag = tbd_controller.turn_turntable(station_turntable_theta)
 
         cur_turntable_theta = tbd_controller.get_current_turntable_position()
