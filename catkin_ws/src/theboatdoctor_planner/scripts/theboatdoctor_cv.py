@@ -16,11 +16,24 @@ class TheBoatDoctorCV():
 	
 	def __init__(self,Type):
 		rospy.init_node('test', anonymous=False)
-		self.type=Type
-		self.data=None
-		self.firstCall=1 
 
-	def get_actuator_location(self):
+		self.data=None
+		self.firstCall=1
+
+		if(Type == 'V1'):
+			self.type = 3
+		elif(Type == 'V2'):
+			self.type = 2
+		elif(Type == 'V3'):
+			self.type = 1
+		elif(Type == 'A'):
+			self.type = 4
+		elif(Type == 'B'):
+			self.type = 4
+		else:
+			self.type = 0
+
+	def get_station_info_kinect(self):
 		Type=str(self.type)
 		command="gnome-terminal -e 'rosrun object_detection kinect_client.py --type {0}'".format(Type)
 		if self.firstCall==1:
@@ -42,7 +55,27 @@ class TheBoatDoctorCV():
  			if len(self.data)==1:
  				return 10000  ### error msg 
  			else:
- 				return self.data
+ 				if(self.type == 4):
+ 					station_object_position_in_3d = self.data[0:9]
+ 					station_orientation = ['','','']
+ 					for i in xrange(3):
+ 						if(self.data[i+9] == 1):
+ 							station_orientation[i] = 'up'
+ 						else:
+ 							station_orientation[i] = 'down'
+ 					return (station_object_position_in_3d, station_orientation)
+ 				elif(self.type == 2)
+ 					station_object_position_in_3d = self.data[0:3]
+ 					station_orientation = 'vertical'
+ 				else:
+ 					station_object_position_in_3d = self.data[0:3]
+ 					if(self.data[3] == 1):
+ 						station_orientation = 'vertical'
+ 					elif(self.data[3] == 2): 
+ 						station_orientation = 'horizontal'
+ 					else:
+ 						station_orientation = ''
+ 				return (station_object_position_in_3d, station_orientation)
  			
 		else: 
  			msg = rospy.wait_for_message('/kinect2/actuator_location', Float32MultiArray) ## message received from publish topic in kinect 
@@ -52,10 +85,7 @@ class TheBoatDoctorCV():
  			else:
  				return self.data
 
-
-
-
- 	def get_actuator_status(self):
+ 	def get_station_info_pi(self):
  		Type=str(self.type)
  		print 1
 		command="xterm -hold -e 'rosrun object_detection pi_cam_client.py --type {0}'".format(Type)

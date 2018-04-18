@@ -55,7 +55,6 @@ if __name__ == '__main__':
 
     tbd_controller = TheBoatDoctorController()
     tbd_ik = TheBoatDoctorIK()
-    tbd_cv = TheBoatDoctorCV()
 
     tbd_c.home_robot()
 
@@ -98,7 +97,12 @@ if __name__ == '__main__':
             direction = actuations[0][0]
             degree = actuations[0][1:]
 
-        (station_object_position_in_3d, station_orientation) = tbd_cv.get_station_info(actuator)
+        tbd_cv = TheBoatDoctorCV(actuator)
+
+        (station_object_position_in_3d, station_orientation) = tbd_cv.get_station_info_kinect()
+
+        print("Station object position in 3D: " + str(station_object_position_in_3d))
+        print("Station orientation: " + )
 
         if(actuator == "A" or actuator == "B"):
             # Breakers
