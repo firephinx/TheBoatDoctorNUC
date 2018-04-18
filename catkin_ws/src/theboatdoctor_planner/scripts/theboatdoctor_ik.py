@@ -68,7 +68,7 @@ class TheBoatDoctorIK:
         z_arm = z - z_gan
 
         # calc angles based on position
-        theta1 = math.asin((z_arm-self.l3_horz)/self.l2)
+        theta1 = math.asin((z_arm+self.l3_horz)/self.l2)
         theta2 = -math.pi/2 - theta1   
 
         # calc x values
@@ -85,7 +85,7 @@ class TheBoatDoctorIK:
 
         x_base = x - x_temp - x_gan
         z_gan = z - z_temp
-        return np.array([0, in_to_m(x_gan), in_to_m(z_gan), theta1, theta2, 0])
+        return np.array([0, in_to_m(x_gan), in_to_m(z_gan), -theta1, -theta2, 0])
 
     def calc_ik_vert(self, desired_end_effector_location):
         # position given is relative to base
