@@ -19,10 +19,10 @@ class TheBoatDoctorIK:
 
     def __init__(self):
         # arm lengths in inches
-        self.l1 = 6.5
-        self.l2 = 7
-        self.l3_vert = 2.5
-        self.l3_horz = 4.5
+        self.l1 = 8.125
+        self.l2 = 10.5
+        self.l3_vert = 7.5
+        self.l3_horz = 7.5
         self.base_height = 6
         self.base_width = 2
 
@@ -31,10 +31,10 @@ class TheBoatDoctorIK:
         self.x_gan_max = 10
         self.z_gan_min = 0
         self.z_gan_max = 13
-        self.z_arm_max_vert = 7
-        self.z_arm_min_vert = -7
-        self.z_arm_min_horz = -2.5
-        self.z_arm_max_horz = 2.5
+        self.z_arm_max_vert = 10
+        self.z_arm_min_vert = -10
+        self.z_arm_min_horz = -18
+        self.z_arm_max_horz = 3
 
     def solve_ik(self, desired_end_effector_location, station_orientation):
 
@@ -56,7 +56,7 @@ class TheBoatDoctorIK:
         # position given is relative to base
         z_gan = self.z_gan_min
         z = desired_end_effector_location[2]
-        x = desired_end_effector_location[0]
+        x = desired_end_effector_location[1]
         while(z - z_gan > self.z_arm_max_horz):
             z_gan += 1
         while(z - z_gan < self.z_arm_min_horz):
@@ -91,7 +91,7 @@ class TheBoatDoctorIK:
         # position given is relative to base
         z_gan = self.z_gan_min
         z = desired_end_effector_location[2]
-        x = desired_end_effector_location[0]
+        x = desired_end_effector_location[1]
         while(z - z_gan > self.z_arm_max_vert):
             z_gan += 1
         while(z - z_gan < self.z_arm_min_vert):
@@ -120,4 +120,4 @@ class TheBoatDoctorIK:
 
         x_base = x - x_temp - x_gan
         z_gan = z - z_temp
-        return np.array([0, in_to_m(x_gan), in_to_m(z_gan), theta1, theta2, 0])  
+        return np.array([0, in_to_m(x_gan), in_to_m(z_gan), -theta1, -theta2, 0])  
