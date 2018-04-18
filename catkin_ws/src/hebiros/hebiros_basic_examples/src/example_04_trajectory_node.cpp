@@ -15,9 +15,17 @@ using namespace hebiros;
 
 //Global variable and callback function used to store feedback data
 sensor_msgs::JointState feedback;
+sensor_msgs::JointState waypoint;
+TrajectoryGoal goal;
+bool move_to_waypoint = false;
 
 void feedback_callback(sensor_msgs::JointState data) {
   feedback = data;
+}
+
+void waypoint_callback(sensor_msgs::JointState data) {
+  waypoint = data;
+  move_to_waypoint = true;
 }
 
 //Callback which is called once when the action goal completes
@@ -73,8 +81,10 @@ int main(int argc, char **argv) {
 
   //Create a subscriber to receive feedback from a group
   //Register feedback_callback as a callback which runs when feedback is received
-  ros::Subscriber feedback_subscriber = n.subscribe(
-    "/hebiros/"+group_name+"/feedback/joint_state", 100, feedback_callback);
+  ros::Subscriber feedback_subscriber = n.subscribe("/hebiros/"+group_name+"/feedback/joint_state", 100, feedback_callback);
+
+  //Create a subscriber to receive the next waypoint 
+  ros::Subscriber waypoint_subscriber = n.subscribe("/TheBoatDoctor/arm_joint_command", 100, waypoint_callback);
 
   int num_joints = 3;
   int num_waypoints = 2;
@@ -87,7 +97,6 @@ int main(int argc, char **argv) {
   client.waitForServer();
 
   //Construct a trajectory to be sent as an action goal
-  TrajectoryGoal goal;
   goal.times.resize(num_waypoints);
   goal.waypoints.resize(num_waypoints);
 
@@ -103,9 +112,9 @@ int main(int argc, char **argv) {
   std::vector<std::string> names = {"The Boat Doctor/elbow", "The Boat Doctor/wrist", "The Boat Doctor/end effector"};
   //Set positions, velocities, and accelerations for each waypoint and each joint
   //The following vectors have one joint per row and one waypoint per column
-  std::vector<std::vector<double>> positions = {{feedback.position[0], feedback.position[0]},
-                                                {feedback.position[1], feedback.position[1]},
-                                                {feedback.position[2], feedback.position[2]}};
+  std::vector<std::vector<double>> positions = {{feedback.position[0], 0},
+                                                {feedback.position[1], 0},
+                                                {feedback.position[2], 0}};
   std::vector<std::vector<double>> velocities = {{0, 0},
                                                  {0, 0},
                                                  {0, 0}};

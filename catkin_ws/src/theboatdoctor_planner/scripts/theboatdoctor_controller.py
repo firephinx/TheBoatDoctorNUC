@@ -5,8 +5,6 @@ from std_msgs.msg import Empty, String, Bool
 from geometry_msgs.msg import Pose2D, Twist
 from sensor_msgs.msg import JointState, Range, Imu
 
-import time
-
 class TheBoatDoctorController:
 	def __init__(self):
 		rospy.init_node('TheBoatDoctorController')
@@ -21,6 +19,8 @@ class TheBoatDoctorController:
 		self.move_robot_base_pub = rospy.Publisher('/TheBoatDoctor/move_robot_base', Pose2D, queue_size=10);
 		self.move_gantry_pub = rospy.Publisher('/TheBoatDoctor/move_gantry', Pose2D, queue_size=10);
 		self.turn_turntable_pub = rospy.Publisher('/TheBoatDoctor/turn_turntable', Pose2D, queue_size=10);
+		self.pump_pub = rospy.Publisher('/TheBoatDoctor/Pump_Switch', Bool, queue_size=1)
+		self.led_pub = rospy.Publisher('/TheBoatDoctor/LED_Switch', Bool, queue_size=1)
 
 		rospy.sleep(1)
 
@@ -96,3 +96,19 @@ class TheBoatDoctorController:
 				z_gantry_ind = i
 			i = i + 1
 		return [joint_state_msg.position[x_gantry_ind], joint_state_msg.position[z_gantry_ind]]
+
+	def pump_switch(self, switch):
+		bool_msg = Bool()
+		bool_msg.data = switch
+		self.pump_pub.publish(bool_msg)
+		self.pump_pub.publish(bool_msg)
+		pump_status_msg = rospy.wait_for_message('/TheBoatDoctor/pump_status', Bool)
+		return pump_status_msg.data
+
+	def led_switch(self, switch):
+		bool_msg = Bool()
+		bool_msg.data = switch
+		self.led.publish(bool_msg)
+		self.led.publish(bool_msg)
+		led_status_msg = rospy.wait_for_message('/TheBoatDoctor/led_status', Bool)
+		return led_status_msg.data

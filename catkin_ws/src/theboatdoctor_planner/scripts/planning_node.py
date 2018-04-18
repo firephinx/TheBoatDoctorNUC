@@ -175,5 +175,12 @@ if __name__ == '__main__':
             trajectory[3] = joint_angles_for_intermediate_positions[1]
             trajectory[4] = joint_angles_for_intermediate_positions[0]
 
+            print("X Gantry: " + str(trajectory[0][1]))
+            print("Z Gantry: " + str(trajectory[0][2]))
+            done_moving_gantry_to_station_flag = tbd_controller.move_gantry([trajectory[0][1],trajectory[0][2]])
+            while(done_moving_gantry_to_station_flag != True):
+                done_moving_gantry_to_station_flag = tbd_controller.move_gantry([trajectory[0][1],trajectory[0][2]])
+
+            
 
     f.close()
