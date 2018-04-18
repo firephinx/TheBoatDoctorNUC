@@ -13,7 +13,7 @@ from theboatdoctor_cv import TheBoatDoctorCV
 def get_station_base_coords(station):
     if (station == "A"):
         #base_coords = [0.33, 1.25, 0.0]
-        base_coords = [0.33, 0.45, 0.0]
+        base_coords = [0.4, 1.25, 0.0]
     elif (station == "B"):
         base_coords = [0.33, 1.00, 0.0]
     elif (station == "C"):

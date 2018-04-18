@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import math
 import rospy
 from std_msgs.msg import Empty, String, Bool
 from geometry_msgs.msg import Pose2D, Twist
@@ -43,14 +44,14 @@ class TheBoatDoctorController:
 		self.reset_pub.publish(empty_msg)
 
 	def home_arm(self):
-		return move_arm([-math.pi / 2, -math.pi / 2, 0])
+		return self.move_arm([-math.pi / 2, -math.pi / 2, 0])
 
 	def home_robot(self):
 		empty_msg = Empty()
 		self.home_pub.publish(empty_msg)
 		self.home_pub.publish(empty_msg)
 		done_homing_msg = rospy.wait_for_message('/TheBoatDoctor/done_homing', Bool)
-		return done_homing_msg.data && home_arm()
+		return done_homing_msg.data && self.home_arm()
 
 	def move_robot_base(self, desired_robot_base_position):
 		pose_2d_msg = Pose2D()
