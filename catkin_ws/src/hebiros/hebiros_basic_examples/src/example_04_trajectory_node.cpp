@@ -11,6 +11,9 @@
 #ifndef M_PI_2
 #define M_PI_2 1.57079632679489661923
 #endif
+#ifndef GRAVITY
+#define GRAVITY 9.8
+#endif
 
 using namespace hebiros;
 
@@ -84,6 +87,17 @@ int main(int argc, char **argv) {
   //Register feedback_callback as a callback which runs when feedback is received
   ros::Subscriber feedback_subscriber = n.subscribe("/hebiros/"+group_name+"/feedback/joint_state", 100, feedback_callback);
 
+  ros::Publisher command_publisher = n.advertise<sensor_msgs::JointState>("/hebiros/"+group_name+"/command/joint_state", 100);
+
+  //Construct a JointState to command the modules
+  //This may potentially contain a name, position, velocity, and effort for each module
+  sensor_msgs::JointState command_msg;
+  command_msg.name.push_back("The Boat Doctor/elbow");
+  command_msg.name.push_back("The Boat Doctor/wrist");
+  command_msg.name.push_back("The Boat Doctor/end effector");
+
+  command_msg.position.resize(3);    
+
   //Create a subscriber to receive the next trajectory point 
   ros::Subscriber trajectory_point_subscriber = n.subscribe("/TheBoatDoctor/move_arm", 100, trajectory_point_callback);
   ros::Publisher trajectory_complete_publisher = n.advertise<std_msgs::Bool>("/TheBoatDoctor/done_moving_arm", 10);
@@ -114,9 +128,6 @@ int main(int argc, char **argv) {
   std::vector<std::string> names = {"The Boat Doctor/elbow", "The Boat Doctor/wrist", "The Boat Doctor/end effector"};
   //Set positions, velocities, and accelerations for each waypoint and each joint
   //The following vectors have one joint per row and one waypoint per column
-  std::vector<std::vector<double>> positions = {{feedback.position[0], -M_PI_2},
-                                                {feedback.position[1], -M_PI_2},
-                                                {feedback.position[2], 0}};
   std::vector<std::vector<double>> velocities = {{0, 0},
                                                  {0, 0},
                                                  {0, 0}};
@@ -128,7 +139,6 @@ int main(int argc, char **argv) {
   for (int i = 0; i < num_waypoints; i++) {
     for (int j = 0; j < num_joints; j++) {
       waypoint.names[j] = names[j];
-      waypoint.positions[j] = positions[j][i];
       waypoint.velocities[j] = velocities[j][i];
       waypoint.accelerations[j] = accelerations[j][i];
     }
@@ -136,19 +146,16 @@ int main(int argc, char **argv) {
     goal.waypoints[i] = waypoint;
   }
 
-  //Send the goal, executing the trajectory
-  client.sendGoal(goal, &trajectory_done, &trajectory_active, &trajectory_feedback);
-
   while(ros::ok()) {
     ros::spinOnce();
-    if(move_to_waypoint)
+    if(move_to_trajectory_point)
     {
-      std::vector<std::vector<double>> trajectory_positions = {{feedback.position[0], trajectory_point.position[0]},
-                                                               {feedback.position[1], trajectory_point.position[1]},
-                                                               {feedback.position[2], trajectory_point.position[2]}};
+      std::vector<std::vector<double>> positions = {{feedback.position[0], trajectory_point.position[0]},
+                                                    {feedback.position[1], trajectory_point.position[1]},
+                                                    {feedback.position[2], trajectory_point.position[2]}};
       for (int i = 0; i < num_waypoints; i++) {
         for (int j = 0; j < num_joints; j++) {
-          waypoint.positions[j] = trajectory_positions[j][i];
+          waypoint.positions[j] = positions[j][i];
         }
         goal.waypoints[i] = waypoint;
       }
@@ -158,6 +165,16 @@ int main(int argc, char **argv) {
       std_msgs::Bool trajectory_complete_msg;
       trajectory_complete_msg.data = true;
       trajectory_complete_publisher.publish(trajectory_complete_msg);
+    }
+    else
+    {
+      command_msg.position[0] = feedback.position[0];
+      command_msg.position[1] = feedback.position[1];
+      command_msg.position[2] = feedback.position[2];
+      command_msg.effort[0] = GRAVITY * 3 * cos(feedback.position[0]);
+      command_msg.effort[1] = GRAVITY * 1 * sin(-feedback.position[1]);
+      command_msg.effort[2] = 0;
+      command_publisher.publish(command_msg);
     }
     loop_rate.sleep();
   }
