@@ -72,7 +72,7 @@ if __name__ == '__main__':
         print("Station: " + station)
         station_base_coords = get_station_base_coords(station)
         done_moving_robot_base_to_station_flag = tbd_controller.move_robot_base(station_base_coords)
-        while(!done_moving_robot_base_to_station_flag):
+        while(~done_moving_robot_base_to_station_flag):
             done_moving_robot_base_to_station_flag = tbd_controller.move_robot_base(station_base_coords)
 
         cur_base_pos = tbd_controller.get_current_position()
@@ -81,7 +81,7 @@ if __name__ == '__main__':
         # Turn the turntable an appropriate amount to face the station.
         station_turntable_theta = get_station_turntable_theta(station)
         done_turning_turntable_to_station_flag = tbd_controller.turn_turntable(station_turntable_theta)
-        while(!done_turning_turntable_to_station_flag):
+        while(~done_turning_turntable_to_station_flag):
             done_turning_turntable_to_station_flag = tbd_controller.turn_turntable(station_turntable_theta)
 
         cur_turntable_theta = tbd_controller.get_current_turntable_position()
@@ -102,7 +102,7 @@ if __name__ == '__main__':
         (station_object_position_in_3d, station_orientation) = tbd_cv.get_station_info_kinect()
 
         print("Station object position in 3D: " + str(station_object_position_in_3d))
-        print("Station orientation: " + )
+        print("Station orientation: " + station_orientation)
 
         if(actuator == "A" or actuator == "B"):
             # Breakers

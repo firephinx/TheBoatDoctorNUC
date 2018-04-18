@@ -64,7 +64,7 @@ class TheBoatDoctorCV():
  						else:
  							station_orientation[i] = 'down'
  					return (station_object_position_in_3d, station_orientation)
- 				elif(self.type == 2)
+ 				elif(self.type == 2):
  					station_object_position_in_3d = self.data[0:3]
  					station_orientation = 'vertical'
  				else:
