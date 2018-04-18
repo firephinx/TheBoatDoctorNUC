@@ -121,7 +121,10 @@ class TheBoatDoctorController:
 
 	def pump_switch(self, switch):
 		bool_msg = Bool()
-		bool_msg.data = switch
+		if(switch == "on"):
+			bool_msg.data = True
+		else:
+			bool_msg.data = False
 		self.pump_pub.publish(bool_msg)
 		rospy.sleep(0.1)
 		self.pump_pub.publish(bool_msg)
@@ -130,7 +133,10 @@ class TheBoatDoctorController:
 
 	def led_switch(self, switch):
 		bool_msg = Bool()
-		bool_msg.data = switch
+		if(switch == "on"):
+			bool_msg.data = True
+		else:
+			bool_msg.data = False
 		self.led.publish(bool_msg)
 		rospy.sleep(0.1)
 		self.led.publish(bool_msg)

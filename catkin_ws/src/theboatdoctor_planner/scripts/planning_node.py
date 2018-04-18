@@ -91,13 +91,6 @@ if __name__ == '__main__':
 
         actuator = elements[0][1:]
         actuations = elements[1:]
-        if(actuator == "A" or actuator == "B"):
-            # Breaker, assume breakers are always left to right in order
-            directions = actuations[1::2]
-        else:
-            #valve
-            direction = actuations[0][0]
-            degree = actuations[0][1:]
 
         tbd_cv = TheBoatDoctorCV(actuator)
 
@@ -145,6 +138,8 @@ if __name__ == '__main__':
             trajectory[9] = joint_angles_for_intermediate_positions[3]
             trajectory[10] = joint_angles_for_intermediate_positions[0]
 
+            directions = actuations[1::2]
+
         else:
             intermediate_positions = numpy.array([station_object_position_in_3d,
                                                   station_object_position_in_3d])
@@ -165,16 +160,18 @@ if __name__ == '__main__':
             joint_angles_for_intermediate_positions = numpy.zeros([2,6])
 
             joint_angles_for_goal_position = tbd_ik.solve_ik(station_object_position_in_3d, station_orientation)
+            joint_angles_for_task_completion = joint_angles_for_goal_position
 
             for i in xrange(2):
                 joint_angles_for_intermediate_positions[i] = tbd_ik.solve_ik(intermediate_positions[i], station_orientation)
 
-            trajectory = numpy.zeros([5,6])
+            trajectory = numpy.zeros([6,6])
             trajectory[0] = joint_angles_for_intermediate_positions[0]
             trajectory[1] = joint_angles_for_intermediate_positions[1]
             trajectory[2] = joint_angles_for_goal_position
-            trajectory[3] = joint_angles_for_intermediate_positions[1]
-            trajectory[4] = joint_angles_for_intermediate_positions[0]
+            trajectory[3] = joint_angles_for_task_completion
+            trajectory[4] = joint_angles_for_intermediate_positions[1]
+            trajectory[5] = joint_angles_for_intermediate_positions[0]
 
             print("X Gantry: " + str(trajectory[0][1]))
             print("Z Gantry: " + str(trajectory[0][2]))
@@ -189,6 +186,146 @@ if __name__ == '__main__':
             while(done_moving_arm_flag != True):
                 done_moving_arm_flag = tbd_controller.move_arm([trajectory[0][3],trajectory[0][4],trajectory[0][5]])
 
-            
+            current_angle = tbd_cv.get_station_info_pi()
+
+            angle_threshold = 3
+
+            if(actuator == "V1" or actuator == "V2"):
+                direction = actuations[0][0]
+                degree = int(actuations[0][1:])
+                if(direction == "+"):
+                    desired_angle = current_angle + degree
+
+                    if(abs(desired_angle - current_angle) < angle_threshold):
+                        continue
+                    else:
+                        trajectory[3][5] = desired_angle - current_angle
+                        trajectory[4][5] = desired_angle - current_angle
+
+                elif(direction == "-"):
+                    desired_angle = current_angle - degree
+
+                    if(abs(desired_angle - current_angle) < angle_threshold):
+                            continue
+                    else:
+                        trajectory[3][5] = desired_angle - current_angle
+                        trajectory[4][5] = desired_angle - current_angle
+
+            else:
+                desired_position = actuations[0][0]
+
+                if(station_orientation == "vertical"):
+                    # Open
+                    if(desired_position == 0):
+                        desired_angle = -90
+
+                        if(abs(desired_angle - current_angle) < angle_threshold):
+                            continue
+                        else:
+                            trajectory[3][5] = desired_angle - current_angle
+                            trajectory[4][5] = desired_angle - current_angle
+
+                    # Closed
+                    elif(desired_position == 1):
+                        desired_angle = 0
+
+                        if(abs(desired_angle - current_angle) < angle_threshold):
+                            continue
+                        else:
+                            trajectory[3][5] = desired_angle - current_angle
+                            trajectory[4][5] = desired_angle - current_angle
+
+                elif(station_orientation == "horizontal"):
+                    # Open
+                    if(desired_position == 0):
+                        desired_angle = 0
+
+                        if(abs(desired_angle - current_angle) < angle_threshold):
+                            continue
+                        else:
+                            trajectory[3][5] = desired_angle - current_angle
+                            trajectory[4][5] = desired_angle - current_angle
+
+                    # Closed
+                    elif(desired_position == 1):
+                        desired_angle = 90
+
+                        if(abs(desired_angle - current_angle) < angle_threshold):
+                            continue
+                        else:
+                            trajectory[3][5] = desired_angle - current_angle
+                            trajectory[4][5] = desired_angle - current_angle
+
+            print("X Gantry: " + str(trajectory[1][1]))
+            print("Z Gantry: " + str(trajectory[1][2]))
+            done_moving_gantry_flag = tbd_controller.move_gantry([trajectory[1][1],trajectory[1][2]])
+            while(done_moving_gantry_flag != True):
+                done_moving_gantry_flag = tbd_controller.move_gantry([trajectory[1][1],trajectory[1][2]])
+
+            print("Elbow Angle: " + str(trajectory[1][3]))
+            print("Wrist Angle: " + str(trajectory[1][4]))
+            print("End Effector Angle: " + str(trajectory[1][5]))
+            done_moving_arm_flag = tbd_controller.move_arm([trajectory[1][3],trajectory[1][4],trajectory[1][5]])
+            while(done_moving_arm_flag != True):
+                done_moving_arm_flag = tbd_controller.move_arm([trajectory[1][3],trajectory[1][4],trajectory[1][5]])
+
+            print("X Gantry: " + str(trajectory[2][1]))
+            print("Z Gantry: " + str(trajectory[2][2]))
+            done_moving_gantry_flag = tbd_controller.move_gantry([trajectory[2][1],trajectory[2][2]])
+            while(done_moving_gantry_flag != True):
+                done_moving_gantry_flag = tbd_controller.move_gantry([trajectory[2][1],trajectory[2][2]])
+
+            print("Elbow Angle: " + str(trajectory[2][3]))
+            print("Wrist Angle: " + str(trajectory[2][4]))
+            print("End Effector Angle: " + str(trajectory[2][5]))
+            done_moving_arm_flag = tbd_controller.move_arm([trajectory[2][3],trajectory[2][4],trajectory[2][5]])
+            while(done_moving_arm_flag != True):
+                done_moving_arm_flag = tbd_controller.move_arm([trajectory[2][3],trajectory[2][4],trajectory[2][5]])
+   
+            tbd_controller.pump_switch("on")
+
+            print("X Gantry: " + str(trajectory[3][1]))
+            print("Z Gantry: " + str(trajectory[3][2]))
+            done_moving_gantry_flag = tbd_controller.move_gantry([trajectory[3][1],trajectory[3][2]])
+            while(done_moving_gantry_flag != True):
+                done_moving_gantry_flag = tbd_controller.move_gantry([trajectory[3][1],trajectory[3][2]])
+
+            print("Elbow Angle: " + str(trajectory[3][3]))
+            print("Wrist Angle: " + str(trajectory[3][4]))
+            print("End Effector Angle: " + str(trajectory[3][5]))
+            done_moving_arm_flag = tbd_controller.move_arm([trajectory[3][3],trajectory[3][4],trajectory[3][5]])
+            while(done_moving_arm_flag != True):
+                done_moving_arm_flag = tbd_controller.move_arm([trajectory[3][3],trajectory[3][4],trajectory[3][5]])
+
+            tbd_controller.pump_switch("off")
+
+            print("X Gantry: " + str(trajectory[4][1]))
+            print("Z Gantry: " + str(trajectory[4][2]))
+            done_moving_gantry_flag = tbd_controller.move_gantry([trajectory[4][1],trajectory[4][2]])
+            while(done_moving_gantry_flag != True):
+                done_moving_gantry_flag = tbd_controller.move_gantry([trajectory[4][1],trajectory[4][2]])
+
+            print("Elbow Angle: " + str(trajectory[4][3]))
+            print("Wrist Angle: " + str(trajectory[4][4]))
+            print("End Effector Angle: " + str(trajectory[4][5]))
+            done_moving_arm_flag = tbd_controller.move_arm([trajectory[4][3],trajectory[4][4],trajectory[4][5]])
+            while(done_moving_arm_flag != True):
+                done_moving_arm_flag = tbd_controller.move_arm([trajectory[4][3],trajectory[4][4],trajectory[4][5]])
+
+            print("X Gantry: " + str(trajectory[5][1]))
+            print("Z Gantry: " + str(trajectory[5][2]))
+            done_moving_gantry_flag = tbd_controller.move_gantry([trajectory[5][1],trajectory[5][2]])
+            while(done_moving_gantry_flag != True):
+                done_moving_gantry_flag = tbd_controller.move_gantry([trajectory[5][1],trajectory[5][2]])
+
+            print("Elbow Angle: " + str(trajectory[5][3]))
+            print("Wrist Angle: " + str(trajectory[5][4]))
+            print("End Effector Angle: " + str(trajectory[5][5]))
+            done_moving_arm_flag = tbd_controller.move_arm([trajectory[5][3],trajectory[5][4],trajectory[5][5]])
+            while(done_moving_arm_flag != True):
+                done_moving_arm_flag = tbd_controller.move_arm([trajectory[5][3],trajectory[5][4],trajectory[5][5]])
+
+            current_angle = tbd_cv.get_station_info_pi()
+            print(current_angle)
 
     f.close()

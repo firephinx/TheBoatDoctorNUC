@@ -108,7 +108,7 @@ class TheBoatDoctorCV():
  			if len(self.data)==1:
  				return 10000  ### error msg 
  			else:
- 				return self.data 			
+ 				return self.data		
 
 		else: 
  			msg = rospy.wait_for_message('/raspicam_node/actuator_status', String) ## message received from publish topic in kinect 
