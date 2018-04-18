@@ -12,8 +12,7 @@ def in_to_m(n):
 
 def cam_to_ik(cam_coord):
     r_y_90 = np.array([ [0, 0, 1], [0, 1, 0], [-1, 0, 0] ])
-    r_z_90 = np.array([ [0, -1, 0], [1, 0, 0], [0, 0, 1] ])
-    return r_z_90.dot(r_y_90.dot(cam_coord))
+    return r_y_90.dot(cam_coord)
 
 class TheBoatDoctorIK:
 
@@ -56,7 +55,7 @@ class TheBoatDoctorIK:
         # position given is relative to base
         z_gan = self.z_gan_min
         z = desired_end_effector_location[2]
-        x = desired_end_effector_location[1]
+        x = desired_end_effector_location[0]
         while(z - z_gan > self.z_arm_max_horz):
             z_gan += 1
         while(z - z_gan < self.z_arm_min_horz):
@@ -91,7 +90,7 @@ class TheBoatDoctorIK:
         # position given is relative to base
         z_gan = self.z_gan_min
         z = desired_end_effector_location[2]
-        x = desired_end_effector_location[1]
+        x = desired_end_effector_location[0]
         while(z - z_gan > self.z_arm_max_vert):
             z_gan += 1
         while(z - z_gan < self.z_arm_min_vert):
