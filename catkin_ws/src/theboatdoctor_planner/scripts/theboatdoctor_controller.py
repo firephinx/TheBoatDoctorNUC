@@ -15,6 +15,7 @@ class TheBoatDoctorController:
 		self.front_ultrasonic_range = 0.0
 		self.right_ultrasonic_range = 0.0
 
+		self.reset_pub = rospy.Publisher('/TheBoatDoctor/Reset', Empty, queue_size=1)
 		self.home_pub = rospy.Publisher('/TheBoatDoctor/Home', Empty, queue_size=1)
 		self.move_robot_base_pub = rospy.Publisher('/TheBoatDoctor/move_robot_base', Pose2D, queue_size=10);
 		self.move_gantry_pub = rospy.Publisher('/TheBoatDoctor/move_gantry', Pose2D, queue_size=10);
@@ -34,6 +35,11 @@ class TheBoatDoctorController:
 		self.current_base_position[0] = pose_2d_msg.x
 		self.current_base_position[1] = pose_2d_msg.y
 		self.current_base_position[2] = pose_2d_msg.theta
+
+	def reset_robot(self):
+		empty_msg = Empty()
+		self.reset_pub.publish(empty_msg)
+		self.reset_pub.publish(empty_msg)
 
 	def home_robot(self):
 		empty_msg = Empty()

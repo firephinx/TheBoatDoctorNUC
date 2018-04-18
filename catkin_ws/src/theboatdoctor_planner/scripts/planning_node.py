@@ -57,6 +57,7 @@ if __name__ == '__main__':
     tbd_controller = TheBoatDoctorController()
     tbd_ik = TheBoatDoctorIK()
 
+    tbd_controller.reset_robot()
     tbd_controller.home_robot()
 
     f = open(args.missionfilepathname, "r")
@@ -181,6 +182,6 @@ if __name__ == '__main__':
             while(done_moving_gantry_to_station_flag != True):
                 done_moving_gantry_to_station_flag = tbd_controller.move_gantry([trajectory[0][1],trajectory[0][2]])
 
-            
+
 
     f.close()
