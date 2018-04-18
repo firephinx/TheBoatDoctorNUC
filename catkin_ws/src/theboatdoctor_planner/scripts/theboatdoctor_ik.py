@@ -28,9 +28,9 @@ class TheBoatDoctorIK:
 
         # Limits in inches
         self.x_gan_min = 0
-        self.x_gan_max = 16
-        self.z_gan_min = 0.5
-        self.z_gan_max = 22
+        self.x_gan_max = 10
+        self.z_gan_min = 0
+        self.z_gan_max = 13
         self.z_arm_max_vert = 7
         self.z_arm_min_vert = -7
         self.z_arm_min_horz = -2.5
