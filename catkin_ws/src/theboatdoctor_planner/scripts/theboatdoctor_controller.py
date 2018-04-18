@@ -48,7 +48,6 @@ class TheBoatDoctorController:
 	def home_robot(self):
 		empty_msg = Empty()
 		self.home_pub.publish(empty_msg)
-		rospy.sleep(0.1)
 		self.home_pub.publish(empty_msg)
 		done_homing_msg = rospy.wait_for_message('/TheBoatDoctor/done_homing', Bool)
 		return done_homing_msg.data && home_arm()
@@ -59,7 +58,6 @@ class TheBoatDoctorController:
 		pose_2d_msg.y = desired_robot_base_position[1]
 		pose_2d_msg.theta = desired_robot_base_position[2]
 		self.move_robot_base_pub.publish(pose_2d_msg)
-		rospy.sleep(0.1)
 		self.move_robot_base_pub.publish(pose_2d_msg)
 		done_moving_robot_base_msg = rospy.wait_for_message('/TheBoatDoctor/done_moving_robot_base', Bool)
 		return done_moving_robot_base_msg.data
@@ -69,7 +67,6 @@ class TheBoatDoctorController:
 		pose_2d_msg.x = desired_gantry_position[0]
 		pose_2d_msg.y = desired_gantry_position[1]
 		self.move_gantry_pub.publish(pose_2d_msg)
-		rospy.sleep(0.1)
 		self.move_gantry_pub.publish(pose_2d_msg)
 		done_moving_gantry_msg = rospy.wait_for_message('/TheBoatDoctor/done_moving_gantry', Bool)
 		return done_moving_gantry_msg.data
@@ -78,7 +75,6 @@ class TheBoatDoctorController:
 		pose_2d_msg = Pose2D()
 		pose_2d_msg.theta = desired_theta
 		self.turn_turntable_pub.publish(pose_2d_msg)
-		rospy.sleep(0.1)
 		self.turn_turntable_pub.publish(pose_2d_msg)
 		done_turning_turntable_msg = rospy.wait_for_message('/TheBoatDoctor/done_turning_turntable', Bool)
 		return done_turning_turntable_msg.data
@@ -126,7 +122,6 @@ class TheBoatDoctorController:
 		else:
 			bool_msg.data = False
 		self.pump_pub.publish(bool_msg)
-		rospy.sleep(0.1)
 		self.pump_pub.publish(bool_msg)
 		pump_status_msg = rospy.wait_for_message('/TheBoatDoctor/pump_status', Bool)
 		return pump_status_msg.data
@@ -138,7 +133,6 @@ class TheBoatDoctorController:
 		else:
 			bool_msg.data = False
 		self.led.publish(bool_msg)
-		rospy.sleep(0.1)
 		self.led.publish(bool_msg)
 		led_status_msg = rospy.wait_for_message('/TheBoatDoctor/led_status', Bool)
 		return led_status_msg.data
