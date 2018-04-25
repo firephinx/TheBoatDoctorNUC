@@ -6,7 +6,7 @@ import cv2
 
 class ActuatorClassifier(object):
     def __init__(self):
-        self.path='/home/theboatdoctor-nuc/Desktop/deploy/valves_900/frozen_inference_graph.pb'
+        self.path='/home/theboatdoctor-nuc/Desktop/deploy/valves_900_day/frozen_inference_graph.pb'
         PATH_TO_MODEL = self.path#'frozen_inference_graph.pb'
         self.detection_graph = tf.Graph()
         with self.detection_graph.as_default():

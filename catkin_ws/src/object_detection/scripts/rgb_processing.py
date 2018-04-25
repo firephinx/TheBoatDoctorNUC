@@ -15,6 +15,9 @@ class rgb_process(object):
 		self.left_coln_corner=np.true_divide(1-self.wide_range_corner,2); ### empty number of left and right colns
 		self.offset=0.2
 		self.img=img
+
+		self.height_range=1 ### how much rows to save from bottom 
+
 		#print 1
 
 
@@ -24,7 +27,7 @@ class rgb_process(object):
 	###  if at station F, then only show left portion of img becasue Kinnect camera is at right side 
 	###   input: img= RGB img;  station_F= if the task is at station_F
 
-		try:
+		# try:
 			size=np.shape(img)
 			row=size[0]
 			coln=size[1]
@@ -34,8 +37,12 @@ class rgb_process(object):
 			#print np.shape(mask[:,0])
 			
 			if station_F==0:
-				for i in np.arange(int(self.left_coln*coln),int((self.left_coln+self.wide_range)*coln)):
+				for i in np.arange(int(self.left_coln*coln),int((self.left_coln+self.wide_range)*coln)):  ## can be optimzied here  
 					mask[:,i]=255
+				for j in np.arange(0,int(row*(1-self.height_range))):  ##3  can be optimized here 
+					# print int(self.left_coln*coln)
+					# print int((self.left_coln+self.wide_range)*coln)
+					mask[j,int(self.left_coln*coln):int((self.left_coln+self.wide_range)*coln)]=0
 			elif station_F ==1:
 				for i in np.arange(int((self.left_coln-self.offset)*coln),int((self.left_coln+self.wide_range_corner-self.offset)*coln)):
 					mask[:,i]=255
@@ -46,8 +53,8 @@ class rgb_process(object):
 			# cv2.waitKey(0)
 			##### ends ##############
 			return masked_img
-		except:
-			print "[rgb_processing] mask funciton Error"
+		# except:
+		# 	print "[rgb_processing] mask funciton Error"
 
 
 		
@@ -85,7 +92,7 @@ class rgb_process(object):
 			#cv2.imshow("a",binary_img)
 			#cv2.waitKey(0)
 			label_length=np.size(goodLabels)
-			#print label_length
+			print label_length
 			if label_length==0:
 				#print "Im here"
 				#print np.shape(binary_img)
@@ -97,18 +104,20 @@ class rgb_process(object):
 				#print "Im here3"
 				final_label=(labels==goodLabels[0])
 				for i in np.arange(1,label_length):	
-					final_label=(final_label | (labels==goodLabels[i])) ## find pixel position that satisfy the area requirement from goodLabels
+	 				final_label=(final_label | (labels==goodLabels[i])) ## find pixel position that satisfy the area requirement from goodLabels
 					#print final_label
 				final_mask=final_label
 				#print ("im here")
 			#print ((labels>1) & (labels <3))
 			####### helper line: to check if right mask)
-			#masked_img=cv2.bitwise_and(binary_img,binary_img,mask=final_mask)
-			#cv2.imshow("result3",masked_img)
-			#cv2.waitKey(0)
+			# final_mask=np.uint8(final_mask)
+			# masked_img=cv2.bitwise_and(binary_img,binary_img,mask=final_mask)
+			# cv2.imshow("result3",masked_img)
+			# cv2.waitKey(20)
 			#print goodLabels
 			#print stats
 			#print np.max(labels)
+			#print final_mask
 			return final_mask
 		#except:
 		#	print "[rgb_processing] findTarget funciton error"
@@ -134,7 +143,7 @@ class rgb_process(object):
 		img=cv2.bitwise_and(img_hsv,img_hsv,mask=mask)
 		cv2.imshow("result2",img)
 		cv2.waitKey(20)
-		########################
+		#######################
 		return mask 
 
 
@@ -163,8 +172,11 @@ class rgb_process(object):
 
 class kinect_process(rgb_process):
 	def __init__(self,img):
-		self.wide_range=0.2;  ### how much colns to save   0.3
-		self.left_coln=np.true_divide(1-self.wide_range,2); ### empty number of left and right colns
+		self.wide_range=0.4;  ### how much colns to save   0.3
+		self.left_coln=np.true_divide(1-self.wide_range,3); ### empty number of left and right colns ### was 2, changed it to 3 due to offset of kinect camera 
+		self.height_range=0.5 ### how much rows to save from bottom 
+
+
 
 		self.wide_range_corner=0.3;  ### how much colns to save 
 		self.left_coln_corner=np.true_divide(1-self.wide_range_corner,2); ### empty number of left and right colns
@@ -172,6 +184,331 @@ class kinect_process(rgb_process):
 		self.img=img
 
 
+
+####### helper functions ############
+	def find_contours_thresh(self,mask,area_th,img,kernel,iterations):
+		#### function: this function find contour in a mask that has largest area  
+		#### mask: 0,1 binary img 
+		#### area_th: area threshhold for contour 
+		#### img: RGB img for drawing 
+		#### kernel: kernel for dilation 
+		#### iterations: iteartions for dilation
+		#### return: filtered contours  
+				mask=np.array(mask,dtype=np.uint8)
+				print "mask",np.sum(mask)
+				#kernel=np.ones((9,9),np.uint8)
+				mask=cv2.dilate(mask,kernel,iterations=iterations)
+				print "mask_dialted",np.sum(mask)
+				# cv2.imshow("dialted",mask)
+				# cv2.waitKey(20)
+
+				_,contours,_= cv2.findContours(mask, 1, 2)
+				#print contours[0]
+				#cnts= [cnt for cnt in contours if cv2.contourArea(cnt)>area_th]
+				length=len(contours)
+				print "contour_number",length
+				if length==0 or length==1:  ### if no contour find 
+					#print 1 
+					return None
+				else:  
+					if length>2:
+						area_max=[cv2.contourArea(contours[0]),cv2.contourArea(contours[1])]
+						#print area_max
+						cnts=[contours[0],contours[1]]
+						i=0
+						for cnt in contours[2:]: 
+							area2=cv2.contourArea(cnt)
+							if area2> area_max[0] or area2>area_max[1]:							
+								INDEX=area_max.index(min(area_max))
+								area_max[INDEX]=area2
+								cnts[INDEX]=cnt
+
+					else:
+						cnts=[contours[0],contours[1]]
+						#print cnt
+						area_max=[cv2.contourArea(cnts[0]),cv2.contourArea(cnts[1])]
+					###### helper function ######
+					# cv2.drawContours(img,cnt, -1, (0,255,0), 3)
+					# cv2.imshow("contours",img)
+					# cv2.waitKey(20)
+					# print area_max
+					###### helper function ends ######
+					#print area_max
+					if area_max[0]>area_th and area_max[1]>area_th:
+						return cnts 
+					else:
+						#print 1
+						return None
+
+
+	def find_three_contours_thresh(self,mask,area_th,img,kernel,iterations,breaker):
+		#### function: this function find contour in a mask that has largest area  
+		#### mask: 0,1 binary img 
+		#### area_th: area threshhold for contour 
+		#### img: RGB img for drawing 
+		#### return: filtered contours  
+			mask=np.uint8(mask)
+			mask=cv2.dilate(mask,kernel,iterations=iterations)
+			_,contours,_= cv2.findContours(mask, 1, 2)
+			##### helper line #########
+			cv2.drawContours(img, contours, -1, (0,255,0), 3)
+			cv2.imshow("contours"+str(breaker),img)
+			cv2.waitKey(20)
+			##### helper line ends ########
+			#cnts= [cnt for cnt in contours if cv2.contourArea(cnt)>area_th]
+			length=len(contours)
+			if length==0:  ### if no contour find 
+				return None
+			else:  
+				if length>=3:
+					cnts=[]
+					i=0 
+					cnt_area=dict()
+					for cnt in contours:
+						area=cv2.contourArea(cnt)
+						if area<10000:
+							cnts.append(cnt)
+							cnt_area[str(i)]=area
+							print "contour", cnt_area[str(i)]
+							i+=1
+					#print cnt_area
+					#print sorted(cnt_area,key=cnt_area.get)
+					ordered_key=sorted(cnt_area,key=cnt_area.get)
+					chosen_key=ordered_key[-3:len(ordered_key)]  ### get three contours that have largest area 
+					cnts_chosen=[] 
+					for key in chosen_key:	
+						if cnt_area[key]>area_th:
+							cnts_chosen.append(cnts[int(key)])
+					#print chosen_key 
+					###### helper function ######
+					if len(cnts_chosen)<3:
+						if breaker==1:
+							print "[rgb_processing/find_three_contours_thresh]: I only find {} breakers".format(len(cnts_chosen))
+						else: 
+							print "[rgb_processing/find_three_contours_thresh]: I only find {} black_box".format(len(cnts_chosen)) 
+						return None 
+					else:
+						if breaker==1:
+							print "[rgb_processing/find_three_contours_thresh]: I find 3 brekers"
+						else: 
+							print "[rgb_processing/find_three_contours_thresh]: I find 3 black_box" 
+						return cnts_chosen
+					##### helper function ends ######
+					cv2.drawContours(img, cnts_chosen, -1, (0,255,0), 3)
+					cv2.imshow("contours"+str(breaker),img)
+					cv2.waitKey(20)
+					###### helper function ends ######
+				else:
+					if breaker==1:
+						print "[rgb_processing/find_three_contours_thresh]: I only find {} brekers".format(length)
+					else:
+						print "[rgb_processing/find_three_contours_thresh]: I only find {} black_box".format(length)
+					return None
+
+
+
+
+	def get_blackBox_ROI(self,breaker_info_s,img):
+		##### this function find ROI of black box around breakers######
+		##### input: breaker_info 
+		#### img: orignal rgb img 
+		#### return: maksed img that contains only black box and breakers 
+		size=np.shape(img)
+		row=size[0]
+		coln=size[1]
+		#print row,coln
+		mask=np.zeros([row,coln],np.uint8)
+		scale_width=2; ## scale factor of breaker box to include black box 
+		scale_heigth=6; ## scale factor of breaker box to include black box 
+
+		for breaker_info in breaker_info_s:
+			box=breaker_info['box']
+			x_min=np.min(box[:,0])
+			y_min=np.min(box[:,1])
+			breaker_width=np.max(box[:,0])-x_min
+			breaker_height=np.max(box[:,1])-y_min
+			#print breaker_width,breaker_height
+			x_start=int(x_min-breaker_width)
+			x_end=int(x_min+breaker_width*scale_width)
+			y_start=int(y_min-breaker_height*scale_heigth)
+			y_end=int(y_min+breaker_height*scale_heigth)
+			mask[y_start:y_end+1,x_start:x_end+1]=255
+		####### helper function ######### 
+		masked_img=cv2.bitwise_and(img,img,mask=mask)
+		###### helper function ##########
+		cv2.imshow('black_box',masked_img)
+		cv2.waitKey(20)
+		##### ends ##############
+		return masked_img		
+
+
+
+
+	def black_box_proc(self,img,area_th):
+			######## the function process breaker 
+			####### input: RGB image 
+			#cv2.imshow("result4",img)
+			#cv2.waitKey(0)
+			low_th=np.array([50,50,0])      ## 0,0,0
+			high_th=np.array([120,150,90]) ##110,110,110
+			##low_th=np.array([10,10,10])
+			#high_th=np.array([15,15,15])
+			mask=self.th_hsv(img,low_th,high_th)
+
+			#cv2.imshow("masked_img_black_box2",mask)
+			#cv2.waitKey(0)
+
+			target_mask=self.findTarget(mask,area_th)
+			
+			if target_mask is None:
+				print "[rgb_processing/black_box_proc]: didn't find black_boxes"
+				return None 
+				#cv2.imshow("mask",target_mask)
+		  		#cv2.waitKey(200)
+		  	##### helper line ###############
+		  	#print 1
+		  	#print 1
+			mask_final=np.uint8(target_mask)
+
+			# cv2.imshow("masked_img_black_box2q",img)
+			# cv2.waitKey(20)
+			
+			masked_img=cv2.bitwise_and(img,img,mask=mask_final)
+			cv2.imshow("masked_img_black_box",masked_img)
+			cv2.waitKey(20)
+			###############################
+			return target_mask
+
+
+
+	def breaker_status(self,breakers_info,black_boxes_info):
+			######## this function determines if a beaker is on or off 
+			######## input: breakers_info: dictionanry of berakers_info from left to right 
+			#######  black_boxes_info: dictionanry of black_boxes_info from left to right
+			####### return: breaker state: up or down
+			states=[] 
+			for i in np.arange(3):
+				breaker_Cy=breakers_info[i]["Cy"]
+				box_Cy=black_boxes_info[i]["Cy"]
+				print breaker_Cy, box_Cy
+				if abs(breaker_Cy-box_Cy)<3: 
+					state=-1 ### down 
+				else:
+					state=1 ### up
+				states.append(state)
+			return states	
+
+
+
+
+	def find_rect_centers(self,cnts,img):
+			##### ths function find center of a bounding box ######
+			### input: cnt: one contour 
+			#### img: orignal rgb img for drawing 
+			#### return: center of a bounding box  
+			centers=[] 
+			for cnt in cnts:	
+				rect = cv2.minAreaRect(cnt)
+				box = cv2.boxPoints(rect)
+				Cx=np.average(box[:,0])  ### find X center of box 
+				Cy=np.average(box[:,1])  ### fiind Y center of box 
+				centers.append([Cx,Cy])
+				#### helper function ####
+				# int_box = np.int0(box)
+				# cv2.drawContours(img,[int_box],0,(0,0,255),2)
+				# cv2.imshow("rect",img)
+				# cv2.waitKey(20)
+				#### ends ####
+
+			return centers
+
+
+
+
+	def find_multi_rect_centers(self,cnts,img,breaker):
+			##### ths function find center of a bounding box ######
+			### input: cnt: one contour 
+			#### img: orignal rgb img for drawing 
+			#### return: breaker_lsit that contains each breaker's dictionary info (3 in total), the dictionary includes Center X, center Y, and four vertices info
+				breaker_list=[]
+
+				for cnt in cnts:   
+					rect = cv2.minAreaRect(cnt)
+					box = cv2.boxPoints(rect)
+					Cx=np.average(box[:,0])  ### find X center of box 
+					Cy=np.average(box[:,1])  ### fiind Y center of box
+					breaker_info=dict()
+					breaker_info["Cx"]=Cx
+					breaker_info["Cy"]=Cy
+					breaker_info["box"]=box
+					breaker_info["cnt"]=cnt 
+					breaker_list.append(breaker_info)
+					 
+				#### helper function ####
+				# 	int_box = np.int0(box)
+				# 	cv2.drawContours(img,[int_box],0,(0,0,255),2)
+				# cv2.imshow("rect"+str(breaker),img)
+				# cv2.waitKey(20)
+				# #### ends ####
+				breaker_list=sorted(breaker_list, key=lambda k: k["Cx"]) ### sort dictionary so that from left to right
+				return breaker_list
+
+
+
+
+	def find_contour_thresh(self,mask,area_th,img,kernel,iterations):
+		#### function: this function find contour in a mask that has largest area  
+		#### mask: 0,1 binary img 
+		#### area_th: area threshhold for contour 
+		#### img: RGB img for drawing 
+		#### kernel: kernel for dilation 
+		#### iterations: iteartions for dilation
+		#### return: filtered contours  
+				mask=np.array(mask,dtype=np.uint8)
+				#print "mask",np.sum(mask)
+				#kernel=np.ones((9,9),np.uint8)
+				mask=cv2.dilate(mask,kernel,iterations=iterations)
+				#print "mask_dialted",np.sum(mask)
+				# cv2.imshow("dialted",mask)
+				# cv2.waitKey(20)
+
+				_,contours,_= cv2.findContours(mask, 1, 2)
+				#print contours[0]
+				#cnts= [cnt for cnt in contours if cv2.contourArea(cnt)>area_th]
+				length=len(contours)
+				#print "contour_number",length
+				if length==0:  ### if no contour find 
+					#print 1 
+					return None
+				else:  
+					if length>1:
+						area_max=cv2.contourArea(contours[0])
+						#print area_max
+						cnt=contours[0]
+						i=0
+						for cnts in contours: 
+							area2=cv2.contourArea(cnts)
+							if area2>area_max: 
+								area_max=area2
+								cnt=cnts
+							i+=1
+					else:
+						cnt=contours[0]
+						#print cnt
+						area_max=cv2.contourArea(cnt)
+					###### helper function ######
+					# cv2.drawContours(img,cnt, -1, (0,255,0), 3)
+					# cv2.imshow("contours",img)
+					# cv2.waitKey(20)
+					#print cnn
+					###### helper function ends ######
+					#print area_max
+					if area_max>area_th:
+						return cnt 
+					else:
+						#print 1
+						return None 
+	
 ########## proc each acutaor ###############
 
 	def breaker_proc(self,img,area_th):
@@ -179,118 +516,309 @@ class kinect_process(rgb_process):
 		####### input: RGB image 
 		#cv2.imshow("result4",img)
 		#cv2.waitKey(0)
-		low_th=np.array([0,170,100])
-		high_th=np.array([20,200,255])
+		img_up=copy.deepcopy(img)
+		
+		low_th=np.array([0,80,110])
+		high_th=np.array([50,220,255])
 		mask=self.th_hsv(img,low_th,high_th)
+
+		low_th_up=np.array([150,50,170])
+		high_th_up=np.array([200,120,255])
+		mask_up=self.th_hsv(img_up,low_th_up,high_th_up)
+		
+		mask=np.uint8(np.logical_or(mask,mask_up))
+
 		target_mask=self.findTarget(mask,area_th)
 		##### helper line ###############
 		# mask_final=np.uint8(target_mask)
 		# masked_img=cv2.bitwise_and(img,img,mask=mask_final)
 		# cv2.imshow("result4",masked_img)
-		# cv2.waitKey(0)
+		# cv2.waitKey(20)
 		###############################
-		if target_mask is None:
-			size=np.shape(img)
-			row=size[0]
-			coln=size[1]
-			target_mask=np.zeros([row,coln],np.uint8)
-			#cv2.imshow("mask",target_mask)
-	  		#cv2.waitKey(200)
-	  	#cv2.imshow("mask",target_mask)
-	  	#cv2.waitKey(200)	
+		########### helper linee ##########
+		# 	cv2.imshow("mask",target_mask)
+		# 	cv2.waitKey(20)
+		# cv2.imshow("mask",target_mask)
+		# cv2.waitKey(20)	
+	  	####### helper line ends ########
+	  	#print target_mask
 	  	return target_mask
 
+	def find_each_mask_breaker(self,breaker_infos,image):
+		size=np.shape(image)
+		row=size[0]
+		coln=size[1]
+		breaker_masks=[]
+		for breaker_info in breaker_infos:
+			mask=np.zeros([row,coln],np.uint8)
+			cnt=breaker_info["cnt"]
+			x,y,w,h=cv2.boundingRect(cnt)
+			mask[x:x+w,y:y+h]=255
+			breaker_masks.append(mask)
+		return breaker_masks
 
-	def vertical_proc(self,img,area_th):
+
+
+
+
+
+			
+
+	def breaker_status_proc(self,breaker_mask,img_visual):
+		cnt_area_th=10
+		iterations=3
+		kernel=np.ones((3,3),np.uint8)
+		img_process=copy.deepcopy(img_visual)
+		cnts=self.find_three_contours_thresh(breaker_mask,cnt_area_th,img_visual,kernel,iterations,breaker=1)
+		if cnts is None: 
+			return None,None
+		else: 
+			breaker_info=self.find_multi_rect_centers(cnts,img_visual,breaker=1)
+			breaker_masks=self.find_each_mask_breaker(breaker_info,img_process)
+			#print "length:",len(breaker_masks)
+			#return None
+			
+			masked_image=self.get_blackBox_ROI(breaker_info,img_process)
+			black_box_aera_th=50
+			black_box_mask=self.black_box_proc(masked_image,black_box_aera_th)
+			if black_box_mask is not None:
+				cnt_area_th=100
+				iterations=1
+				kernel=np.ones((3,3),np.uint8)
+				cnts=self.find_three_contours_thresh(black_box_mask,cnt_area_th,img_visual,kernel,iterations,breaker=0)
+				if cnts is None: 
+					print 111111111111111111
+					return None,None
+				else :
+					#print 11111111111111111111111111
+					black_box_info=self.find_multi_rect_centers(cnts,img_visual,breaker=0)
+					breaker_states=self.breaker_status(breaker_info,black_box_info)
+					print breaker_states
+					return breaker_masks,breaker_states
+			else:
+				print "[rgb_processing/breaker_status_proc]: didn't find black_box_mask"
+				return None,None
+
+
+	def shuttle_proc(self,img,area_th):
 			######## the function process breaker 
 			####### input: RGB image 
 			#cv2.imshow("result4",img)
 			#cv2.waitKey(0)
-			#low_th=np.array([100,120,120])
-			low_th=np.array([70,110,100])
-			high_th=np.array([255,255,255])
+			
+			#low_th=np.array([70,200,200])
+			#high_th=np.array([150,255,255])
+			low_th=np.array([100,100,100]) ## 100 200 100
+			high_th=np.array([150,240,240]) ## 150 255 200
 			mask=self.th_hsv(img,low_th,high_th)
 			target_mask=self.findTarget(mask,area_th)
 			##### helper line ###############
-			# mask_final=np.uint8(target_mask)
-			# masked_img=cv2.bitwise_and(img,img,mask=mask_final)
-			# cv2.imshow("result4",masked_img)
-			# cv2.waitKey(0)
-			###############################
-			if target_mask is None:
-				size=np.shape(img)
-				row=size[0]
-				coln=size[1]
-				target_mask=np.zeros([row,coln],np.uint8)
-				#cv2.imshow("mask",target_mask)
-		  		#cv2.waitKey(200)
-		  	#cv2.imshow("mask",target_mask)
-		  	#cv2.waitKey(200)	
-		  	return target_mask
+			# if target_mask is not None:
+			# 	mask_final=np.uint8(target_mask)
+			# 	masked_img=cv2.bitwise_and(img,img,mask=mask_final)
+			# 	cv2.imshow("result4",masked_img)
+			# 	cv2.waitKey(20)
+			##############################
+		  	# target_mask=np.uint8(target_mask)
+		  	# cv2.imshow("mask",target_mask)
+		  	# cv2.waitKey(20)	
+		  	return target_mask  ## can be mask or None 
+
+	def shuttle_sub_proc(self,img,target_mask_valve,blob_th_white,area_th_white,area_th_valve):
+		img_visual=copy.deepcopy(img)
+		
+		##### white part ROI #### 
+		iterations=3
+		kernel=np.ones((5,5),np.uint8)
+		cnt_valve=self.find_contour_thresh(target_mask_valve,area_th_valve,img_visual,kernel,iterations)
+		if cnt_valve is not None:
+			x,y,w,h = cv2.boundingRect(cnt_valve)
+			#### helper function ####
+			# cv2.rectangle(img_visual,(x,y),(x+w,y+h),(0,255,0),2)
+			# cv2.imshow("unroated_rect",img_visual)
+			# cv2.waitKey(20)
+			#### ends ####
+			### make mask###
+			size=np.shape(img)
+			row=size[0]
+			coln=size[1]
+			mask=np.zeros([row,coln],np.uint8)
+			### ends ###
+
+			scale_width=2
+			scale_heigth=2
+			x_start=int(x-w*scale_width)
+			x_end=int(x+2*w*scale_width)
+			y_start=int(y-h*scale_heigth)
+			y_end=int(y+2*h*scale_heigth)
+			mask[y_start:y_end+1,x_start:x_end+1]=255 
+			masked_img=cv2.bitwise_and(img,img,mask=mask)
+			####### helper function #########
+			# cv2.imshow("masked_img",masked_img)
+			# cv2.waitKey(20)
+			#### ends ####
+			##### find white #########
+
+			low_th=np.array([50,0,210])
+			high_th=np.array([100,50,255])
+			mask=self.th_hsv(masked_img,low_th,high_th)
+			if mask is None: 
+				print "[rgb_processing/shuttle_sub_proc] I can't find white part of shuttle valve in hsv"
+				return None 
+			else:
+				target_mask=self.findTarget(mask,blob_th_white)
+				if target_mask is None: 
+					print "[rgb_processing/shuttle_sub_proc] I can't find white part of shuttle valve"
+					return None
+				else: 
+					iterations=3
+					kernel=np.ones((7,7),np.uint8)
+					cnts_white=self.find_contours_thresh(target_mask,area_th_white,img_visual,kernel,iterations)
+					
+					if cnts_white is None or cnt_valve is None: 
+						return None 
+					else: 
+						center_white=self.find_rect_centers(cnts_white,img_visual)
+						print center_white[0][0], center_white[1][0]
+						#distance=np.linalg.norm(np.array([center_white[0][0],center_white[0][1]])-np.array([center_white[1][0],center_white[1][1]]))
+						distance=abs(center_white[0][0]-center_white[1][0])
+						print distance  
+						if distance>30: ## white part and valve are seperate ## 63 for horizontal valve  
+							print "[rgb_processing/spigot_sub_proc] The shuttle valvue is horizontal"
+							return -1
+						else: 
+							print "[rgb_processing/spigot_sub_proc] The shuttle valvue is vertial"
+							return 1
+						# print center_white[0][1], center_valve[0][1] 
+						# if center_white[0][1]>center_valve[0][1]: ## white part and valve are seperate 
+						# 	print "[rgb_processing/spigot_sub_proc] The shuttle valvue is horizontal"
+						# 	return 2 
+						# else: 
+						# 	print "[rgb_processing/spigot_sub_proc] The spigot valvue is vertical"
+					
+		else: 
+			print "[rgb_processing/spigot_sub_proc] I can't find valve contour"
+			return None
 
 
 
-
-	def small_blue(self,img,area_th):
-		low_th=np.array([0,0,0])
-		high_th=np.array([255,255,255])
+	def spigot_proc(self,img,area_th):
+		low_th=np.array([100,200,100]) ## 100 200 100
+		high_th=np.array([200,255,200]) ## 150 255 200
 		mask=self.th_hsv(img,low_th,high_th)
 		target_mask=self.findTarget(mask,area_th)
+		##### helper line ###############
+		if target_mask is not None:
+			mask_final=np.uint8(target_mask)
+			masked_img=cv2.bitwise_and(img,img,mask=mask_final)
+			cv2.imshow("result4",masked_img)
+			cv2.waitKey(20)
+		#############################
+		return target_mask
 
+
+	def spigot_sub_proc(self,img,target_mask_valve,blob_th_white,area_th_white,area_th_valve):
+		img_visual=copy.deepcopy(img)
+		
+		##### white part ROI #### 
+		iterations=3
+		kernel=np.ones((5,5),np.uint8)
+		cnt_valve=self.find_contour_thresh(target_mask_valve,area_th_valve,img_visual,kernel,iterations)
+		if cnt_valve is not None:
+			x,y,w,h = cv2.boundingRect(cnt_valve)
+			#### helper function ####
+			# cv2.rectangle(img_visual,(x,y),(x+w,y+h),(0,255,0),2)
+			# cv2.imshow("unroated_rect",img_visual)
+			# cv2.waitKey(20)
+			#### ends ####
+			### make mask###
+			size=np.shape(img)
+			row=size[0]
+			coln=size[1]
+			mask=np.zeros([row,coln],np.uint8)
+			### ends ###
+
+			scale_width=0.8
+			scale_heigth=1.8
+			x_start=int(x-w*scale_width)
+			x_end=int(x+2*w*scale_width)
+			y_start=int(y-h*scale_heigth)
+			y_end=int(y+2*h*scale_heigth)
+			mask[y_start:y_end+1,x_start:x_end+1]=255 
+			masked_img=cv2.bitwise_and(img,img,mask=mask)
+			####### helper function #########
+			# cv2.imshow("masked_img",masked_img)
+			# cv2.waitKey(20)
+			#### ends ####
+			
+
+			
+
+
+
+			##### find white #########
+
+			low_th=np.array([50,0,200])
+			high_th=np.array([120,50,255])
+			mask=self.th_hsv(masked_img,low_th,high_th)
+			if mask is None: 
+				print "[rgb_processing/spigot_sub_proc] I can't find white part of spigot valve in hsv"
+				return None 
+			else:
+				target_mask=self.findTarget(mask,blob_th_white)
+				if target_mask is None: 
+					print "[rgb_processing/spigot_sub_proc] I can't find white part of spigot valve"
+					return None
+				else: 
+					iterations=3
+					kernel=np.ones((3,3),np.uint8)
+					cnt_white=self.find_contour_thresh(target_mask,area_th_white,img_visual,kernel,iterations)
+					
+					if cnt_white is None or cnt_valve is None: 
+						return None 
+					else: 
+						center_white=self.find_rect_centers(cnt_white,img_visual)
+						center_valve=self.find_rect_centers(cnt_valve,img_visual)
+						#distance=np.linalg.norm(np.array([center_white[0][0],center_white[0][1]])-np.array([center_valve[0][0],center_valve[0][1]]))
+						# print distance  ## 84.5 in normal for L-shape  ###  30 in normal distance for small-shape
+						# if distance>50: ## white part and valve are seperate 
+						# 	print "[rgb_processing/spigot_sub_proc] The spigot valvue is L shape"
+						# 	return 2 
+						# else: 
+						# 	print "[rgb_processing/spigot_sub_proc] The spigot valvue is small shape"
+						# 	return 1 
+						print center_white[0][1], center_valve[0][1] 
+						if center_white[0][1]>center_valve[0][1]: ## white part and valve are seperate 
+							print "[rgb_processing/spigot_sub_proc] The spigot valvue is L shape"
+							return -1 
+						else: 
+							print "[rgb_processing/spigot_sub_proc] The spigot valvue is small shape"
+							return 1
+					
+		else: 
+			print "[rgb_processing/spigot_sub_proc] I can't find valve contour"
+			return None
+
+
+
+	
 	def orange(self,img,area_th):
-		low_th=np.array([0,0,0])
-		high_th=np.array([255,255,255])
+		low_th=np.array([0,130,130])    # 0,130,200
+		high_th=np.array([20,220,255])  # 20,200,255
 		mask=self.th_hsv(img,low_th,high_th)
 		mask_final=np.uint8(mask)
 		target_mask=self.findTarget(mask,area_th)
 		##### helper line ###########
-		# mask_final=np.uint8(target_mask)
-		# masked_img=cv2.bitwise_and(img,img,mask=mask_final)
-		# cv2.imshow("result4",masked_img)
-		# cv2.waitKey(0)
+		if target_mask is not None:
+			mask_final=np.uint8(target_mask)
+			masked_img=cv2.bitwise_and(img,img,mask=mask_final)
+			cv2.imshow("result4",masked_img)
+			cv2.waitKey(20)
 		#############################
+		return target_mask
 
-
-	def L_shape(self,img,area_th):
-		low_th=np.array([100,100,100])
-		high_th=np.array([255,255,255])
-		mask=self.th_hsv(img,low_th,high_th)
-		target_mask=self.findTarget(mask,area_th)
-
-
-
-	def horizontal_blue(self,img,area_th):
-		img2=copy.deepcopy(img)
-		
-		low_th=np.array([100,120,150])
-		high_th=np.array([255,255,255])
-		mask1=self.th_hsv(img,low_th,high_th)
-		
-
-		# low_th=np.array([50,0,100])
-		# high_th=np.array([150,30,255])
-		# mask2=self.th_hsv(img2,low_th,high_th)
-
-
-		# low_th=np.array([0,0,100])
-		# high_th=np.array([50,30,255])
-		# mask3=self.th_hsv(img2,low_th,high_th)
-
-		# mask_final=((mask1|mask2))
-		mask_final=mask1
-
-		# masked_img=cv2.bitwise_and(img,img,mask=mask_final)
-		# cv2.imshow("result3",masked_img)
-		# cv2.waitKey(0)
-
-		target_mask2=self.findTarget(mask_final,400)
-		_,binary=cv2.threshold(mask_final,100,255,cv2.THRESH_BINARY);
-		########## helper line ##########################
-		#masked_img=cv2.bitwise_and(img,img,mask=binary)
-		cv2.imshow("result3",binary)
-		cv2.waitKey(0)
+	
 		#################################################
-
 
 
 	def locate_actuators(self,type,station_F,img):
@@ -299,37 +827,85 @@ class kinect_process(rgb_process):
 		#### type: actutator type  1: B , 2: vertial 3: small 4: orange 5: L_shape 6: A  7:horizontal
 		##### station_F: if at station F 
 		#print 1 
-		masked_img=self.mask(img,station_F)
+		img1=copy.deepcopy(img)
+		img2=copy.deepcopy(img) ## for sub proc 
+		masked_img=self.mask(img1,station_F)
 		#print np.shape(img)
-		if type==1:
+		
+		if type==1: ### shuttle 
+			blob_area_th=30
+			target_mask=self.shuttle_proc(masked_img,blob_area_th)
+			if target_mask is None: 
+				print "[rgb_processing/locate_actuators]: can't find shuttle valve"
+				subType=None
+			else: 
+				#subType=None
+				area_th_white=10
+				area_th_valve=20
+				blob_th_white=50
+				#subType=None
+				masked_img=self.mask(img2,station_F)
+				subType=self.shuttle_sub_proc(masked_img,target_mask,blob_th_white,area_th_white,area_th_valve)     
+				if subType is None: 
+					print "[rgb_processing/locate_actuators]: can't find shuttle valve subtype"
+		
+
+
+		elif type==2: ### organe 
 			blob_area_th=200
-			target_mask=self.breaker_proc(masked_img,blob_area_th)
-		elif type==2:
+			target_mask=self.orange(masked_img,blob_area_th)
+			if target_mask is None: 
+				print "[rgb_processing/locate_actuators]: can't find orange valve"
+			subType=None
+
+
+		
+		elif type==3: ### spigot valve 
+			blob_area_th=50
+			target_mask=self.spigot_proc(masked_img,blob_area_th)
+			if target_mask is None: 
+				print "[rgb_processing/locate_actuators]: can't find spigot valve"
+				subType=None
+			else: 
+				#subType=None
+				area_th_white=10
+				area_th_valve=20
+				blob_th_white=20
+				#subType=None
+				masked_img=self.mask(img2,station_F)
+				subType=self.spigot_sub_proc(masked_img,target_mask,blob_th_white,area_th_white,area_th_valve)     
+				if subType is None: 
+					print "[rgb_processing/locate_actuators]: can't find spigot valve subtype"
+		
+
+		elif type==4:   ### breaker 
 			blob_area_th=10
-			target_mask=self.vertical_proc(masked_img,blob_area_th)
-		elif type==3: ### haven't tested yet 
-			blob_area_th=400
-			self.samll_blue(masked_img,blob_area_th)
-		elif type==4: ### haven't tested yet 
-			blob_area_th=400
-			self.orange(masked_img,blob_area_th)
-		elif type==5:
-			blob_area_th=400
-			self.L_shape(masked_img,blob_area_th)
-		elif type==6: ### same as B for right now 
-			blob_area_th=400
-			self.breaker_proc(masked_img,blob_area_th)
-		elif type==7: 
-			blob_area_th=400
-			self.horizontal_blue(masked_img,blob_area_th)
-		return target_mask
+			target_mask=self.breaker_proc(masked_img,blob_area_th)
+			subType=None ## breaker doesn't have sub type
+			breaker_states=None ## initialize breaker_states 
+			if target_mask is None: 
+				print "[rgb_processing/locate_actuators]: can't find breaker"
+			else:
+				target_mask,breaker_states=self.breaker_status_proc(target_mask,img2)
+
+
+
+		else:
+			print "[rgb_processing/locate_actuators]: type must be within 1 to 4"
+			target_mask=None
+			subType=None 
+			breaker_states=None
+		if type==4:
+			return target_mask,subType,breaker_states
+		else:
+			return target_mask,subType,None
 
 
 
 
 class pi_cam_process(rgb_process):
 	def __init__(self,img):
-		self.wide_range=1;  ### how much colns to save   0.3
+		self.wide_range=0.8;  ### how much colns to save   0.3
 		self.left_coln=np.true_divide(1-self.wide_range,2); ### empty number of left and right colns
 
 		self.wide_range_corner=0.3;  ### how much colns to save 
@@ -337,14 +913,21 @@ class pi_cam_process(rgb_process):
 		self.offset=0.2
 		self.img=img
 
+		self.height_range=1 ### how much rows to save from bottom 
+
+
 
 	def green_tip_orange(self,img,area_th):
 			######## the function process breaker 
 			####### input: RGB image 
 			#cv2.imshow("result4",img)
 			#cv2.waitKey(0)
-			low_th=np.array([20,80,20])
-			high_th=np.array([100,100,100])
+			# low_th=np.array([30,30,190])
+			# high_th=np.array([100,100,230])
+
+			low_th=np.array([30,30,30])
+			high_th=np.array([100,140,100])
+
 			mask=self.th_hsv(img,low_th,high_th)
 			target_mask=self.findTarget(mask,area_th)
 			if target_mask is None:
@@ -355,11 +938,11 @@ class pi_cam_process(rgb_process):
 				#cv2.imshow("mask",target_mask)
 		  		#cv2.waitKey(200)
 		  	
-			##### helper line ###############
+			#### helper line ###############
 			# mask_final=np.uint8(target_mask)
 			# masked_img=cv2.bitwise_and(img,img,mask=mask_final)
 			# cv2.imshow("result4",masked_img)
-			# cv2.waitKey(0)
+			# cv2.waitKey(20)
 			###############################
 			
 
@@ -375,8 +958,8 @@ class pi_cam_process(rgb_process):
 			####### input: RGB image 
 			#cv2.imshow("result4",img)
 			#cv2.waitKey(0)
-			low_th=np.array([20,50,20])
-			high_th=np.array([100,120,50])
+			low_th=np.array([30,80,80])
+			high_th=np.array([80,130,130])
 			mask=self.th_hsv(img,low_th,high_th)
 			target_mask=self.findTarget(mask,area_th)
 			if target_mask is None:
@@ -391,7 +974,7 @@ class pi_cam_process(rgb_process):
 			# mask_final=np.uint8(target_mask)
 			# masked_img=cv2.bitwise_and(img,img,mask=mask_final)
 			# cv2.imshow("result4",masked_img)
-			# cv2.waitKey(0)
+			# cv2.waitKey(20)
 			###############################
 			
 
@@ -407,12 +990,13 @@ class pi_cam_process(rgb_process):
 			####### input: RGB image 
 			#cv2.imshow("result4",img)
 			#cv2.waitKey(0)
-			low_th=np.array([0,100,40])
-			high_th=np.array([100,200,100])
+			low_th=np.array([0,100,80])
+			high_th=np.array([255,200,200])
 			mask=self.th_hsv(img,low_th,high_th)
 			target_mask=self.findTarget(mask,area_th)
 			
 			if target_mask is None:
+				#print 1
 				size=np.shape(img)
 				row=size[0]
 				coln=size[1]
@@ -421,10 +1005,10 @@ class pi_cam_process(rgb_process):
 		  		#cv2.waitKey(200)
 		  	##### helper line ###############
 		  	#print 1
-			#mask_final=np.uint8(target_mask)
-			#masked_img=cv2.bitwise_and(img,img,mask=mask_final)
-			#cv2.imshow("masked_img",masked_img)
-			#cv2.waitKey(0)
+			# mask_final=np.uint8(target_mask)
+			# masked_img=cv2.bitwise_and(img,img,mask=mask_final)
+			# cv2.imshow("masked_img",masked_img)
+			# cv2.waitKey(0)
 			###############################
 		  	return target_mask
 
@@ -434,8 +1018,8 @@ class pi_cam_process(rgb_process):
 			####### input: RGB image 
 			#cv2.imshow("result4",img)
 			#cv2.waitKey(0)
-			low_th=np.array([100,120,0])
-			high_th=np.array([255,255,100])
+			low_th=np.array([100,200,60])
+			high_th=np.array([150,255,140])
 			mask=self.th_hsv(img,low_th,high_th)
 			target_mask=self.findTarget(mask,area_th)
 			
@@ -451,7 +1035,7 @@ class pi_cam_process(rgb_process):
 			# mask_final=np.uint8(target_mask)
 			# masked_img=cv2.bitwise_and(img,img,mask=mask_final)
 			# cv2.imshow("masked_img",masked_img)
-			# cv2.waitKey(0)
+			# cv2.waitKey(20)
 			###############################
 		  	return target_mask
 
@@ -461,8 +1045,9 @@ class pi_cam_process(rgb_process):
 			####### input: RGB image 
 			#cv2.imshow("result4",img)
 			#cv2.waitKey(0)
-			low_th=np.array([100,120,0])
-			high_th=np.array([255,255,100])
+			print "im here"
+			low_th=np.array([0,160,0])
+			high_th=np.array([150,255,220])
 			mask=self.th_hsv(img,low_th,high_th)
 			target_mask=self.findTarget(mask,area_th)
 			
@@ -478,7 +1063,7 @@ class pi_cam_process(rgb_process):
 			# mask_final=np.uint8(target_mask)
 			# masked_img=cv2.bitwise_and(img,img,mask=mask_final)
 			# cv2.imshow("masked_img",masked_img)
-			# cv2.waitKey(0)
+			# cv2.waitKey(20)
 			###############################
 		  	return target_mask
 
@@ -496,10 +1081,18 @@ class pi_cam_process(rgb_process):
 			# radius_int = int(radius)
 			# cv2.circle(img,center_int,radius_int,(0,255,0),2)
 			# cv2.imshow("circle",img)
-			# cv2.waitKey(0)
+			# cv2.waitKey(20)
 			#### ends #########
 			return (x,y)
 
+
+	def find_ellipse_center(self,cnt,img):
+		ellipse=cv2.fitEllipse(cnt)
+		print ellipse
+		# cv2.ellipse(img,ellipse,(0,0,255),2)
+		# cv2.imshow("ellipse",img)
+		# cv2.waitKey(20)
+		return ellipse[0]
 
 
 	def find_rect_center(self,cnt,img):
@@ -515,7 +1108,7 @@ class pi_cam_process(rgb_process):
 			# int_box = np.int0(box)
 			# cv2.drawContours(img,[int_box],0,(0,0,255),2)
 			# cv2.imshow("rect",img)
-			# cv2.waitKey(0)
+			# cv2.waitKey(20)
 			#### ends ####
 
 			return (Cx,Cy)
@@ -531,12 +1124,44 @@ class pi_cam_process(rgb_process):
 		#righty = int(((cols-x)*vy/vx)+y)
 		### helper function ####
 		# print vx,vy,x,y
-		# cv2.line(img,(int(x-vx*500),int(y-vy*500)),(int(x+vx*100),int(y+vy*100)),(0,255,0),2)
+		# cv2.line(img,(int(x-vx*500),int(y-vy*500)),(int(x+vx*100),int(y+vy*100)),(0,0,255),2)
 		# cv2.imshow("fitted_line",img)
-		# cv2.waitKey(0)
+		# cv2.waitKey(20)
 		##### ends #########
 		return (vx,vy,x,y)	
 
+
+	# def find_line(self,cnt,center,img):
+	# 	##### ths function find two poitns that fit a line of a contour ######
+	# 	### input: cnt: one contour 
+	# 	#### img: orignal rgb img for drawing 
+	# 	#### return: direction vector (vx,vy) and a poit on the line (x,y)
+	# 	vx,vy,_,_ = cv2.fitLine(cnt, cv2.DIST_L2,0,0.01,0.01)
+	# 	x=center[0]
+	# 	y=center[1]
+	# 	#lefty = int((-x*vy/vx) + y)
+	# 	#righty = int(((cols-x)*vy/vx)+y)
+	# 	### helper function ####
+	# 	print vx,vy,x,y
+	# 	cv2.line(img,(int(x-vx*500),int(y-vy*500)),(int(x+vx*100),int(y+vy*100)),(0,0,255),2)
+	# 	cv2.imshow("fitted_line",img)
+	# 	cv2.waitKey(20)
+	# 	##### ends #########
+	# 	return (vx,vy,x,y)	
+
+
+	def find_extrem_points(self,cnt,img):
+		left=tuple(cnt[cnt[:,:,0].argmin()][0])
+		right=tuple(cnt[cnt[:,:,0].argmax()][0])
+		top=tuple(cnt[cnt[:,:,1].argmin()][0])
+		bottom=tuple(cnt[cnt[:,:,1].argmax()][0])
+		cv2.circle(img,left,5,(255,0,0))
+		cv2.circle(img,right,5,(255,0,0))
+		cv2.circle(img,top,5,(255,0,0))
+		cv2.circle(img,bottom,5,(255,0,0))
+		cv2.imshow("extremPoint",img)
+		cv2.waitKey(20)
+		return left 
 
 
 	def unroated_box(self,cnt,img):
@@ -548,27 +1173,40 @@ class pi_cam_process(rgb_process):
 			#### helper function ####
 			# cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2)
 			# cv2.imshow("unroated_rect",img)
-			# cv2.waitKey(0)
+			# cv2.waitKey(20)
 			#### ends ####
 			return (x,y,w,h)
 		
 
-	def find_contour_thresh(self,mask,area_th,img):
+	def find_contour_thresh(self,mask,area_th,img,kernel,iterations):
 	#### function: this function find contour in a mask that has largest area  
 	#### mask: 0,1 binary img 
 	#### area_th: area threshhold for contour 
 	#### img: RGB img for drawing 
+	#### kernel: kernel for dilation 
+	#### iterations: iteartions for dilation
 	#### return: filtered contours  
-			mask=np.uint8(mask)
+			mask=np.array(mask,dtype=np.uint8)
+			print "mask",np.sum(mask)
+			#kernel=np.ones((9,9),np.uint8)
+			mask=cv2.dilate(mask,kernel,iterations=iterations)
+			print "mask_dialted",np.sum(mask)
+			# cv2.imshow("dialted",mask)
+			# cv2.waitKey(20)
+
 			_,contours,_= cv2.findContours(mask, 1, 2)
+			#print contours[0]
 			#cnts= [cnt for cnt in contours if cv2.contourArea(cnt)>area_th]
 			length=len(contours)
+			print "contour_number",length
 			if length==0:  ### if no contour find 
+				#print 1 
 				return None
 			else:  
-				area_max=cv2.contourArea(contours[0])
-				cnt=contours[0]
 				if length>1:
+					area_max=cv2.contourArea(contours[0])
+					#print area_max
+					cnt=contours[0]
 					i=0
 					for cnts in contours: 
 						area2=cv2.contourArea(contours[i])
@@ -576,15 +1214,21 @@ class pi_cam_process(rgb_process):
 							area_max=area2
 							cnt=contours[i]
 						i+=1
+				else:
+					cnt=contours[0]
+					#print cnt
+					area_max=cv2.contourArea(cnt)
 				###### helper function ######
-				# cv2.drawContours(img, cnt, -1, (0,255,0), 3)
+				# cv2.drawContours(img,cnt, -1, (0,255,0), 3)
 				# cv2.imshow("contours",img)
-				# cv2.waitKey(0)
+				# cv2.waitKey(20)
+				#print cnn
 				###### helper function ends ######
-				
+				#print area_max
 				if area_max>area_th:
 					return cnt 
 				else:
+					#print 1
 					return None 
 	
 		  	
@@ -599,9 +1243,9 @@ class pi_cam_process(rgb_process):
 			# center_int=(int(center[0]),int(center[1]))
 			# pt_int=(int(pt[0]),int(pt[1]))
 			# cv2.line(img, center_int, pt_int, (255,0,0), 2)
-			#print angle
+			# print angle
 			# cv2.imshow("Line",img)
-			# cv2.waitKey(0) 
+			# cv2.waitKey(20) 
 		####### ends ##########
 			return angle 
 
@@ -641,8 +1285,8 @@ class pi_cam_process(rgb_process):
 			####### input: RGB image 
 			#cv2.imshow("result4",img)
 			#cv2.waitKey(0)
-			low_th=np.array([0,180,0])
-			high_th=np.array([100,255,80])
+			low_th=np.array([0,80,120])
+			high_th=np.array([50,255,255])
 			mask=self.th_hsv(img,low_th,high_th)
 			target_mask=self.findTarget(mask,area_th)
 			
@@ -655,22 +1299,28 @@ class pi_cam_process(rgb_process):
 		  		#cv2.waitKey(200)
 		  	##### helper line ###############
 		  	#print 1
-			# mask_final=np.uint8(target_mask)
-			# masked_img=cv2.bitwise_and(img,img,mask=mask_final)
-			# cv2.imshow("masked_img",masked_img)
-			# cv2.waitKey(0)
+			mask_final=np.uint8(target_mask)
+			masked_img=cv2.bitwise_and(img,img,mask=mask_final)
+			cv2.imshow("masked_img",masked_img)
+			cv2.waitKey(20)
 			###############################
 			return target_mask
 
 
-	def find_three_contours_thresh(self,mask,area_th,img,breaker):
+	def find_three_contours_thresh(self,mask,area_th,img,kernel,iterations,breaker):
 		#### function: this function find contour in a mask that has largest area  
 		#### mask: 0,1 binary img 
 		#### area_th: area threshhold for contour 
 		#### img: RGB img for drawing 
 		#### return: filtered contours  
 			mask=np.uint8(mask)
+			mask=cv2.dilate(mask,kernel,iterations=iterations)
 			_,contours,_= cv2.findContours(mask, 1, 2)
+			##### helper line #########
+			cv2.drawContours(img, contours, -1, (0,255,0), 3)
+			cv2.imshow("contours"+str(breaker),img)
+			cv2.waitKey(20)
+			##### helper line ends ########
 			#cnts= [cnt for cnt in contours if cv2.contourArea(cnt)>area_th]
 			length=len(contours)
 			if length==0:  ### if no contour find 
@@ -683,6 +1333,7 @@ class pi_cam_process(rgb_process):
 					for cnt in contours:
 						cnts.append(cnt)
 						cnt_area[str(i)]=cv2.contourArea(cnt)
+						print "contour", cnt_area[str(i)]
 						i+=1
 					#print cnt_area
 					#print sorted(cnt_area,key=cnt_area.get)
@@ -709,7 +1360,7 @@ class pi_cam_process(rgb_process):
 					##### helper function ends ######
 					# cv2.drawContours(img, cnts_chosen, -1, (0,255,0), 3)
 					# cv2.imshow("contours"+str(breaker),img)
-					# cv2.waitKey(0)
+					# cv2.waitKey(20)
 					###### helper function ends ######
 				else:
 					if breaker==1:
@@ -740,8 +1391,8 @@ class pi_cam_process(rgb_process):
 			# 	int_box = np.int0(box)
 			# 	cv2.drawContours(img,[int_box],0,(0,0,255),2)
 			# cv2.imshow("rect"+str(breaker),img)
-			# cv2.waitKey(0)
-			#### ends ####
+			# cv2.waitKey(20)
+			# #### ends ####
 			breaker_list=sorted(breaker_list, key=lambda k: k["Cx"]) ### sort dictionary so that from left to right
 			return breaker_list
 
@@ -775,7 +1426,7 @@ class pi_cam_process(rgb_process):
 		masked_img=cv2.bitwise_and(img,img,mask=mask)
 		###### helper function ##########
 		# cv2.imshow('black_box',masked_img)
-		# cv2.waitKey(0)
+		# cv2.waitKey(20)
 		##### ends ##############
 		return masked_img		
 
@@ -785,8 +1436,8 @@ class pi_cam_process(rgb_process):
 		####### input: RGB image 
 		#cv2.imshow("result4",img)
 		#cv2.waitKey(0)
-		low_th=np.array([30,45,0])
-		high_th=np.array([60,60,20])
+		low_th=np.array([100,0,0])
+		high_th=np.array([150,100,150])
 		##low_th=np.array([10,10,10])
 		#high_th=np.array([15,15,15])
 		mask=self.th_hsv(img,low_th,high_th)
@@ -806,14 +1457,14 @@ class pi_cam_process(rgb_process):
 	  	##### helper line ###############
 	  	#print 1
 	  	#print 1
-		# mask_final=np.uint8(target_mask)
+		mask_final=np.uint8(target_mask)
 
 		# cv2.imshow("masked_img_black_box2q",img)
-		# cv2.waitKey(0)
+		# cv2.waitKey(20)
 		
-		# masked_img=cv2.bitwise_and(img,img,mask=mask_final)
-		# cv2.imshow("masked_img_black_box",masked_img)
-		# cv2.waitKey(0)
+		masked_img=cv2.bitwise_and(img,img,mask=mask_final)
+		cv2.imshow("masked_img_black_box",masked_img)
+		cv2.waitKey(20)
 		###############################
 		return target_mask
 
@@ -843,15 +1494,19 @@ class pi_cam_process(rgb_process):
 	def locate_green(self,type,img,station_F=0):
 			masked_img=self.mask(img,station_F)
 			img_visual=copy.deepcopy(img)
-			if type==3: ## orange valve
+			if type==2: ## orange valve
 
 				####### find center of orange valve ########
-				orange_area_th=50000
-				orange_mask=self.orange_proc(masked_img,orange_area_th)
-				cnt_area_th=50000
-				cnt=self.find_contour_thresh(orange_mask,cnt_area_th,img_visual)
+				orange_area_th=10000
+				orange_mask=self.orange_proc(masked_img,orange_area_th)  ### may want to dialte the mask
+
+	
+				cnt_area_th=10000
+				iterations=3
+				kernel=np.ones((9,9),np.uint8)
+				cnt=self.find_contour_thresh(orange_mask,cnt_area_th,img_visual,kernel,iterations)
 				if cnt is None: 
-					print "[pi_cam_info]: I can't find small valve" 
+					print "[pi_cam_info]: I can't find organe valve" 
 					return None 
 				else:
 					circle_center=self.find_circle_center(cnt,img_visual)
@@ -862,20 +1517,26 @@ class pi_cam_process(rgb_process):
 					tip_area_th=400
 					tip_mask=self.green_tip_orange(masked_img,tip_area_th)
 					cnt_area_th=400
-					cnts= self.find_contour_thresh(tip_mask,cnt_area_th,img_visual)
+					iterations=1
+					kernel=np.ones((1,1),np.uint8)
+					cnts= self.find_contour_thresh(tip_mask,cnt_area_th,img_visual,kernel,iterations)
 					if cnts is None: 
 						print "[pi_cam_info]: I can't find green tip on small valve" 
 						return None 
 					else:					
-						tips_center=self.find_rect_center(cnts[0],img_visual)	
+						tips_center=self.find_rect_center(cnts,img_visual)	
 						angle=self.calc_angle_circle(circle_center,tips_center,img_visual)
 						print "[pi_cam_info] Orange valve orientation is",angle,"deg"
+						return angle 
 
-			elif type==4: ## small valve 
+			elif type==3: ## spigot valve 
 				small_area_th=10000
 				small_mask=self.small_proc(masked_img,small_area_th)
+
+				iterations=3
+				kernel=np.ones((13,13),np.uint8)
 				cnt_area_th=10000
-				cnt= self.find_contour_thresh(small_mask,cnt_area_th,img_visual)
+				cnt= self.find_contour_thresh(small_mask,cnt_area_th,img_visual,kernel,iterations)
 				if cnt is None: 
 					print "[pi_cam_info]: I can't find small blue valve" 
 					return None 
@@ -888,20 +1549,31 @@ class pi_cam_process(rgb_process):
 					tip_area_th=400
 					tip_mask=self.green_tip_small(masked_img,tip_area_th)
 					cnt_area_th=400
-					cnt= self.find_contour_thresh(tip_mask,cnt_area_th,img_visual)
+					iterations=2
+					kernel=np.ones((5,5),np.uint8)
+					cnt= self.find_contour_thresh(tip_mask,cnt_area_th,img_visual,kernel,iterations)
 					if cnt is None: 
 						print "[pi_cam_info]: I can't find green tip on small valve" 
 						return None 
 					else:
 						tips_center=self.find_rect_center(cnt,img_visual)
+						#tips_center=self.find_ellipse_center(cnt,img_visual)
+						#tips_center=self.find_line(cnt,img_visual)
+						#tips_center=self.find_extrem_points(cnt,img_visual)
 						angle=self.calc_angle_circle(circle_center,tips_center,img_visual)
 						print "[pi_cam_info] Small blue valve orientation is",angle,"deg"
+						return angle
 
-			elif type==2: ## small switch 
+			elif type==1: ## shuttle valve
+				masked_img=img  ## don't use cropped image 
 				small_area_th=10000
 				small_mask=self.switch_proc(masked_img,small_area_th)
-				cnt_area_th=10000
-				cnt= self.find_contour_thresh(small_mask,cnt_area_th,img_visual)
+				
+				cnt_area_th=8000
+				iterations=2
+				kernel=np.ones((3,3),np.uint8)
+				cnt= self.find_contour_thresh(small_mask,cnt_area_th,img_visual,kernel,iterations)
+				
 				if cnt is None: 
 					print "[pi_cam_info]: I can't find horizontal blue switch" 
 					return None 
@@ -909,23 +1581,32 @@ class pi_cam_process(rgb_process):
 					vx,vy,_,_=self.find_line(cnt,img_visual)
 					angle=np.angle(vx+vy*1j,deg=True)
 					print "The swithc is ", angle, "deg" 
+					return angle 
 					#x,y,w,h=self.unroated_box(cnt,img_visual)
 					#masked_img=self.get_ROI((x,y,w,h),img_visual)
 
-			elif type==1: ## 
+			elif type==4: ## breaker 
 				breaker_area_th=500
 				breaker_mask=self.breaker_proc(masked_img,breaker_area_th)
+
 				cnt_area_th=500
-				cnts=self.find_three_contours_thresh(breaker_mask,cnt_area_th,img_visual,breaker=1)
+				iterations=3
+				kernel=np.ones((3,3),np.uint8)
+				cnts=self.find_three_contours_thresh(breaker_mask,cnt_area_th,img_visual,kernel,iterations,breaker=1)
 				if cnts is None: 
 					return None
 				else: 
 					breaker_info=self.find_multi_rect_centers(cnts,img_visual,breaker=1)
+					#return None
+					#### comment out, may use kinect to finish it #######
 					masked_image=self.get_blackBox_ROI(breaker_info,img)
 					black_box_aera_th=500
 					black_box_mask=self.black_box_proc(masked_image,black_box_aera_th)
+
 					cnt_area_th=500
-					cnts=self.find_three_contours_thresh(black_box_mask,cnt_area_th,img_visual,breaker=0)
+					iterations=1
+					kernel=np.ones((1,1),np.uint8)
+					cnts=self.find_three_contours_thresh(black_box_mask,cnt_area_th,img_visual,kernel,iterations,breaker=0)
 					if cnts is None: 
 						return None
 					else :
@@ -933,7 +1614,7 @@ class pi_cam_process(rgb_process):
 						breaker_states=self.breaker_status(breaker_info,black_box_info)
 						print breaker_states
 						#print black_box_info 
-
+						return breaker_states
 
 
 

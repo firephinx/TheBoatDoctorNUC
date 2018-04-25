@@ -1,4 +1,5 @@
 #include "ros/ros.h"
+#include "math.h"
 #include "sensor_msgs/JointState.h"
 #include "std_msgs/Bool.h"
 #include "actionlib/client/simple_action_client.h"
@@ -20,8 +21,11 @@ using namespace hebiros;
 //Global variable and callback function used to store feedback data
 sensor_msgs::JointState feedback;
 sensor_msgs::JointState trajectory_point;
+sensor_msgs::JointState command_msg;
 TrajectoryGoal goal;
 bool move_to_trajectory_point = false;
+bool started_move = false;
+bool done_move = false;
 
 void feedback_callback(sensor_msgs::JointState data) {
   feedback = data;
@@ -45,6 +49,8 @@ void trajectory_done(const actionlib::SimpleClientGoalState& state,
   }
 
   move_to_trajectory_point = false;
+  started_move = false;
+  done_move = true;
 }
 
 //Callback which is called once when the action goal becomes active
@@ -91,12 +97,15 @@ int main(int argc, char **argv) {
 
   //Construct a JointState to command the modules
   //This may potentially contain a name, position, velocity, and effort for each module
-  sensor_msgs::JointState command_msg;
   command_msg.name.push_back("The Boat Doctor/elbow");
   command_msg.name.push_back("The Boat Doctor/wrist");
   command_msg.name.push_back("The Boat Doctor/end effector");
 
   command_msg.position.resize(3);    
+
+  command_msg.position[0] = -M_PI_2;
+  command_msg.position[1] = -M_PI_2;
+  command_msg.position[2] = 0;
 
   //Create a subscriber to receive the next trajectory point 
   ros::Subscriber trajectory_point_subscriber = n.subscribe("/TheBoatDoctor/move_arm", 100, trajectory_point_callback);
@@ -135,45 +144,46 @@ int main(int argc, char **argv) {
                                                     {0, 0},
                                                     {0, 0}};
 
-  //Construct the goal using the TrajectoryGoal format
-  for (int i = 0; i < num_waypoints; i++) {
-    for (int j = 0; j < num_joints; j++) {
-      waypoint.names[j] = names[j];
-      waypoint.velocities[j] = velocities[j][i];
-      waypoint.accelerations[j] = accelerations[j][i];
-    }
-    goal.times[i] = times[i];
-    goal.waypoints[i] = waypoint;
-  }
-
   while(ros::ok()) {
     ros::spinOnce();
-    if(move_to_trajectory_point)
+    if(move_to_trajectory_point && !started_move)
     {
       std::vector<std::vector<double>> positions = {{feedback.position[0], trajectory_point.position[0]},
                                                     {feedback.position[1], trajectory_point.position[1]},
                                                     {feedback.position[2], trajectory_point.position[2]}};
+
+      command_msg.position[0] = trajectory_point.position[0];
+      command_msg.position[1] = trajectory_point.position[1];
+      command_msg.position[2] = trajectory_point.position[2];
+
+      //Construct the goal using the TrajectoryGoal format
       for (int i = 0; i < num_waypoints; i++) {
         for (int j = 0; j < num_joints; j++) {
+          waypoint.names[j] = names[j];
           waypoint.positions[j] = positions[j][i];
+          waypoint.velocities[j] = velocities[j][i];
+          waypoint.accelerations[j] = accelerations[j][i];
         }
+        goal.times[i] = times[i];
         goal.waypoints[i] = waypoint;
       }
 
       //Send the goal, executing the trajectory
       client.sendGoal(goal, &trajectory_done, &trajectory_active, &trajectory_feedback);
+      started_move = true;
+    }
+    if(done_move)
+    {
+      done_move = false;
       std_msgs::Bool trajectory_complete_msg;
       trajectory_complete_msg.data = true;
       trajectory_complete_publisher.publish(trajectory_complete_msg);
     }
-    else
+    if(!started_move && !move_to_trajectory_point)
     {
-      command_msg.position[0] = feedback.position[0];
-      command_msg.position[1] = feedback.position[1];
-      command_msg.position[2] = feedback.position[2];
-      command_msg.effort[0] = GRAVITY * 3 * cos(feedback.position[0]);
-      command_msg.effort[1] = GRAVITY * 1 * sin(-feedback.position[1]);
-      command_msg.effort[2] = 0;
+      /*command_msg.effort[0] = GRAVITY * 3 * std::cos(feedback.position[0]);
+      command_msg.effort[1] = GRAVITY * 1 * std::sin(-feedback.position[1]);
+      command_msg.effort[2] = 0;*/
       command_publisher.publish(command_msg);
     }
     loop_rate.sleep();

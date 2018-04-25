@@ -8,6 +8,7 @@ from sensor_msgs.msg import Image,CameraInfo
 from sensor_msgs.msg import PointCloud2
 import sensor_msgs.point_cloud2 as pc2
 import message_filters
+from std_msgs.msg import Float32MultiArray
 
 
 
@@ -28,9 +29,20 @@ import tf
 import tf.msg
 import geometry_msgs.msg
 
+
+from object_detection.srv import *
+
+
+## type 1: shuttle valvue 1 -1 (2): horizontal 1 (1): verical  
+## type 2: orange vale 
+## type 3: spigot valve 3 -1 (2): L shape   3 1 (1): small 
+## type 4: breaker   up 1 (1), down -1 (2)
+
+
+
 class image_converter:
 
-  def __init__(self):
+  def __init__(self,type):
     #self.out = cv2.VideoWriter('outpy.avi',cv2.VideoWriter_fourcc('X','V','I','D'), 10, (270,480))
     #fourcc = cv2.VideoWriter_fourcc(*'XVID')
     #self.out = cv2.VideoWriter('output.avi',fourcc, 20.0, (640,480))
@@ -40,7 +52,7 @@ class image_converter:
     self.alpha=0.5 ## blending factor for depth + color 
     self.gamma=0 ## blending shift .....
     self.scale=1 ### sacle img sizes
-    self.th_xy=100 ### threshold to account for having object for measuring X,Y
+    self.th_xy=11 ### threshold to account for having object for measuring X,Y
 
     self.marker=Marker()
 
@@ -50,9 +62,30 @@ class image_converter:
     self.color_sub=message_filters.Subscriber("/kinect2/qhd/image_color_rect",Image)
     self.cameraInfo_sub=message_filters.Subscriber("/kinect2/qhd/camera_info",CameraInfo)
     self.position_pub = rospy.Publisher('/Marker/actuator_pose', Marker, queue_size=10)
-    self.pub_actuator_tf = rospy.Publisher("/tf/actuator", tf.msg.tfMessage,queue_size=10)
+    self.pub_actuator_tf = rospy.Publisher("/tf/actuator", tf.msg.tfMessage,queue_size=10)  ###### try to use tf format, not using 
+    self.pub_actuator_own=rospy.Publisher("/kinect2/actuator_location",Float32MultiArray,queue_size=10)
+    self.pub_error=rospy.Publisher("/kinect2/error_msg",String,queue_size=10)
     ts=message_filters.TimeSynchronizer([self.depth_sub,self.color_sub,self.cameraInfo_sub],10)
-    ts.registerCallback(self.img_proc)
+    ts.registerCallback(self.get_data)
+    self.depth_stream=None 
+    self.color_stream=None 
+    self.camera_info=None 
+
+
+    self.br = tf.TransformBroadcaster()
+    self.tf_listener=tf.TransformListener()
+
+
+    self.dataNum=0
+
+    self.type=type ### actuator type 
+
+    self.X=[] ##### locations of acutators 
+    self.Y=[]
+    self.Z=[]
+    self.SUBTYPE=[] ## subtype of some acutators 
+    self.bStatus=[] ### breakerStatus
+    self.dataQ=11	 ### num of images to process, use odd number to break tie  
 
 
 
@@ -93,56 +126,193 @@ class image_converter:
 			self.pub_actuator_tf.publish(tfm)
   
   def broadcast_tf(self,x,y,z):
-  			br = tf.TransformBroadcaster()
-  			br.sendTransform((x/1000, y/1000, z/1000),
+  			self.br.sendTransform((x/1000, y/1000, z/1000),
                          (0.0, 0.0, 0.0, 1.0),
                          rospy.Time.now(),
-                         "actuator",
+                         "/actuator",
                          "/my_base_rgb_optical_frame")
+  			#print 1
 
-  def img_proc(self,depth_stream,color_stream,camera_info):
+
+  def get_data(self,depth_stream,color_stream,camera_info):
+  		self.depth_stream=depth_stream
+  		self.color_stream=color_stream
+  		self.camera_info=camera_info
+  		#print self.type
+  		print "[Kinect] getting data"  		
+  		x,y,z,subType,error,breakerStatus=self.img_proc()
+  		if error==0: ## if no error 
+  			self.dataNum+=1   			
+	  		if subType is None: ### convert subType to ROSmsg compatible data type 
+	  			subType=0
+
+	  		if self.type==4:
+	  			self.SUBTYPE.append(subType)	  		
+	  			self.X.append(x) ## first breaker 
+	  			self.Y.append(y) ## second breaker 
+	  			self.Z.append(z) ## third breaker
+	  			self.bStatus.append(breakerStatus)
+	  				
+	  		else:
+		  		self.SUBTYPE.append(subType)	  		
+		  		self.X.append(x)
+		  		self.Y.append(y)
+		  		self.Z.append(z)
+		  		self.	bStatus.append([0,0,0]) ### trivial since not used 
+	  		#print x,y,z
+	  	else:
+	  		message=String() 
+	  		message.data=str(error)
+	  		self.pub_error.publish(message)  ### publish error message, adjust robot position 	
+
+  		if  self.dataNum==self.dataQ:
+  			print "unsubscrib topic"
+  			self.depth_sub.unregister()
+  			self.color_sub.unregister()
+  			self.cameraInfo_sub.unregister()
+  			if self.type==4:
+  				pt1=np.mean(np.array(self.X),axis=0)
+  				pt2=np.mean(np.array(self.Y),axis=0)
+  				pt3=np.mean(np.array(self.Z),axis=0)
+  				subType=0
+  				status=np.sum(np.array(self.bStatus),axis=0)
+  				#print self.bStatus
+  				#print status
+  				for i in np.arange(3):
+	  				if status[i]>0.5:
+		  				status[i]=1 
+		  			elif status[i]<-0.5: 
+		  				status[i]=2 
+		  			else:
+		  				#print "im here"
+		  				status[i]=0
+		  		location=Float32MultiArray()
+	  			location.data=[pt1[0],pt1[1],pt1[2],pt2[0],pt2[1],pt2[2],pt3[0],pt3[1],pt3[2],subType,status[0],status[1],status[2]]
+  			else:
+	  			xVal=np.mean(self.X)
+	  			yVal=np.mean(self.Y)
+	  			zVal=np.mean(self.Z)
+	  			subType=np.sum(self.SUBTYPE)
+	  			if subType>0.5:
+	  				subType=1 
+	  			elif subType<-0.5: 
+	  				subType=2 
+	  			else:
+	  				subType=0
+	  			print "The x,y,z values are",xVal,yVal,zVal
+	  			location=Float32MultiArray()
+	  			location.data=[xVal,yVal,zVal,subType]
+  			self.pub_actuator_own.publish(location)
+  			self.X=[]  ## reset 
+  			self.Y=[]
+  			self.Z=[]
+  			self.SUBTYPE=[]
+  			self.bStatus=[]
+
+  			#cv2.destroyAllWindows()
+  		
+  				
+
+  def img_proc(self):
   	### This function process depth and RGB images to get x,y,z info of an interested obj 
+  		#print (4)
+  		error=0
+  		if self.depth_stream is not None and self.color_stream is not None and self.camera_info is not None:
+			self.depth_stream.encoding='mono16'
+			cv_depth=self.bridge.imgmsg_to_cv2(self.depth_stream,desired_encoding='mono16')  ## distance (mm) coded in UC161 (or mono16)
+			cv_depth=cv2.resize(cv_depth,(0,0,),fx=self.scale,fy=self.scale)
+
+			#print (2)
+			cv_depth_visual=copy.deepcopy(cv_depth)
+			cv2.normalize(cv_depth_visual, cv_depth_visual, 0, 65535, cv2.NORM_MINMAX)  ## uncomment for better visual result 
+
+			# cv2.imshow("depth_img",cv_depth_visual)
+			# cv2.waitKey(20)
+			#print np.max(cv_depth)
+			#print (3)
+
+			cv_color=self.bridge.imgmsg_to_cv2(self.color_stream,desired_encoding='bgr8')
+			cv_color=cv2.resize(cv_color,(0,0,),fx=self.scale,fy=self.scale)
+			# cv2.imshow("color_img",cv_color)
+			# cv2.waitKey(20)
+
+			#### visually check if depth img and color img aligned, will comment out ####
+			#depth_mask=np.dstack((cv_depth,cv_depth,cv_depth))
+			#depth_color=cv2.addWeighted(depth_mask,self.alpha,cv_color,1-self.alpha,self.gamma)
+			#cv2.imshow("color_depth",depth_color)
+			#cv2.waitKey(1)
+			#############################Visual check end ####################################
+
+			#### find actuator ####
+			kinect=kinect_process(cv_color)
+			target_masks,subType,breakerStatus=kinect.locate_actuators(self.type,0,cv_color) 
+			if target_masks is not None:
+				if self.type==4:
+					xyz=[]
+					for target_mask in target_masks:
+						mask_final=np.uint8(target_mask)
+						#### end #### 
+
+						#### depth result #####
+						depth=self.Z_proc(cv_color,cv_depth,mask_final)
+
+						X,Y=self.XY_proc(cv_color,mask_final,self.camera_info,cv_depth,self.th_xy)
+						print "X:{} mm  Y:{} mm".format(X,Y)
+						self.pub_actuator_Marker(-Y,X,depth) ### switch XY to comply with Kinect rgb optical frame 
+						#self.pub_actuator(X,Y,depth)
+						self.broadcast_tf(-Y,X,depth)
+						rospy.sleep(0.01)
+						(trans,rot)=self.tf_listener.lookupTransform('/IK_reference','/actuator',rospy.Time(0))
+						xyz.append([trans[0],trans[1],trans[2]])
+						#return X,Y,depth
+					if breakerStatus!=None:  ### has to find breakerStatus for type 4 
+						error=0
+					else:
+						error=1 
+					return xyz[0],xyz[1],xyz[2],subType,error,breakerStatus
+
+				else:
+					mask_final=np.uint8(target_masks)
+					#### end #### 
+
+					#### depth result #####
+					depth=self.Z_proc(cv_color,cv_depth,mask_final)
+
+					X,Y=self.XY_proc(cv_color,mask_final,self.camera_info,cv_depth,self.th_xy)
+					print "X:{} mm  Y:{} mm".format(X,Y)
+					self.pub_actuator_Marker(-Y,X,depth) ### switch XY to comply with Kinect rgb optical frame 
+					#self.pub_actuator(X,Y,depth)
+					self.broadcast_tf(-Y,X,depth)
+					rospy.sleep(0.01)
+					(trans,rot)=self.tf_listener.lookupTransform('/IK_reference','/actuator',rospy.Time(0))
+					print trans[0],trans[1],trans[2]
+					#return X,Y,depth
+					if self.type ==  2:
+						error=0 
+						return trans[0],trans[1],trans[2],subType,error,None
+					else:
+						if subType is None: 
+							error=1
+							return trans[0],trans[1],trans[2],subType,error,None  
+						else: 
+							error=0
+							return trans[0],trans[1],trans[2],subType,error,None  ## none is breakerstatus
+			else:
+				print "[depth_proc/img_proc] I can't find actuator" 
+				error=1
+				return -1000000,-100000,-100000,None,error,None 
+	
 
 
-	  	depth_stream.encoding='mono16'
-	  	cv_depth=self.bridge.imgmsg_to_cv2(depth_stream,desired_encoding='mono16')  ## distance (mm) coded in UC161 (or mono16)
-	  	cv_depth=cv2.resize(cv_depth,(0,0,),fx=self.scale,fy=self.scale)
+			self.depth_stream=None 
+			self.color_stream=None 
+			self.camera_info=None
+				
+		else:
+			print "[depth_proc/img_proc] no data"
+			error=1 
+			return -1000000,-100000,-100000,None,error 
 
-
-	  	cv_depth_visual=copy.deepcopy(cv_depth)
-	  	cv2.normalize(cv_depth_visual, cv_depth_visual, 0, 65535, cv2.NORM_MINMAX)  ## uncomment for better visual result 
-	 
-	  	cv2.imshow("depth_img",cv_depth_visual)
-	  	cv2.waitKey(20)
-	  	#print np.max(cv_depth)
-
-
-	  	cv_color=self.bridge.imgmsg_to_cv2(color_stream,desired_encoding='bgr8')
-	  	cv_color=cv2.resize(cv_color,(0,0,),fx=self.scale,fy=self.scale)
-	  	#cv2.imshow("color_img",cv_color)
-	  	#cv2.waitKey(200)
-	  	
-	  	#### visually check if depth img and color img aligned, will comment out ####
-	  	#depth_mask=np.dstack((cv_depth,cv_depth,cv_depth))
-	  	#depth_color=cv2.addWeighted(depth_mask,self.alpha,cv_color,1-self.alpha,self.gamma)
-	  	#cv2.imshow("color_depth",depth_color)
-	  	#cv2.waitKey(1)
-	  	#############################Visual check end ####################################
-	  	
-	  	#### find actuator ####
-	  	kinect=kinect_process(cv_color)
-	  	target_mask=kinect.locate_actuators(1,0,cv_color) 
-	  	mask_final=np.uint8(target_mask)
-	  	#### end #### 
-
-	  	#### depth result #####
-	  	depth=self.Z_proc(cv_color,cv_depth,mask_final)
-
-	  	X,Y=self.XY_proc(cv_color,mask_final,camera_info,cv_depth,self.th_xy)
-	  	print "X:{} mm  Y:{} mm".format(X,Y)
-	  	self.pub_actuator_Marker(-Y,X,depth) ### switch XY to comply with Kinect rgb optical frame 
-	  	#self.pub_actuator(X,Y,depth)
-	  	self.broadcast_tf(-Y,X,depth)
 
 
   def Z_proc(self,cv_color,cv_depth,mask_final):
@@ -165,7 +335,7 @@ class image_converter:
 		#print np.sum(masked_depth!=0)
 		if math.isnan(depth):
 			print "[depth_proc] No object found"
-			depth=-1 ### not a valid number 
+			depth=0 ### not a valid number 
 		else:
 			print "depth:",depth,"mm"
 		return depth 
@@ -175,8 +345,8 @@ class image_converter:
 
 		### helper line ########
 		masked_color=cv2.bitwise_and(cv_color,cv_color,mask=mask_final)
-		cv2.imshow("result4",masked_color)
-		cv2.waitKey(20)
+		# cv2.imshow("result4",masked_color)
+		# cv2.waitKey(20)
 		### ends ########## 
 
 		points=cv2.findNonZero(mask_final)
@@ -200,7 +370,7 @@ class image_converter:
 				#print [reversed(tuple(i)) for i in points]
 				#print points
 				depths= [cv_depth[tuple(i)]for i in new_coln]
-				depths=np.reshape(np.array(depths),(1,len(depths))) ### 1 by n 
+				depths=np .reshape(np.array(depths),(1,len(depths))) ### 1 by n 
 				#print np.shape(depths)
 
 				Ones=np.ones([num_pts,1]) ### n by 1
@@ -314,16 +484,13 @@ class image_converter:
 
 
 
-def main(args):
-  rospy.init_node('kinect_node', anonymous=True)
-  ic = image_converter()
-  try:
-    rospy.spin()
-    #time.sleep(1000)
-  except KeyboardInterrupt:
-    print("Shutting down")
-  cv2.destroyAllWindows()
+def localize_actuators(msg):
+	ic = image_converter(msg.want)
+	rospy.spin() 
+	print "im here"
 
 if __name__ == '__main__':
-    main(sys.argv)
+	rospy.init_node('kinect2_FindLocations', anonymous=True)
+  	s=rospy.Service("kinect2/locations",callKinect,localize_actuators)
+  	rospy.spin()
 
