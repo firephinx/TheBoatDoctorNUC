@@ -86,8 +86,8 @@ class TheBoatDoctorCV():
 
 
 if __name__=="__main__":
-	detector=TheBoatDoctorCV(1)
-	location=detector.get_actuator_location()
+	detector=TheBoatDoctorCV(2)
+	location=detector.get_actuator_status()
 	print location
 	print "finished"
 

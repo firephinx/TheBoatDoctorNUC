@@ -133,7 +133,7 @@ int main(int argc, char **argv) {
 
   double nan = std::numeric_limits<float>::quiet_NaN();
   //Set the times to reach each waypoint in seconds
-  std::vector<double> times = {0, 5};
+  std::vector<double> times = {0, 3};
   std::vector<std::string> names = {"The Boat Doctor/elbow", "The Boat Doctor/wrist", "The Boat Doctor/end effector"};
   //Set positions, velocities, and accelerations for each waypoint and each joint
   //The following vectors have one joint per row and one waypoint per column

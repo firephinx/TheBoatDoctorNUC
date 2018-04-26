@@ -8,16 +8,32 @@ from theboatdoctor_controller import TheBoatDoctorController
 from theboatdoctor_ik import TheBoatDoctorIK
 from theboatdoctor_cv import TheBoatDoctorCV
 
+## Tuning Parameters
+raspberry_pi_camera_vertical_station_x_offset = -0.2
+raspberry_pi_camera_vertical_station_z_offset = -0.06
+vertical_station_goal_x_offset = -0.086
+vertical_station_goal_z_offset = 0.01
+raspberry_pi_camera_horizontal_station_x_offset = -0.2
+raspberry_pi_camera_horizontal_station_z_offset = 0.06
+horizontal_station_goal_x_offset = -0.03
+horizontal_station_goal_z_offset = 0.1
+
+def cam_to_ik(cam_coord):
+    r_y_90 = numpy.array([ [0, 0, 1], [0, 1, 0], [-1, 0, 0] ])
+    return r_y_90.dot(cam_coord)
+
+
 #All measurements in meters and radians
     
 def get_station_base_coords(station):
     if (station == "A"):
-        #base_coords = [0.33, 1.25, 0.0]
-        base_coords = [0.4, 1.25, 0.0]
+        base_coords = [0.42, 1.2589, 0.0]
+        #base_coords = [0.42, 0.639, 0.0]
     elif (station == "B"):
-        base_coords = [0.33, 1.00, 0.0]
+        base_coords = [0.42, 1.00, 0.0]
+        #base_coords = [0.42, 0.389, 0.0]
     elif (station == "C"):
-        base_coords = [0.33, 0.762, 0.0]
+        base_coords = [0.42, 0.729, 0.0]
     elif (station == "D"):
         base_coords = [0.33, 0.4572, 0.0]
     elif (station == "E"):
@@ -58,7 +74,9 @@ if __name__ == '__main__':
     tbd_ik = TheBoatDoctorIK()
 
     tbd_controller.reset_robot()
-    tbd_controller.home_robot()
+    done_homing_flag = tbd_controller.home_robot()
+    while(done_homing_flag != True):
+        done_homing_flag = tbd_controller.home_robot()
 
     f = open(args.missionfilepathname, "r")
     commands = f.readlines()
@@ -94,21 +112,24 @@ if __name__ == '__main__':
 
         tbd_cv = TheBoatDoctorCV(actuator)
 
-        (station_object_position_in_3d, station_orientation) = tbd_cv.get_station_info_kinect()
+        tbd_controller.position_arm_for_vision()
 
-        print("Station object position in 3D: " + str(station_object_position_in_3d))
+        (station_object_position_in_3d_camera_coordinates, station_orientation) = tbd_cv.get_station_info_kinect()
+
+        print("Station object position in 3D: " + str(station_object_position_in_3d_camera_coordinates))
         print("Station orientation: " + station_orientation)
+        station_object_position_in_3d_robot_coordinates = cam_to_ik(numpy.array(station_object_position_in_3d_camera_coordinates))
 
         if(actuator == "A" or actuator == "B"):
             # Breakers
-            goal_positions = numpy.array([station_object_position_in_3d[0:3],
-                                          station_object_position_in_3d[3:6],
-                                          station_object_position_in_3d[6:9]])
+            goal_positions = numpy.array([station_object_position_in_3d_robot_coordinates[0:3],
+                                          station_object_position_in_3d_robot_coordinates[3:6],
+                                          station_object_position_in_3d_robot_coordinates[6:9]])
 
-            intermediate_positions = numpy.array([station_object_position_in_3d[3:6],
-                                                  station_object_position_in_3d[0:3],
-                                                  station_object_position_in_3d[3:6],
-                                                  station_object_position_in_3d[6:9]])
+            intermediate_positions = numpy.array([station_object_position_in_3d_robot_coordinates[3:6],
+                                                  station_object_position_in_3d_robot_coordinates[0:3],
+                                                  station_object_position_in_3d_robot_coordinates[3:6],
+                                                  station_object_position_in_3d_robot_coordinates[6:9]])
 
             intermediate_positions[0][0] = intermediate_positions[0][0] + 0.05
             intermediate_positions[0][2] = intermediate_positions[0][2] - 0.1
@@ -141,38 +162,45 @@ if __name__ == '__main__':
             directions = actuations[1::2]
 
         else:
-            intermediate_positions = numpy.array([station_object_position_in_3d,
-                                                  station_object_position_in_3d])
+            raspberry_pi_camera_position = station_object_position_in_3d_robot_coordinates
 
             if(station_orientation == "vertical"):
-                intermediate_positions[0][0] = intermediate_positions[0][0] + 0.05
-                intermediate_positions[0][2] = intermediate_positions[0][2] - 0.1
-                intermediate_positions[1][2] = intermediate_positions[1][2] - 0.075
+                raspberry_pi_camera_position[0] = raspberry_pi_camera_position[0] + raspberry_pi_camera_vertical_station_x_offset
+                raspberry_pi_camera_position[2] = raspberry_pi_camera_position[2] + raspberry_pi_camera_vertical_station_z_offset
             elif(station_orientation == "horizontal"):
-                intermediate_positions[0][0] = intermediate_positions[0][0] - 0.1
-                intermediate_positions[0][2] = intermediate_positions[0][2] - 0.05
-                intermediate_positions[1][0] = intermediate_positions[1][0] - 0.075
+                raspberry_pi_camera_position[0] = raspberry_pi_camera_position[0] + raspberry_pi_camera_horizontal_station_x_offset
+                raspberry_pi_camera_position[2] = raspberry_pi_camera_position[2] + raspberry_pi_camera_horizontal_station_z_offset
             else:
                 print("Station orientation was not provided.")
                 break
 
-            joint_angles_for_goal_position = numpy.zeros([1,6])
-            joint_angles_for_intermediate_positions = numpy.zeros([2,6])
+            joint_angles_for_raspberry_pi_camera_position = numpy.zeros([1,6])
 
-            joint_angles_for_goal_position = tbd_ik.solve_ik(station_object_position_in_3d, station_orientation)
-            joint_angles_for_task_completion = joint_angles_for_goal_position
+            print(raspberry_pi_camera_position)
 
-            for i in xrange(2):
-                joint_angles_for_intermediate_positions[i] = tbd_ik.solve_ik(intermediate_positions[i], station_orientation)
+            joint_angles_for_raspberry_pi_camera_position = tbd_ik.solve_ik(raspberry_pi_camera_position, station_orientation)
+            joint_angles_for_intermediate_position = numpy.copy(joint_angles_for_raspberry_pi_camera_position)
+            joint_angles_for_goal_position = numpy.copy(joint_angles_for_raspberry_pi_camera_position)
 
-            trajectory = numpy.zeros([6,6])
-            trajectory[0] = joint_angles_for_intermediate_positions[0]
-            trajectory[1] = joint_angles_for_intermediate_positions[1]
+            if(station_orientation == "vertical"):
+                joint_angles_for_intermediate_position[2] = joint_angles_for_intermediate_position[2] - raspberry_pi_camera_vertical_station_z_offset + vertical_station_goal_z_offset
+                joint_angles_for_goal_position[1] = joint_angles_for_goal_position[1] - raspberry_pi_camera_vertical_station_x_offset + vertical_station_goal_x_offset
+                joint_angles_for_goal_position[2] = joint_angles_for_goal_position[2] - raspberry_pi_camera_vertical_station_z_offset + vertical_station_goal_z_offset
+            else:
+                joint_angles_for_intermediate_position[1] = joint_angles_for_intermediate_position[1] - raspberry_pi_camera_horizontal_station_x_offset + horizontal_station_goal_x_offset
+                joint_angles_for_goal_position[1] = joint_angles_for_goal_position[1] - raspberry_pi_camera_horizontal_station_x_offset + horizontal_station_goal_x_offset
+                joint_angles_for_goal_position[2] = joint_angles_for_goal_position[2] - raspberry_pi_camera_horizontal_station_z_offset + horizontal_station_goal_z_offset
+
+            num_trajectories = 6
+            trajectory = numpy.zeros([num_trajectories,6])
+            trajectory[0] = joint_angles_for_raspberry_pi_camera_position
+            trajectory[1] = joint_angles_for_intermediate_position
             trajectory[2] = joint_angles_for_goal_position
-            trajectory[3] = joint_angles_for_task_completion
-            trajectory[4] = joint_angles_for_intermediate_positions[1]
-            trajectory[5] = joint_angles_for_intermediate_positions[0]
+            trajectory[3] = joint_angles_for_goal_position
+            trajectory[4] = joint_angles_for_intermediate_position
+            trajectory[5] = joint_angles_for_raspberry_pi_camera_position
 
+            ## Move Gantry to Raspberry Pi Camera location
             print("X Gantry: " + str(trajectory[0][1]))
             print("Z Gantry: " + str(trajectory[0][2]))
             done_moving_gantry_flag = tbd_controller.move_gantry([trajectory[0][1],trajectory[0][2]])
@@ -186,15 +214,19 @@ if __name__ == '__main__':
             while(done_moving_arm_flag != True):
                 done_moving_arm_flag = tbd_controller.move_arm([trajectory[0][3],trajectory[0][4],trajectory[0][5]])
 
-            current_angle = tbd_cv.get_station_info_pi()
+            ## Get the current angle of the station
+            current_angle = float(tbd_cv.get_station_info_pi())
+            while(current_angle == 10000):
+                current_angle = float(tbd_cv.get_station_info_pi())
+            print("Station angle = " + str(current_angle))
 
-            angle_threshold = 3
+            angle_threshold = 3 * math.pi / 180
 
             if(actuator == "V1" or actuator == "V2"):
                 direction = actuations[0][0]
-                degree = int(actuations[0][1:])
+                degree = float(actuations[0][1:])
                 if(direction == "+"):
-                    desired_angle = current_angle + degree
+                    desired_angle = current_angle + (degree * math.pi / 180)
 
                     if(abs(desired_angle - current_angle) < angle_threshold):
                         continue
@@ -203,7 +235,7 @@ if __name__ == '__main__':
                         trajectory[4][5] = desired_angle - current_angle
 
                 elif(direction == "-"):
-                    desired_angle = current_angle - degree
+                    desired_angle = current_angle - (degree * math.pi / 180)
 
                     if(abs(desired_angle - current_angle) < angle_threshold):
                             continue
@@ -217,7 +249,7 @@ if __name__ == '__main__':
                 if(station_orientation == "vertical"):
                     # Open
                     if(desired_position == 0):
-                        desired_angle = -90
+                        desired_angle = -(math.pi / 2)
 
                         if(abs(desired_angle - current_angle) < angle_threshold):
                             continue
@@ -248,7 +280,7 @@ if __name__ == '__main__':
 
                     # Closed
                     elif(desired_position == 1):
-                        desired_angle = 90
+                        desired_angle = (math.pi / 2)
 
                         if(abs(desired_angle - current_angle) < angle_threshold):
                             continue
@@ -256,76 +288,38 @@ if __name__ == '__main__':
                             trajectory[3][5] = desired_angle - current_angle
                             trajectory[4][5] = desired_angle - current_angle
 
-            print("X Gantry: " + str(trajectory[1][1]))
-            print("Z Gantry: " + str(trajectory[1][2]))
-            done_moving_gantry_flag = tbd_controller.move_gantry([trajectory[1][1],trajectory[1][2]])
-            while(done_moving_gantry_flag != True):
-                done_moving_gantry_flag = tbd_controller.move_gantry([trajectory[1][1],trajectory[1][2]])
+            # Move through the trajectories
+            for i in range(1,6):
+                if(i == 1 or i == 5):
+                    tbd_controller.home_arm()
+                print(i)
+                print("X Gantry: " + str(trajectory[i][1]))
+                print("Z Gantry: " + str(trajectory[i][2]))
+                done_moving_gantry_flag = tbd_controller.move_gantry([trajectory[i][1],trajectory[i][2]])
+                while(done_moving_gantry_flag != True):
+                    done_moving_gantry_flag = tbd_controller.move_gantry([trajectory[i][1],trajectory[i][2]]) 
 
-            print("Elbow Angle: " + str(trajectory[1][3]))
-            print("Wrist Angle: " + str(trajectory[1][4]))
-            print("End Effector Angle: " + str(trajectory[1][5]))
-            done_moving_arm_flag = tbd_controller.move_arm([trajectory[1][3],trajectory[1][4],trajectory[1][5]])
-            while(done_moving_arm_flag != True):
-                done_moving_arm_flag = tbd_controller.move_arm([trajectory[1][3],trajectory[1][4],trajectory[1][5]])
+                print("Elbow Angle: " + str(trajectory[i][3]))
+                print("Wrist Angle: " + str(trajectory[i][4]))
+                print("End Effector Angle: " + str(trajectory[i][5]))
+                done_moving_arm_flag = tbd_controller.move_arm([trajectory[i][3],trajectory[i][4],trajectory[i][5]])
+                while(done_moving_arm_flag != True):
+                    done_moving_arm_flag = tbd_controller.move_arm([trajectory[i][3],trajectory[i][4],trajectory[i][5]])
 
-            print("X Gantry: " + str(trajectory[2][1]))
-            print("Z Gantry: " + str(trajectory[2][2]))
-            done_moving_gantry_flag = tbd_controller.move_gantry([trajectory[2][1],trajectory[2][2]])
-            while(done_moving_gantry_flag != True):
-                done_moving_gantry_flag = tbd_controller.move_gantry([trajectory[2][1],trajectory[2][2]])
+                if (i == 2):
+                    tbd_controller.pump_switch("on")
+                    rospy.sleep(1)
+                elif (i == 3):
+                    tbd_controller.pump_switch("off")
+                    rospy.sleep(1)
 
-            print("Elbow Angle: " + str(trajectory[2][3]))
-            print("Wrist Angle: " + str(trajectory[2][4]))
-            print("End Effector Angle: " + str(trajectory[2][5]))
-            done_moving_arm_flag = tbd_controller.move_arm([trajectory[2][3],trajectory[2][4],trajectory[2][5]])
-            while(done_moving_arm_flag != True):
-                done_moving_arm_flag = tbd_controller.move_arm([trajectory[2][3],trajectory[2][4],trajectory[2][5]])
-   
-            tbd_controller.pump_switch("on")
+            tbd_cv2 = TheBoatDoctorCV(actuator) ### Tong added
+            current_angle = tbd_cv2.get_station_info_pi()
+            print("station check", current_angle)
 
-            print("X Gantry: " + str(trajectory[3][1]))
-            print("Z Gantry: " + str(trajectory[3][2]))
-            done_moving_gantry_flag = tbd_controller.move_gantry([trajectory[3][1],trajectory[3][2]])
-            while(done_moving_gantry_flag != True):
-                done_moving_gantry_flag = tbd_controller.move_gantry([trajectory[3][1],trajectory[3][2]])
-
-            print("Elbow Angle: " + str(trajectory[3][3]))
-            print("Wrist Angle: " + str(trajectory[3][4]))
-            print("End Effector Angle: " + str(trajectory[3][5]))
-            done_moving_arm_flag = tbd_controller.move_arm([trajectory[3][3],trajectory[3][4],trajectory[3][5]])
-            while(done_moving_arm_flag != True):
-                done_moving_arm_flag = tbd_controller.move_arm([trajectory[3][3],trajectory[3][4],trajectory[3][5]])
-
-            tbd_controller.pump_switch("off")
-
-            print("X Gantry: " + str(trajectory[4][1]))
-            print("Z Gantry: " + str(trajectory[4][2]))
-            done_moving_gantry_flag = tbd_controller.move_gantry([trajectory[4][1],trajectory[4][2]])
-            while(done_moving_gantry_flag != True):
-                done_moving_gantry_flag = tbd_controller.move_gantry([trajectory[4][1],trajectory[4][2]])
-
-            print("Elbow Angle: " + str(trajectory[4][3]))
-            print("Wrist Angle: " + str(trajectory[4][4]))
-            print("End Effector Angle: " + str(trajectory[4][5]))
-            done_moving_arm_flag = tbd_controller.move_arm([trajectory[4][3],trajectory[4][4],trajectory[4][5]])
-            while(done_moving_arm_flag != True):
-                done_moving_arm_flag = tbd_controller.move_arm([trajectory[4][3],trajectory[4][4],trajectory[4][5]])
-
-            print("X Gantry: " + str(trajectory[5][1]))
-            print("Z Gantry: " + str(trajectory[5][2]))
-            done_moving_gantry_flag = tbd_controller.move_gantry([trajectory[5][1],trajectory[5][2]])
-            while(done_moving_gantry_flag != True):
-                done_moving_gantry_flag = tbd_controller.move_gantry([trajectory[5][1],trajectory[5][2]])
-
-            print("Elbow Angle: " + str(trajectory[5][3]))
-            print("Wrist Angle: " + str(trajectory[5][4]))
-            print("End Effector Angle: " + str(trajectory[5][5]))
-            done_moving_arm_flag = tbd_controller.move_arm([trajectory[5][3],trajectory[5][4],trajectory[5][5]])
-            while(done_moving_arm_flag != True):
-                done_moving_arm_flag = tbd_controller.move_arm([trajectory[5][3],trajectory[5][4],trajectory[5][5]])
-
-            current_angle = tbd_cv.get_station_info_pi()
-            print(current_angle)
+            tbd_controller.reset_robot()
+            done_homing_flag = tbd_controller.home_robot()
+            while(done_homing_flag != True):
+                done_homing_flag = tbd_controller.home_robot()
 
     f.close()

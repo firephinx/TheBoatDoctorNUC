@@ -1,22 +1,21 @@
 digraph G {
-"Kinectv2_measure" -> "my_base_rgb_optical_frame"[label="Broadcaster: /kinect2\nAverage rate: 94.951 Hz\nMost recent transform: 1522868998.103 ( -0.016 sec old)\nBuffer length: 4.992 sec\n"];
-"Kinectv2_measure" -> "my_base_link"[label="Broadcaster: /kinect_base\nAverage rate: 10.181 Hz\nMost recent transform: 1522868998.143 ( -0.056 sec old)\nBuffer length: 4.813 sec\n"];
-"my_base_rgb_optical_frame" -> "my_base_ir_optical_frame"[label="Broadcaster: /kinect2\nAverage rate: 85.860 Hz\nMost recent transform: 1522868998.061 ( 0.026 sec old)\nBuffer length: 4.950 sec\n"];
-"Kinectv2" -> "Kinectv2_adjust"[label="Broadcaster: /kinectCAD_to_KinectCAD2\nAverage rate: 10.168 Hz\nMost recent transform: 1522868998.164 ( -0.078 sec old)\nBuffer length: 4.917 sec\n"];
-"XGantry" -> "Kinectv2"[label="Broadcaster: /rob_st_pub\nAverage rate: 10000.000 Hz\nMost recent transform: 0.000 ( 1522868998.086 sec old)\nBuffer length: 0.000 sec\n"];
-"Kinectv2_adjust" -> "Kinectv2_measure"[label="Broadcaster: /kinectCAD_to_kinectMeasure\nAverage rate: 10.183 Hz\nMost recent transform: 1522868998.162 ( -0.075 sec old)\nBuffer length: 4.910 sec\n"];
-"map" -> "world"[label="Broadcaster: /bring_to_map\nAverage rate: 10.179 Hz\nMost recent transform: 1522868998.089 ( -0.003 sec old)\nBuffer length: 4.814 sec\n"];
-"XGantry" -> "IK_reference"[label="Broadcaster: /ZGantry_midPoint\nAverage rate: 10.183 Hz\nMost recent transform: 1522868998.113 ( -0.026 sec old)\nBuffer length: 4.812 sec\n"];
-"Turntable" -> "XGantry"[label="Broadcaster: /rob_st_pub\nAverage rate: 10.208 Hz\nMost recent transform: 1522868998.064 ( 0.022 sec old)\nBuffer length: 4.800 sec\n"];
-"world" -> "Locomotion"[label="Broadcaster: /rob_st_pub\nAverage rate: 10000.000 Hz\nMost recent transform: 0.000 ( 1522868998.086 sec old)\nBuffer length: 0.000 sec\n"];
-"Locomotion" -> "Turntable"[label="Broadcaster: /rob_st_pub\nAverage rate: 10.208 Hz\nMost recent transform: 1522868998.064 ( 0.022 sec old)\nBuffer length: 4.800 sec\n"];
-"XGantry" -> "ZGantry_to_arm"[label="Broadcaster: /rob_st_pub\nAverage rate: 10.208 Hz\nMost recent transform: 1522868998.064 ( 0.022 sec old)\nBuffer length: 4.800 sec\n"];
-"ZGantry_to_arm" -> "arm_link"[label="Broadcaster: /rob_st_pub\nAverage rate: 10.208 Hz\nMost recent transform: 1522868998.064 ( 0.022 sec old)\nBuffer length: 4.800 sec\n"];
-"arm_link" -> "end_effctor_link"[label="Broadcaster: /rob_st_pub\nAverage rate: 10.208 Hz\nMost recent transform: 1522868998.064 ( 0.022 sec old)\nBuffer length: 4.800 sec\n"];
-"end_effctor_link" -> "end_effctor"[label="Broadcaster: /rob_st_pub\nAverage rate: 10.208 Hz\nMost recent transform: 1522868998.064 ( 0.022 sec old)\nBuffer length: 4.800 sec\n"];
-"my_base_rgb_optical_frame" -> "actuator"[label="Broadcaster: /kinect_node_4298_1522868883845\nAverage rate: 1.582 Hz\nMost recent transform: 1522868997.449 ( 0.638 sec old)\nBuffer length: 3.793 sec\n"];
+"XGantry" -> "Kinectv2"[label="Broadcaster: /rob_st_pub\nAverage rate: 10000.000 Hz\nMost recent transform: 0.000 ( 1523438175.667 sec old)\nBuffer length: 0.000 sec\n"];
+"Turntable" -> "XGantry"[label="Broadcaster: /rob_st_pub\nAverage rate: 10.204 Hz\nMost recent transform: 1523438175.653 ( 0.014 sec old)\nBuffer length: 4.900 sec\n"];
+"world" -> "Locomotion"[label="Broadcaster: /rob_st_pub\nAverage rate: 10000.000 Hz\nMost recent transform: 0.000 ( 1523438175.667 sec old)\nBuffer length: 0.000 sec\n"];
+"map" -> "world"[label="Broadcaster: /bring_to_map\nAverage rate: 10.191 Hz\nMost recent transform: 1523438175.695 ( -0.028 sec old)\nBuffer length: 4.906 sec\n"];
+"Kinectv2_measure" -> "my_base_rgb_optical_frame"[label="Broadcaster: /kinect2\nAverage rate: 107.520 Hz\nMost recent transform: 1523438175.721 ( -0.054 sec old)\nBuffer length: 5.032 sec\n"];
+"Kinectv2_measure" -> "my_base_link"[label="Broadcaster: /kinect_base\nAverage rate: 10.190 Hz\nMost recent transform: 1523438175.733 ( -0.066 sec old)\nBuffer length: 4.907 sec\n"];
+"my_base_rgb_optical_frame" -> "my_base_ir_optical_frame"[label="Broadcaster: /kinect2\nAverage rate: 98.840 Hz\nMost recent transform: 1523438175.657 ( 0.010 sec old)\nBuffer length: 4.968 sec\n"];
+"Kinectv2" -> "Kinectv2_adjust"[label="Broadcaster: /kinectCAD_to_KinectCAD2\nAverage rate: 10.190 Hz\nMost recent transform: 1523438175.706 ( -0.038 sec old)\nBuffer length: 4.907 sec\n"];
+"Kinectv2_adjust" -> "Kinectv2_measure"[label="Broadcaster: /kinectCAD_to_kinectMeasure\nAverage rate: 10.191 Hz\nMost recent transform: 1523438175.712 ( -0.044 sec old)\nBuffer length: 4.906 sec\n"];
+"XGantry" -> "IK_reference"[label="Broadcaster: /ZGantry_midPoint\nAverage rate: 10.190 Hz\nMost recent transform: 1523438175.747 ( -0.080 sec old)\nBuffer length: 4.907 sec\n"];
+"Locomotion" -> "Turntable"[label="Broadcaster: /rob_st_pub\nAverage rate: 10.204 Hz\nMost recent transform: 1523438175.653 ( 0.014 sec old)\nBuffer length: 4.900 sec\n"];
+"XGantry" -> "ZGantry_to_arm"[label="Broadcaster: /rob_st_pub\nAverage rate: 10.204 Hz\nMost recent transform: 1523438175.653 ( 0.014 sec old)\nBuffer length: 4.900 sec\n"];
+"ZGantry_to_arm" -> "arm_link"[label="Broadcaster: /rob_st_pub\nAverage rate: 10.204 Hz\nMost recent transform: 1523438175.653 ( 0.014 sec old)\nBuffer length: 4.900 sec\n"];
+"arm_link" -> "end_effctor_link"[label="Broadcaster: /rob_st_pub\nAverage rate: 10.204 Hz\nMost recent transform: 1523438175.653 ( 0.014 sec old)\nBuffer length: 4.900 sec\n"];
+"end_effctor_link" -> "end_effctor"[label="Broadcaster: /rob_st_pub\nAverage rate: 10.204 Hz\nMost recent transform: 1523438175.653 ( 0.014 sec old)\nBuffer length: 4.900 sec\n"];
 edge [style=invis];
  subgraph cluster_legend { style=bold; color=black; label ="view_frames Result";
-"Recorded at time: 1522868998.086"[ shape=plaintext ] ;
+"Recorded at time: 1523438175.667"[ shape=plaintext ] ;
  }->"map";
 }

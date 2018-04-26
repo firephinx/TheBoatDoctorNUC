@@ -6,8 +6,8 @@
 		
 
 		<!-- adjust realworld calibration --> 
+		<!--<node pkg="tf" type="static_transform_publisher" name="kinectCAD_to_KinectCAD2" args="0.11 0.08 0.18 0 0 0  /Kinectv2 /Kinectv2_adjust  100"/> -->
 		<node pkg="tf" type="static_transform_publisher" name="kinectCAD_to_KinectCAD2" args="0.11 0.08 0.18 0 0 0  /Kinectv2 /Kinectv2_adjust  100"/>
-
 
 
 		<!-- First transformation CAD model coordiante to a custom defined measure coordinate-->		
@@ -23,11 +23,12 @@
 
 
 		<!-- Define mid point of ZGantry as robot reference point for IK -->
-		<node pkg="tf" type="static_transform_publisher" name="ZGantry_midPoint" args="0 0 0.278085 0 1.57 0  /XGantry /IK_reference  100"/> 
+		<!-- <node pkg="tf" type="static_transform_publisher" name="ZGantry_midPoint" args="0 0 0.278085 0 1.57 0  /XGantry /IK_reference  100"/> -->
 
+		<node pkg="tf" type="static_transform_publisher" name="ZGantry_midPoint" args="-0.035243 0 0.095746 0 1.57 0  /XGantry /IK_reference  100"/>
 
 		<node pkg="robot_state_publisher" type="robot_state_publisher" name="rob_st_pub">
-			<remap from="joint_states" to="joint_states_IK"/>
+		<!--	<remap from="joint_states" to="joint_states_IK"/> -->
 		</node>
 
 
@@ -35,4 +36,8 @@
         <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
 		<param name="_use_gui" value="true"/>
 		</node>	
+
+		
+
+
 </launch>

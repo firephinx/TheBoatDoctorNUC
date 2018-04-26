@@ -217,6 +217,7 @@ class image_converter:
   	### This function process depth and RGB images to get x,y,z info of an interested obj 
   		#print (4)
   		error=0
+  		print "in img_proc"
   		if self.depth_stream is not None and self.color_stream is not None and self.camera_info is not None:
 			self.depth_stream.encoding='mono16'
 			cv_depth=self.bridge.imgmsg_to_cv2(self.depth_stream,desired_encoding='mono16')  ## distance (mm) coded in UC161 (or mono16)

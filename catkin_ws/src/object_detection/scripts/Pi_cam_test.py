@@ -8,7 +8,7 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 import numpy as np
 from rgb_processing import pi_cam_process 
-
+import time 
 
 
 from object_detection.srv import *
@@ -40,6 +40,7 @@ class image_converter:
     #self.out = cv2.VideoWriter('outpy.avi',cv2.VideoWriter_fourcc('X','V','I','D'), 10, (270,480))
     #fourcc = cv2.VideoWriter_fourcc(*'XVID')
     #self.out = cv2.VideoWriter('output.avi',fourcc, 20.0, (640,480))
+    print "im in PI_cam_test"
     self.collect_data=0 
     self.imageNum=869 
     self.bridge = CvBridge()
@@ -59,6 +60,7 @@ class image_converter:
   def RGB_proc(self,RGB_stream):
     try:
       #data.encoding='mono16'
+      print "im in RGB_proc"
       cv_image = self.bridge.imgmsg_to_cv2(RGB_stream, desired_encoding="bgr8")
       ####### after new mount, comment out the two lines below ####### 
       #cv_image=cv2.flip(cv_image,0)  ## flip image horizontally 
@@ -109,6 +111,7 @@ class image_converter:
           print "Final value",final_value
           Final_value=String() 
           Final_value.data=final_value
+          #time.sleep(0.01)
           self.status_pub.publish(Final_value)  ## publish angle 
           self.values=[]  ##  reset 
           print "shutdown a node"

@@ -19,7 +19,8 @@ class TheBoatDoctorCV():
 
 		self.data=None
 		self.firstCall=1
-
+		self.firstCall_pi=1
+		#self.type=Type
 		if(Type == 'V1'):
 			self.type = 3
 		elif(Type == 'V2'):
@@ -40,7 +41,7 @@ class TheBoatDoctorCV():
 			#os.system("gnome-terminal -e 'rosrun object_detection pi_cam_client.py --type 3'") ## call rosservice in a new terminal
 			os.system(command) ## call rosservice in a new terminal 
 			time.sleep(0.01) ## give time for os to start 
-			self.firstCall==0
+			self.firstCall=0
 			print 3
 			msg = rospy.wait_for_message('/kinect2/actuator_location', Float32MultiArray) ## message received from publish topic in kinect 
  			#msg = rospy.wait_for_message('test',Bool)
@@ -87,23 +88,24 @@ class TheBoatDoctorCV():
 
  	def get_station_info_pi(self):
  		Type=str(self.type)
- 		print 1
-		command="xterm -hold -e 'rosrun object_detection pi_cam_client.py --type {0}'".format(Type)
+ 		#print 1
+		command="gnome-terminal -e 'rosrun object_detection pi_cam_client.py --type {0}'".format(Type)
 		#print command
 		#command="xterm -hold -e 'source /home/theboatdoctor-nuc/.bashrc && rosservice call /raspicam_service/actuator_status {0}'".format(Type)		
-		print 2
-		if self.firstCall==1:
+		#print 2
+		if self.firstCall_pi==1:
 			print "im here"
 			os.system(command) ## call rosservice in a new terminal 
+			print "im here 2"
 			time.sleep(0.01)
-			self.firstCall==0
+			self.firstCall_pi=0
 			print 3
-			msg = rospy.wait_for_message('/raspicam_node/actuator_status',String) ## message received from publish topic in kinect 
+			msg = rospy.wait_for_message('/raspicam_node/actuator_status',String) ## message received from publish topic in raspcam
  			self.data=msg.data
- 			print 4
+ 			print self.data
  			command="/home/theboatdoctor-nuc/TheBoatDoctorNUC/catkin_ws/src/object_detection/scripts/pi_cam_client.py --type {0}".format(Type)
  			pid=check_output(["pidof","python",command]) 
- 			os.kill(int(pid.split(" ")[1]), signal.SIGKILL)
+ 			os.kill(int(pid.split(" ")[0]), signal.SIGKILL)
 
  			if len(self.data)==1:
  				return 10000  ### error msg 
@@ -121,6 +123,7 @@ class TheBoatDoctorCV():
 
 if __name__=="__main__":
 	detector=TheBoatDoctorCV(1)
-	location=detector.get_actuator_location()
+	location=detector.get_station_info_pi()
+	#location=detector.get_station_info_kinect()
 	print location
 	print "finished"

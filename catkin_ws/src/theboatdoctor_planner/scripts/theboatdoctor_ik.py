@@ -10,18 +10,14 @@ def m_to_in(n):
 def in_to_m(n):
         return n*0.0254
 
-def cam_to_ik(cam_coord):
-    r_y_90 = np.array([ [0, 0, 1], [0, 1, 0], [-1, 0, 0] ])
-    return r_y_90.dot(cam_coord)
-
 class TheBoatDoctorIK:
 
     def __init__(self):
         # arm lengths in inches
         self.l1 = 8.125
         self.l2 = 10.5
-        self.l3_vert = 7.5
-        self.l3_horz = 7.5
+        self.l3_vert = 6.75
+        self.l3_horz = 6.75
         self.base_height = 6
         self.base_width = 2
 
@@ -44,9 +40,9 @@ class TheBoatDoctorIK:
         cam_coord = np.array([x_cam, y_cam, z_cam])
 
         if(station_orientation == "vertical"):
-            return self.calc_ik_vert(cam_to_ik(m_to_in(cam_coord)))
+            return self.calc_ik_vert(m_to_in(cam_coord))
         elif(station_orientation == "horizontal"):
-            return self.calc_ik_horz(cam_to_ik(m_to_in(cam_coord)))
+            return self.calc_ik_horz(m_to_in(cam_coord))
         else:
             print("Station orientation was not provided.")
             return [0,0,0,0,0,0]

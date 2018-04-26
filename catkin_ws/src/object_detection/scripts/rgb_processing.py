@@ -132,17 +132,17 @@ class rgb_process(object):
 		img_hsv=cv2.cvtColor(img,cv2.COLOR_BGR2HSV)
 		#print 2
 		##### helper line ######
-		cv2.imshow("result1",img_hsv)
-		cv2.waitKey(20)
+		# cv2.imshow("result1",img_hsv)
+		# cv2.waitKey(20)
 		#########################
 		mask=cv2.inRange(img_hsv,low_th,high_th) 
 		#cv2.imshow("result2",mask)
 		#cv2.waitKey(200)
 		#print 3
 		##### helper line ########
-		img=cv2.bitwise_and(img_hsv,img_hsv,mask=mask)
-		cv2.imshow("result2",img)
-		cv2.waitKey(20)
+		# img=cv2.bitwise_and(img_hsv,img_hsv,mask=mask)
+		# cv2.imshow("result2",img)
+		# cv2.waitKey(20)
 		#######################
 		return mask 
 
@@ -708,11 +708,11 @@ class kinect_process(rgb_process):
 		mask=self.th_hsv(img,low_th,high_th)
 		target_mask=self.findTarget(mask,area_th)
 		##### helper line ###############
-		if target_mask is not None:
-			mask_final=np.uint8(target_mask)
-			masked_img=cv2.bitwise_and(img,img,mask=mask_final)
-			cv2.imshow("result4",masked_img)
-			cv2.waitKey(20)
+		# if target_mask is not None:
+		# 	mask_final=np.uint8(target_mask)
+		# 	masked_img=cv2.bitwise_and(img,img,mask=mask_final)
+		# 	cv2.imshow("result4",masked_img)
+		# 	cv2.waitKey(20)
 		#############################
 		return target_mask
 
@@ -809,11 +809,11 @@ class kinect_process(rgb_process):
 		mask_final=np.uint8(mask)
 		target_mask=self.findTarget(mask,area_th)
 		##### helper line ###########
-		if target_mask is not None:
-			mask_final=np.uint8(target_mask)
-			masked_img=cv2.bitwise_and(img,img,mask=mask_final)
-			cv2.imshow("result4",masked_img)
-			cv2.waitKey(20)
+		# if target_mask is not None:
+		# 	mask_final=np.uint8(target_mask)
+		# 	masked_img=cv2.bitwise_and(img,img,mask=mask_final)
+		# 	cv2.imshow("result4",masked_img)
+		# 	cv2.waitKey(20)
 		#############################
 		return target_mask
 
@@ -939,10 +939,11 @@ class pi_cam_process(rgb_process):
 		  		#cv2.waitKey(200)
 		  	
 			#### helper line ###############
-			# mask_final=np.uint8(target_mask)
-			# masked_img=cv2.bitwise_and(img,img,mask=mask_final)
-			# cv2.imshow("result4",masked_img)
-			# cv2.waitKey(20)
+			# if target_mask is not None:
+			# 	mask_final=np.uint8(target_mask)
+			# 	masked_img=cv2.bitwise_and(img,img,mask=mask_final)
+			# 	cv2.imshow("result4",masked_img)
+			# 	cv2.waitKey(20)
 			###############################
 			
 
@@ -958,8 +959,8 @@ class pi_cam_process(rgb_process):
 			####### input: RGB image 
 			#cv2.imshow("result4",img)
 			#cv2.waitKey(0)
-			low_th=np.array([30,80,80])
-			high_th=np.array([80,130,130])
+			low_th=np.array([30,30,30])
+			high_th=np.array([100,140,100])
 			mask=self.th_hsv(img,low_th,high_th)
 			target_mask=self.findTarget(mask,area_th)
 			if target_mask is None:
@@ -991,7 +992,7 @@ class pi_cam_process(rgb_process):
 			#cv2.imshow("result4",img)
 			#cv2.waitKey(0)
 			low_th=np.array([0,100,80])
-			high_th=np.array([255,200,200])
+			high_th=np.array([100,200,200])   ### b: 0 - 250 was also good 
 			mask=self.th_hsv(img,low_th,high_th)
 			target_mask=self.findTarget(mask,area_th)
 			
@@ -1005,10 +1006,11 @@ class pi_cam_process(rgb_process):
 		  		#cv2.waitKey(200)
 		  	##### helper line ###############
 		  	#print 1
-			# mask_final=np.uint8(target_mask)
-			# masked_img=cv2.bitwise_and(img,img,mask=mask_final)
-			# cv2.imshow("masked_img",masked_img)
-			# cv2.waitKey(0)
+		  # 	if target_mask is not None:
+				# mask_final=np.uint8(target_mask)
+				# masked_img=cv2.bitwise_and(img,img,mask=mask_final)
+				# cv2.imshow("masked_img",masked_img)
+				# cv2.waitKey(20)
 			###############################
 		  	return target_mask
 
