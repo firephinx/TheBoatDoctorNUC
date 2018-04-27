@@ -5,11 +5,10 @@ import math
 from theboatdoctor_controller import TheBoatDoctorController
 from theboatdoctor_ik import TheBoatDoctorIK
 from theboatdoctor_cv import TheBoatDoctorCV
-import basic_utils
 
 #All measurements in meters and radians
 
-class TheBoatDoctorController:
+class TheBoatDoctorPlanner:
     def __init__(self):
         ## Tuning Parameters
 
@@ -64,7 +63,11 @@ class TheBoatDoctorController:
         self.done_moving_gantry_flag = False
         self.done_moving_arm_flag = False
 
-        self.current_base_position = self.tbd_controller.get_current_position()
+        self.current_base_position = self.tbd_controller.get_current_base_position()
+
+    def cam_to_ik(self, cam_coord):
+        r_y_90 = numpy.array([ [0, 0, 1], [0, 1, 0], [-1, 0, 0] ])
+        return r_y_90.dot(cam_coord)
 
     def get_station_base_coords(self, station):
         print("Station: " + station)
@@ -119,12 +122,12 @@ class TheBoatDoctorController:
     def home_robot(self):
         print("Homing robot")
         self.done_homing_flag = self.tbd_controller.home_robot()
-        while(done_homing_flag != True):
+        while(self.done_homing_flag != True):
             self.done_homing_flag = self.tbd_controller.home_robot()
 
     def home_arm(self):
         print("Homing arm")
-        tbd_controller.home_arm()
+        self.tbd_controller.home_arm()
 
     def print_current_base_position(self):
         self.current_base_position = self.tbd_controller.get_current_base_position()
@@ -148,9 +151,9 @@ class TheBoatDoctorController:
 
     def turn_turntable(self, desired_turntable_degree):
         desired_turntable_theta = math.radians(desired_turntable_degree)
-        done_turning_turntable_flag = tbd_controller.turn_turntable(desired_turntable_theta)
-        while(done_turning_turntable_flag != True):
-            done_turning_turntable_flag = tbd_controller.turn_turntable(desired_turntable_theta)
+        self.done_turning_turntable_flag = self.tbd_controller.turn_turntable(desired_turntable_theta)
+        while(self.done_turning_turntable_flag != True):
+            self.done_turning_turntable_flag = self.tbd_controller.turn_turntable(desired_turntable_theta)
 
     def print_current_turntable_degree(self):
         self.current_turntable_degree = self.tbd_controller.get_current_turntable_degree()
@@ -160,7 +163,7 @@ class TheBoatDoctorController:
         self.print_current_turntable_degree()
 
         # fetch the station turntable degree
-        station_turntable_degree = get_station_turntable_degree(station)
+        station_turntable_degree = self.get_station_turntable_degree(station)
         
         self.turn_turntable(station_turntable_degree)
         
@@ -172,7 +175,7 @@ class TheBoatDoctorController:
     def set_actuations(self, actuations):
         self.actuations = actuations
 
-    def start_vision(self, actuator):
+    def start_vision(self):
         self.tbd_cv = TheBoatDoctorCV(self.actuator)
 
     def position_arm_for_vision(self):
@@ -183,7 +186,7 @@ class TheBoatDoctorController:
 
         print("Station object position in 3D camera coordinates: " + str(self.station_object_position_in_3d_camera_coordinates))
         print("Station orientation: " + self.station_orientation)
-        self.station_object_position_in_3d_robot_coordinates = cam_to_ik(numpy.array(self.station_object_position_in_3d_camera_coordinates))
+        self.station_object_position_in_3d_robot_coordinates = self.cam_to_ik(numpy.array(self.station_object_position_in_3d_camera_coordinates))
         print("Station object position in 3D robot coordinates: " + str(self.station_object_position_in_3d_robot_coordinates))
 
     ######### TODO: Make Better for all stations
@@ -199,7 +202,6 @@ class TheBoatDoctorController:
                     self.raspberry_pi_camera_position[2] = self.raspberry_pi_camera_position[2] + self.raspberry_pi_camera_horizontal_station_v1_z_offset
             else:
                 print("Station orientation was not provided.")
-                break
 
             self.joint_angles_for_raspberry_pi_camera_position = numpy.zeros([1,6])
 
@@ -234,7 +236,6 @@ class TheBoatDoctorController:
                 self.raspberry_pi_camera_position[2] = self.raspberry_pi_camera_position[2] + self.raspberry_pi_camera_vertical_station_v2_z_offset
             else:
                 print("Station orientation was not provided.")
-                break
 
             self.joint_angles_for_raspberry_pi_camera_position = numpy.zeros([1,6])
 
@@ -267,7 +268,6 @@ class TheBoatDoctorController:
                     self.raspberry_pi_camera_position[2] = self.raspberry_pi_camera_position[2] + self.raspberry_pi_camera_horizontal_station_v3_z_offset
             else:
                 print("Station orientation was not provided.")
-                break
 
             self.joint_angles_for_raspberry_pi_camera_position = numpy.zeros([1,6])
 
@@ -312,9 +312,9 @@ class TheBoatDoctorController:
 
     def move_arm(self, desired_arm_thetas):
         print("Desired Arm Angles: " + str(desired_arm_thetas))
-        self.done_moving_arm_flag = tbd_controller.move_arm(desired_arm_thetas)
+        self.done_moving_arm_flag = self.tbd_controller.move_arm(desired_arm_thetas)
         while(self.done_moving_arm_flag != True):
-            self.done_moving_arm_flag = tbd_controller.move_arm(desired_arm_thetas)
+            self.done_moving_arm_flag = self.tbd_controller.move_arm(desired_arm_thetas)
 
     def move_to_raspberry_pi_camera_position(self):
 
@@ -339,7 +339,7 @@ class TheBoatDoctorController:
                 self.desired_station_angle = self.current_station_angle + (self.degree * math.pi / 180)
 
                 if(abs(self.desired_station_angle - self.current_station_angle) < self.angle_threshold):
-                    continue
+                    return
                 else:
                     self.trajectory[3][5] = self.desired_station_angle - self.current_station_angle
                     self.trajectory[4][5] = self.desired_station_angle - self.current_station_angle
@@ -348,7 +348,7 @@ class TheBoatDoctorController:
                 self.desired_station_angle = self.current_station_angle - (degree * math.pi / 180)
 
                 if(abs(self.desired_station_angle - self.current_station_angle) < self.angle_threshold):
-                        continue
+                    return
                 else:
                     self.trajectory[3][5] = self.desired_station_angle - self.current_station_angle
                     self.trajectory[4][5] = self.desired_station_angle - self.current_station_angle
@@ -362,7 +362,7 @@ class TheBoatDoctorController:
                     self.desired_station_angle = -(math.pi / 2)
 
                     if(abs(self.desired_station_angle - self.current_station_angle) < self.angle_threshold):
-                        continue
+                        return
                     else:
                         self.trajectory[3][5] = self.desired_station_angle - self.current_station_angle
                         self.trajectory[4][5] = self.desired_station_angle - self.current_station_angle
@@ -372,7 +372,7 @@ class TheBoatDoctorController:
                     self.desired_station_angle = 0
 
                     if(abs(self.desired_station_angle - self.current_station_angle) < self.angle_threshold):
-                        continue
+                        return
                     else:
                         self.trajectory[3][5] = self.desired_station_angle - self.current_station_angle
                         self.trajectory[4][5] = self.desired_station_angle - self.current_station_angle
@@ -383,7 +383,7 @@ class TheBoatDoctorController:
                     self.desired_station_angle = 0
 
                     if(abs(self.desired_station_angle - self.current_station_angle) < self.angle_threshold):
-                        continue
+                        return
                     else:
                         self.trajectory[3][5] = self.desired_station_angle - self.current_station_angle
                         self.trajectory[4][5] = self.desired_station_angle - self.current_station_angle
@@ -393,7 +393,7 @@ class TheBoatDoctorController:
                     self.desired_station_angle = (math.pi / 2)
 
                     if(abs(self.desired_station_angle - self.current_station_angle) < self.angle_threshold):
-                        continue
+                        return
                     else:
                         self.trajectory[3][5] = self.desired_station_angle - self.current_station_angle
                         self.trajectory[4][5] = self.desired_station_angle - self.current_station_angle
@@ -410,11 +410,11 @@ class TheBoatDoctorController:
         self.move_arm([self.trajectory[3][3], self.trajectory[3][4], self.trajectory[3][5]])
 
     def turn_on_pump(self):
-        tbd_controller.pump_switch("on")
+        self.tbd_controller.pump_switch("on")
         rospy.sleep(1)
 
     def turn_off_pump(self):
-        tbd_controller.pump_switch("off")
+        self.tbd_controller.pump_switch("off")
         rospy.sleep(1)
 
     def return_to_raspberry_pi_camera_position(self):
@@ -434,4 +434,4 @@ class TheBoatDoctorController:
 
     def verify_task_is_completed(self):
 
-        return (abs(self.desired_station_angle - current_station_angle) < self.task_completion_degree_threshold)
+        return (self.actuator == "A" or self.actuator == "B" or (abs(self.desired_station_angle - current_station_angle) < self.task_completion_degree_threshold))

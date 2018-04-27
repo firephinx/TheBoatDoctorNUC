@@ -46,7 +46,7 @@ if __name__ == '__main__':
 
         tbd_planner.determine_station_position_and_orientation_using_kinect()
 
-        tbd_planner.generate_waypoints_using_ik()
+        tbd_planner.generate_robot_trajectory_using_ik()
 
         tbd_planner.move_to_raspberry_pi_camera_position()
 
@@ -69,7 +69,7 @@ if __name__ == '__main__':
 
         tbd_planner.determine_station_orientation_using_raspberry_pi_camera_2()
 
-        while(!tbd_planner.verify_task_is_completed()):
+        while(tbd_planner.verify_task_is_completed() != True):
             tbd_planner.update_waypoints_with_mission_goal()
 
             tbd_planner.move_to_station_object()
