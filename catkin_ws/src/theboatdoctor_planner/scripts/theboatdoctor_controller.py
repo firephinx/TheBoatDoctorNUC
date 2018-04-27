@@ -40,8 +40,8 @@ class TheBoatDoctorController:
 
 	def reset_robot(self):
 		empty_msg = Empty()
+
 		self.reset_pub.publish(empty_msg)
-		rospy.sleep(0.01)
 		self.reset_pub.publish(empty_msg)
 
 	def home_arm(self):
@@ -52,9 +52,10 @@ class TheBoatDoctorController:
 
 	def home_robot(self):
 		empty_msg = Empty()
+
 		self.home_pub.publish(empty_msg)
-		rospy.sleep(0.001)
 		self.home_pub.publish(empty_msg)
+
 		try:
 			done_homing_msg = rospy.wait_for_message('/TheBoatDoctor/done_homing', Bool, timeout = 30)
 			return done_homing_msg.data and self.home_arm()
@@ -66,9 +67,12 @@ class TheBoatDoctorController:
 		pose_2d_msg.x = round(desired_robot_base_position[0], 4)
 		pose_2d_msg.y = round(desired_robot_base_position[1], 4)
 		pose_2d_msg.theta = desired_robot_base_position[2]
+
 		self.move_robot_base_pub.publish(pose_2d_msg)
+		self.move_robot_base_pub.publish(pose_2d_msg)
+
 		try:
-			done_moving_robot_base_msg = rospy.wait_for_message('/TheBoatDoctor/done_moving_robot_base', Bool, timeout = 10)
+			done_moving_robot_base_msg = rospy.wait_for_message('/TheBoatDoctor/done_moving_robot_base', Bool, timeout = 30)
 			return done_moving_robot_base_msg.data
 		except:
 			return False
@@ -77,9 +81,10 @@ class TheBoatDoctorController:
 		pose_2d_msg = Pose2D()
 		pose_2d_msg.x = round(desired_gantry_position[0], 4)
 		pose_2d_msg.y = round(desired_gantry_position[1], 4)
+
 		self.move_gantry_pub.publish(pose_2d_msg)
-		rospy.sleep(0.001)
 		self.move_gantry_pub.publish(pose_2d_msg)
+
 		try:
 			done_moving_gantry_msg = rospy.wait_for_message('/TheBoatDoctor/done_moving_gantry', Bool, timeout = 30)
 			return done_moving_gantry_msg.data
@@ -89,9 +94,10 @@ class TheBoatDoctorController:
 	def turn_turntable(self, desired_theta):
 		pose_2d_msg = Pose2D()
 		pose_2d_msg.theta = round(desired_theta, 4)
+
 		self.turn_turntable_pub.publish(pose_2d_msg)
-		rospy.sleep(0.001)
 		self.turn_turntable_pub.publish(pose_2d_msg)
+
 		try:
 			done_turning_turntable_msg = rospy.wait_for_message('/TheBoatDoctor/done_turning_turntable', Bool, timeout = 5)
 			return done_turning_turntable_msg.data
@@ -102,7 +108,10 @@ class TheBoatDoctorController:
 		joint_state_msg = JointState()
 		joint_state_msg.name = ['elbow','wrist','end effector']
 		joint_state_msg.position = [desired_arm_angles[0], desired_arm_angles[1], desired_arm_angles[2]]
+
 		self.move_arm_pub.publish(joint_state_msg)
+		self.move_arm_pub.publish(joint_state_msg)
+
 		try:
 			done_moving_arm_msg = rospy.wait_for_message('TheBoatDoctor/done_moving_arm', Bool, timeout = 5)
 			return done_moving_arm_msg.data
@@ -110,32 +119,41 @@ class TheBoatDoctorController:
 			return False
 
 	def get_current_base_position(self):
-		pose_2d_msg = rospy.wait_for_message('/TheBoatDoctor/ultrasonic_pose', Pose2D, timeout = 1)
-		current_base_position = [pose_2d_msg.x,pose_2d_msg.y,pose_2d_msg.theta]
-		return current_base_position
+		try:
+			pose_2d_msg = rospy.wait_for_message('/TheBoatDoctor/ultrasonic_pose', Pose2D, timeout = 3)
+			current_base_position = [pose_2d_msg.x,pose_2d_msg.y,pose_2d_msg.theta]
+			return current_base_position
+		except:
+			return [0.0, 0.0, 0.0]
 
 	def get_current_turntable_degree(self):
-		joint_state_msg = rospy.wait_for_message('/TheBoatDoctor/joint_states', JointState, timeout = 1)
-		turntable_ind = 0
-		for i in xrange(len(joint_state_msg.name)):
-			if(joint_state_msg.name[i] == 'turntable'):
-				turntable_ind = i
-				break
-			else:
-				i = i + 1
-		return math.degrees(joint_state_msg.position[turntable_ind])
+		try:
+			joint_state_msg = rospy.wait_for_message('/TheBoatDoctor/joint_states', JointState, timeout = 3)
+			turntable_ind = 0
+			for i in xrange(len(joint_state_msg.name)):
+				if(joint_state_msg.name[i] == 'turntable'):
+					turntable_ind = i
+					break
+				else:
+					i = i + 1
+			return math.degrees(joint_state_msg.position[turntable_ind])
+		except:
+			return 0.0
 
 	def get_current_gantry_position(self):
-		joint_state_msg = rospy.wait_for_message('/TheBoatDoctor/joint_states', JointState, timeout = 1)
-		x_gantry_ind = 0
-		z_gantry_ind = 0
-		for i in xrange(len(joint_state_msg.name)):
-			if(joint_state_msg.name[i] == 'X_motion'):
-				x_gantry_ind = i
-			elif(joint_state_msg.name[i] == 'Z_motion'):
-				z_gantry_ind = i
-			i = i + 1
-		return [joint_state_msg.position[x_gantry_ind], joint_state_msg.position[z_gantry_ind]]
+		try:
+			joint_state_msg = rospy.wait_for_message('/TheBoatDoctor/joint_states', JointState, timeout = 3)
+			x_gantry_ind = 0
+			z_gantry_ind = 0
+			for i in xrange(len(joint_state_msg.name)):
+				if(joint_state_msg.name[i] == 'X_motion'):
+					x_gantry_ind = i
+				elif(joint_state_msg.name[i] == 'Z_motion'):
+					z_gantry_ind = i
+				i = i + 1
+			return [joint_state_msg.position[x_gantry_ind], joint_state_msg.position[z_gantry_ind]]
+		except:
+			return [0.0, 0.0]
 
 	def pump_switch(self, switch):
 		bool_msg = Bool()
@@ -146,7 +164,7 @@ class TheBoatDoctorController:
 		self.pump_pub.publish(bool_msg)
 		self.pump_pub.publish(bool_msg)
 		try:
-			pump_status_msg = rospy.wait_for_message('/TheBoatDoctor/pump_status', Bool, timeout = 1)
+			pump_status_msg = rospy.wait_for_message('/TheBoatDoctor/pump_status', Bool, timeout = 3)
 			return pump_status_msg.data
 		except:
 			return False
@@ -157,10 +175,12 @@ class TheBoatDoctorController:
 			bool_msg.data = True
 		else:
 			bool_msg.data = False
-		self.led.publish(bool_msg)
-		self.led.publish(bool_msg)
+
+		self.led_pub.publish(bool_msg)
+		self.led_pub.publish(bool_msg)
+
 		try:
-			led_status_msg = rospy.wait_for_message('/TheBoatDoctor/led_status', Bool, timeout = 1)
+			led_status_msg = rospy.wait_for_message('/TheBoatDoctor/led_status', Bool, timeout = 3)
 			return led_status_msg.data
 		except:
 			return False
