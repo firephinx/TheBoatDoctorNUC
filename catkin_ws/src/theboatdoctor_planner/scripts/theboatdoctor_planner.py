@@ -39,17 +39,16 @@ class TheBoatDoctorPlanner:
 
         ## Horizontal Station Offsets
         ## V1 Offsets
-        self.raspberry_pi_camera_horizontal_station_v1_x_offset = -0.2
-        self.raspberry_pi_camera_horizontal_station_v1_z_offset = -0.06
+        self.raspberry_pi_camera_horizontal_station_v1_x_offset = -0.06
+        self.raspberry_pi_camera_horizontal_station_v1_z_offset = 0.2
         self.horizontal_station_v1_goal_x_offset = -0.086
         self.horizontal_station_v1_goal_z_offset = 0.01
 
         ## V3 Offsets
-        self.raspberry_pi_camera_horizontal_station_v3_x_offset = -0.2
-        self.raspberry_pi_camera_horizontal_station_v3_z_offset = -0.06
+        self.raspberry_pi_camera_horizontal_station_v3_x_offset = -0.06
+        self.raspberry_pi_camera_horizontal_station_v3_z_offset = 0.2
         self.horizontal_station_v3_goal_x_offset = -0.086
         self.horizontal_station_v3_goal_z_offset = 0.01
-
 
         ## Thresholds
         self.angle_threshold = 3 * math.pi / 180
@@ -432,6 +431,9 @@ class TheBoatDoctorPlanner:
             self.current_station_angle = float(self.tbd_cv2.get_station_info_pi())
         print("Current Station Angle: " + str(self.current_station_angle))
 
+    def get_station_orientation(self):
+        return self.station_orientation
+
     def verify_task_is_completed(self):
 
-        return (self.actuator == "A" or self.actuator == "B" or (abs(self.desired_station_angle - current_station_angle) < self.task_completion_degree_threshold))
+        return (self.actuator == "A" or self.actuator == "B" or (abs(self.desired_station_angle - self.current_station_angle) < self.task_completion_degree_threshold))
