@@ -109,12 +109,12 @@ class TheBoatDoctorController:
 		except:
 			return False
 
-	def get_current_position(self):
+	def get_current_base_position(self):
 		pose_2d_msg = rospy.wait_for_message('/TheBoatDoctor/ultrasonic_pose', Pose2D, timeout = 1)
-		current_position = [pose_2d_msg.x,pose_2d_msg.y,pose_2d_msg.theta]
-		return current_position
+		current_base_position = [pose_2d_msg.x,pose_2d_msg.y,pose_2d_msg.theta]
+		return current_base_position
 
-	def get_current_turntable_position(self):
+	def get_current_turntable_degree(self):
 		joint_state_msg = rospy.wait_for_message('/TheBoatDoctor/joint_states', JointState, timeout = 1)
 		turntable_ind = 0
 		for i in xrange(len(joint_state_msg.name)):
@@ -123,7 +123,7 @@ class TheBoatDoctorController:
 				break
 			else:
 				i = i + 1
-		return joint_state_msg.position[turntable_ind]
+		return math.degrees(joint_state_msg.position[turntable_ind])
 
 	def get_current_gantry_position(self):
 		joint_state_msg = rospy.wait_for_message('/TheBoatDoctor/joint_states', JointState, timeout = 1)
