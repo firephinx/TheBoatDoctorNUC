@@ -97,6 +97,11 @@ class TheBoatDoctorIK:
             z_gan = self.z_gan_min
         z_arm = z - z_gan
 
+        print("z_gan: " + str(z_gan))
+        print("z_arm: " + str(z_arm))
+        print("l2: " + str(self.l2))
+        print("z_arm/self.l2 = " + str(z_arm/self.l2))
+
         # calc angles based on position
         theta1 = math.asin(z_arm/self.l2)
         theta2 = -theta1

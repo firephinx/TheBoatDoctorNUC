@@ -55,16 +55,19 @@ if __name__ == '__main__':
 
         tbd_planner.determine_station_orientation_using_raspberry_pi_camera()
 
+        tbd_planner.determine_mission_goal()
+
         tbd_planner.update_waypoints_with_mission_goal()
 
         if(tbd_planner.verify_task_is_completed()):
+            print("Task is already completed.")
             continue
 
         tbd_planner.move_to_station_object()
 
         tbd_planner.turn_on_pump()
 
-        tbd_planner.move_to_goal_position()
+        tbd_planner.actuate_end_effector()
 
         tbd_planner.turn_off_pump()
 
@@ -72,7 +75,10 @@ if __name__ == '__main__':
 
         tbd_planner.determine_station_orientation_using_raspberry_pi_camera_2()
 
-        while(tbd_planner.verify_task_is_completed() != True):
+        task_completed_flag = tbd_planner.verify_task_is_completed()
+
+        while(task_completed_flag == False):
+
             tbd_planner.update_waypoints_with_mission_goal()
 
             tbd_planner.move_to_station_object()
@@ -86,6 +92,12 @@ if __name__ == '__main__':
             tbd_planner.return_to_raspberry_pi_camera_position()
 
             tbd_planner.determine_station_orientation_using_raspberry_pi_camera_2()
+
+            task_completed_flag = tbd_planner.verify_task_is_completed()
+
+
+
+        print("Task is completed.")
 
 
         # if(actuator == "A" or actuator == "B"):

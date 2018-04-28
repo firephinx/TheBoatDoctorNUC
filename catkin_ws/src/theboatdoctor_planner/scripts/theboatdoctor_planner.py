@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import time
 import numpy
 import math
 from theboatdoctor_controller import TheBoatDoctorController
@@ -22,14 +23,14 @@ class TheBoatDoctorPlanner:
         ## V2 Offsets
         self.raspberry_pi_camera_vertical_station_v2_x_offset = -0.2
         self.raspberry_pi_camera_vertical_station_v2_z_offset = -0.06
-        self.vertical_station_v2_goal_x_offset = -0.086
-        self.vertical_station_v2_goal_z_offset = 0.01
+        self.vertical_station_v2_goal_x_offset = -0.075
+        self.vertical_station_v2_goal_z_offset = 0.02
 
         ## V3 Offsets
-        self.raspberry_pi_camera_vertical_station_v3_x_offset = -0.2
-        self.raspberry_pi_camera_vertical_station_v3_z_offset = -0.06
-        self.vertical_station_v3_goal_x_offset = -0.086
-        self.vertical_station_v3_goal_z_offset = 0.01
+        self.raspberry_pi_camera_vertical_station_v3_x_offset = -0.25
+        self.raspberry_pi_camera_vertical_station_v3_z_offset = -0.07
+        self.vertical_station_v3_goal_x_offset = -0.14
+        self.vertical_station_v3_goal_z_offset = 0.0
 
         ## Breaker Offsets
         self.raspberry_pi_camera_vertical_station_breaker_x_offset = -0.2
@@ -51,8 +52,9 @@ class TheBoatDoctorPlanner:
         self.horizontal_station_v3_goal_z_offset = 0.01
 
         ## Thresholds
-        self.angle_threshold = 3 * math.pi / 180
-        self.task_completion_degree_threshold = 15
+        self.angle_threshold_in_degrees = 3
+        self.task_completion_angle_threshold_in_degrees = 15
+        self.v3_valve_threshold = 15
 
         self.tbd_controller = TheBoatDoctorController()
         self.tbd_ik = TheBoatDoctorIK()
@@ -71,21 +73,21 @@ class TheBoatDoctorPlanner:
     def get_station_base_coords(self, station):
         print("Station: " + station)
         if (station == "A"):
-            station_base_coords = [0.419, 1.249, 0.0]
+            station_base_coords = [0.419, 1.264, 0.0]
         elif (station == "B"):
-            station_base_coords = [0.419, 0.999, 0.0]
+            station_base_coords = [0.419, 0.984, 0.0]
         elif (station == "C"):
-            station_base_coords = [0.419, 0.749, 0.0]
+            station_base_coords = [0.419, 0.734, 0.0]
         elif (station == "D"):
-            station_base_coords = [0.419, 0.499, 0.0]
+            station_base_coords = [0.419, 0.464, 0.0]
         elif (station == "E"):
-            station_base_coords = [0.419, 0.419, 0.0]
+            station_base_coords = [0.419, 0.414, 0.0]
         elif (station == "F"):
-            station_base_coords = [0.419, 0.419, 0.0]
+            station_base_coords = [0.419, 0.414, 0.0]
         elif (station == "G"):
-            station_base_coords = [0.499, 0.419, 0.0]
+            station_base_coords = [0.369, 0.414, 0.0]
         elif (station == "H"):
-            station_base_coords = [0.749, 0.419, 0.0]
+            station_base_coords = [0.749, 0.414, 0.0]
         else :
             station_base_coords = [0.419, 0.419, 0.0]
 
@@ -170,9 +172,11 @@ class TheBoatDoctorPlanner:
 
     def set_actuator(self, actuator):
         self.actuator = actuator
+        print("Actuator: " + actuator)
 
     def set_actuations(self, actuations):
         self.actuations = actuations
+        print("Actuations: " + str(actuations[0][0:]))
 
     def start_vision(self):
         self.tbd_cv = TheBoatDoctorCV(self.actuator)
@@ -196,7 +200,7 @@ class TheBoatDoctorPlanner:
             if(self.station_orientation == "vertical"):
                     self.raspberry_pi_camera_position[0] = self.raspberry_pi_camera_position[0] + self.raspberry_pi_camera_vertical_station_v1_x_offset
                     self.raspberry_pi_camera_position[2] = self.raspberry_pi_camera_position[2] + self.raspberry_pi_camera_vertical_station_v1_z_offset
-            elif(station_orientation == "horizontal"):
+            elif(self.station_orientation == "horizontal"):
                     self.raspberry_pi_camera_position[0] = self.raspberry_pi_camera_position[0] + self.raspberry_pi_camera_horizontal_station_v1_x_offset
                     self.raspberry_pi_camera_position[2] = self.raspberry_pi_camera_position[2] + self.raspberry_pi_camera_horizontal_station_v1_z_offset
             else:
@@ -262,7 +266,7 @@ class TheBoatDoctorPlanner:
             if(self.station_orientation == "vertical"):
                     self.raspberry_pi_camera_position[0] = self.raspberry_pi_camera_position[0] + self.raspberry_pi_camera_vertical_station_v3_x_offset
                     self.raspberry_pi_camera_position[2] = self.raspberry_pi_camera_position[2] + self.raspberry_pi_camera_vertical_station_v3_z_offset
-            elif(station_orientation == "horizontal"):
+            elif(self.station_orientation == "horizontal"):
                     self.raspberry_pi_camera_position[0] = self.raspberry_pi_camera_position[0] + self.raspberry_pi_camera_horizontal_station_v3_x_offset
                     self.raspberry_pi_camera_position[2] = self.raspberry_pi_camera_position[2] + self.raspberry_pi_camera_horizontal_station_v3_z_offset
             else:
@@ -325,77 +329,63 @@ class TheBoatDoctorPlanner:
             
     def determine_station_orientation_using_raspberry_pi_camera(self):
         ## Get the current angle of the station
-        self.current_station_angle = float(self.tbd_cv.get_station_info_pi())
-        while(self.current_station_angle == 10000):
-            self.current_station_angle = float(self.tbd_cv.get_station_info_pi())
-        print("Current Station Angle: " + str(self.current_station_angle))
+        self.current_station_angle_in_degrees = float(self.tbd_cv.get_station_info_pi())
+        while(self.current_station_angle_in_degrees == 10000):
+            self.current_station_angle_in_degrees = float(self.tbd_cv.get_station_info_pi())
 
-    def update_waypoints_with_mission_goal(self):
+        if(self.actuator == "V3"):
+            if(abs(90 - abs(self.current_station_angle_in_degrees)) < self.v3_valve_threshold):
+                self.current_station_angle_in_degrees = 90
+            elif(abs(self.current_station_angle_in_degrees) < self.v3_valve_threshold):
+                self.current_station_angle_in_degrees = 0
+
+            if(self.station_orientation == "vertical"):
+                self.current_station_angle_in_degrees = -self.current_station_angle_in_degrees
+
+        print("Current Station Angle: " + str(self.current_station_angle_in_degrees))
+
+    def determine_mission_goal(self):
         if(self.actuator == "V1" or self.actuator == "V2"):
             self.direction = self.actuations[0][0]
             self.degree = float(self.actuations[0][1:])
             if(self.direction == "+"):
-                self.desired_station_angle = self.current_station_angle + (self.degree * math.pi / 180)
+                self.desired_station_angle_in_degrees = (self.current_station_angle_in_degrees + self.degree + 180) % 360 - 180 
 
-                if(abs(self.desired_station_angle - self.current_station_angle) < self.angle_threshold):
-                    return
-                else:
-                    self.trajectory[3][5] = self.desired_station_angle - self.current_station_angle
-                    self.trajectory[4][5] = self.desired_station_angle - self.current_station_angle
-
-            elif(direction == "-"):
-                self.desired_station_angle = self.current_station_angle - (degree * math.pi / 180)
-
-                if(abs(self.desired_station_angle - self.current_station_angle) < self.angle_threshold):
-                    return
-                else:
-                    self.trajectory[3][5] = self.desired_station_angle - self.current_station_angle
-                    self.trajectory[4][5] = self.desired_station_angle - self.current_station_angle
+            elif(self.direction == "-"):
+                self.desired_station_angle_in_degrees = (self.current_station_angle_in_degrees - self.degree + 180) % 360 - 180 
 
         else:
-            self.desired_station_position = actuations[0][0]
+            self.desired_station_position = self.actuations[0][0]
 
-            if(station_orientation == "vertical"):
+
+            if(self.station_orientation == "vertical"):
                 # Open
-                if(self.desired_station_position == 0):
-                    self.desired_station_angle = -(math.pi / 2)
-
-                    if(abs(self.desired_station_angle - self.current_station_angle) < self.angle_threshold):
-                        return
-                    else:
-                        self.trajectory[3][5] = self.desired_station_angle - self.current_station_angle
-                        self.trajectory[4][5] = self.desired_station_angle - self.current_station_angle
+                if(self.desired_station_position == "0"):
+                    self.desired_station_angle_in_degrees = -90
 
                 # Closed
-                elif(self.desired_station_position == 1):
-                    self.desired_station_angle = 0
+                elif(self.desired_station_position == "1"):
+                    self.desired_station_angle_in_degrees = 0
 
-                    if(abs(self.desired_station_angle - self.current_station_angle) < self.angle_threshold):
-                        return
-                    else:
-                        self.trajectory[3][5] = self.desired_station_angle - self.current_station_angle
-                        self.trajectory[4][5] = self.desired_station_angle - self.current_station_angle
-
-            elif(station_orientation == "horizontal"):
+            elif(self.station_orientation == "horizontal"):
                 # Open
-                if(self.desired_station_position == 0):
-                    self.desired_station_angle = 0
-
-                    if(abs(self.desired_station_angle - self.current_station_angle) < self.angle_threshold):
-                        return
-                    else:
-                        self.trajectory[3][5] = self.desired_station_angle - self.current_station_angle
-                        self.trajectory[4][5] = self.desired_station_angle - self.current_station_angle
+                if(self.desired_station_position == "0"):
+                    self.desired_station_angle_in_degrees = 0
 
                 # Closed
-                elif(self.desired_station_position == 1):
-                    self.desired_station_angle = (math.pi / 2)
+                elif(self.desired_station_position == "1"):
+                    self.desired_station_angle_in_degrees = 90
 
-                    if(abs(self.desired_station_angle - self.current_station_angle) < self.angle_threshold):
-                        return
-                    else:
-                        self.trajectory[3][5] = self.desired_station_angle - self.current_station_angle
-                        self.trajectory[4][5] = self.desired_station_angle - self.current_station_angle
+        print("Desired Station Angle: " + str(self.desired_station_angle_in_degrees))
+
+    def update_waypoints_with_mission_goal(self):
+        if(abs(self.desired_station_angle_in_degrees - self.current_station_angle_in_degrees) < self.angle_threshold_in_degrees):
+            return
+        else:
+            desired_end_effector_angle_in_radians = (self.desired_station_angle_in_degrees - self.current_station_angle_in_degrees) * math.pi / 180
+            self.trajectory[3][5] = desired_end_effector_angle_in_radians
+            self.trajectory[4][5] = desired_end_effector_angle_in_radians
+        
 
     def move_to_station_object(self):
         self.home_arm()
@@ -410,11 +400,11 @@ class TheBoatDoctorPlanner:
 
     def turn_on_pump(self):
         self.tbd_controller.pump_switch("on")
-        rospy.sleep(1)
+        time.sleep(1)
 
     def turn_off_pump(self):
         self.tbd_controller.pump_switch("off")
-        rospy.sleep(1)
+        time.sleep(1)
 
     def return_to_raspberry_pi_camera_position(self):
         ## Move Gantry back to the raspberry pi camera position
@@ -424,16 +414,16 @@ class TheBoatDoctorPlanner:
         self.move_arm([self.trajectory[5][3], self.trajectory[5][4], self.trajectory[5][5]])
 
     def determine_station_orientation_using_raspberry_pi_camera_2(self):
-        tbd_cv2 = TheBoatDoctorCV(actuator)
+        tbd_cv2 = TheBoatDoctorCV(self.actuator)
         ## Get the current angle of the station
-        self.current_station_angle = float(tbd_cv2.get_station_info_pi())
-        while(self.current_station_angle == 10000):
-            self.current_station_angle = float(self.tbd_cv2.get_station_info_pi())
-        print("Current Station Angle: " + str(self.current_station_angle))
+        self.current_station_angle_in_degrees = float(tbd_cv2.get_station_info_pi())
+        while(self.current_station_angle_in_degrees == 10000):
+            #tbd_cv2 = TheBoatDoctorCV(self.actuator)
+            self.current_station_angle_in_degrees = float(tbd_cv2.get_station_info_pi())
+        print("Current Station Angle: " + str(self.current_station_angle_in_degrees))
 
     def get_station_orientation(self):
         return self.station_orientation
 
     def verify_task_is_completed(self):
-
-        return (self.actuator == "A" or self.actuator == "B" or (abs(self.desired_station_angle - self.current_station_angle) < self.task_completion_degree_threshold))
+        return (self.actuator == "A" or self.actuator == "B" or (abs(self.desired_station_angle_in_degrees - self.current_station_angle_in_degrees) % 360  < self.task_completion_angle_threshold_in_degrees))

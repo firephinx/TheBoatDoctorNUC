@@ -51,6 +51,9 @@ class TheBoatDoctorController:
 		return self.move_arm([-math.pi * 3 / 5, -math.pi * 3 / 5, 0])
 
 	def home_robot(self):
+
+		done_homing_arm = self.home_arm()
+
 		empty_msg = Empty()
 
 		self.home_pub.publish(empty_msg)
@@ -58,7 +61,7 @@ class TheBoatDoctorController:
 
 		try:
 			done_homing_msg = rospy.wait_for_message('/TheBoatDoctor/done_homing', Bool, timeout = 30)
-			return done_homing_msg.data and self.home_arm()
+			return done_homing_msg.data and done_homing_arm
 		except:
 			return False
 
