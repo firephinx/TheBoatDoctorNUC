@@ -65,6 +65,8 @@ class TheBoatDoctorPlanner:
         self.done_moving_arm_flag = False
 
         self.current_base_position = self.tbd_controller.get_current_base_position()
+        self.desired_station_angle_in_degrees = 0
+        self.desired_z_movement_distance = 0
 
     def cam_to_ik(self, cam_coord):
         r_y_90 = numpy.array([ [0, 0, 1], [0, 1, 0], [-1, 0, 0] ])
@@ -118,6 +120,7 @@ class TheBoatDoctorPlanner:
         return station_turntable_degree
 
     def reset_robot(self):
+        print("Resetting robot")
         self.tbd_controller.reset_robot()
 
     def home_robot(self):
@@ -125,50 +128,56 @@ class TheBoatDoctorPlanner:
         self.done_homing_flag = self.tbd_controller.home_robot()
         while(self.done_homing_flag != True):
             self.done_homing_flag = self.tbd_controller.home_robot()
+        print("Done homing robot")
 
     def home_arm(self):
         print("Homing arm")
         self.tbd_controller.home_arm()
+        print("Done homing arm")
 
     def print_current_base_position(self):
         self.current_base_position = self.tbd_controller.get_current_base_position()
         print("Current Base Position: [" + str(self.current_base_position[0]) + ", " + str(self.current_base_position[1]) + ", " + str(self.current_base_position[2]) + "]")
 
     def move_robot_base(self, desired_coords):
+        self.print_current_base_position()
+
+        print("Moving Robot Base to Position: [" + str(desired_coords[0]) + ", " + str(desired_coords[1]) + ", " + str(desired_coords[2]) + "]")
         # Move the robot base to the desired coords.
         self.done_moving_robot_base_flag = self.tbd_controller.move_robot_base(desired_coords)
         while(self.done_moving_robot_base_flag != True):
             self.done_moving_robot_base_flag = self.tbd_controller.move_robot_base(desired_coords)
 
-    def move_to_station(self, station):
         self.print_current_base_position()
 
+    def move_to_station(self, station):
         # fetch the station base coords
         station_base_coords = self.get_station_base_coords(station)
     
         self.move_robot_base(station_base_coords)
-        
-        self.print_current_base_position()
 
     def turn_turntable(self, desired_turntable_degree):
+
+        self.print_current_turntable_degree()
+
+        print("Turning turntable to degree: " + str(desired_turntable_degree))
+
         desired_turntable_theta = math.radians(desired_turntable_degree)
         self.done_turning_turntable_flag = self.tbd_controller.turn_turntable(desired_turntable_theta)
         while(self.done_turning_turntable_flag != True):
             self.done_turning_turntable_flag = self.tbd_controller.turn_turntable(desired_turntable_theta)
+
+        self.print_current_turntable_degree()
 
     def print_current_turntable_degree(self):
         self.current_turntable_degree = self.tbd_controller.get_current_turntable_degree()
         print("Current Turntable Degree: [" + str(self.current_turntable_degree) + "]")
 
     def turn_turntable_to_station(self, station):
-        self.print_current_turntable_degree()
-
         # fetch the station turntable degree
         station_turntable_degree = self.get_station_turntable_degree(station)
         
         self.turn_turntable(station_turntable_degree)
-        
-        self.print_current_turntable_degree()
 
     def set_actuator(self, actuator):
         self.actuator = actuator
@@ -179,9 +188,11 @@ class TheBoatDoctorPlanner:
         print("Actuations: " + str(actuations[0][0:]))
 
     def start_vision(self):
+        print("Starting vision")
         self.tbd_cv = TheBoatDoctorCV(self.actuator)
 
     def position_arm_for_vision(self):
+        print("Positioning arm for vision")
         self.tbd_controller.position_arm_for_vision()
 
     def determine_station_position_and_orientation_using_kinect(self):
@@ -211,26 +222,15 @@ class TheBoatDoctorPlanner:
             print("Raspberry Pi Camera Position: " + str(self.raspberry_pi_camera_position))
 
             self.joint_angles_for_raspberry_pi_camera_position = self.tbd_ik.solve_ik(self.raspberry_pi_camera_position, self.station_orientation)
-            self.joint_angles_for_intermediate_position = numpy.copy(self.joint_angles_for_raspberry_pi_camera_position)
             self.joint_angles_for_goal_position = numpy.copy(self.joint_angles_for_raspberry_pi_camera_position)
 
             if(self.station_orientation == "vertical"):
-                self.joint_angles_for_intermediate_position[2] = self.joint_angles_for_intermediate_position[2] - self.raspberry_pi_camera_vertical_station_v1_z_offset + self.vertical_station_v1_goal_z_offset
                 self.joint_angles_for_goal_position[1] = self.joint_angles_for_goal_position[1] - self.raspberry_pi_camera_vertical_station_v1_x_offset + self.vertical_station_v1_goal_x_offset
                 self.joint_angles_for_goal_position[2] = self.joint_angles_for_goal_position[2] - self.raspberry_pi_camera_vertical_station_v1_z_offset + self.vertical_station_v1_goal_z_offset
             else:
-                self.joint_angles_for_intermediate_position[1] = self.joint_angles_for_intermediate_position[1] - self.raspberry_pi_camera_horizontal_station_v1_x_offset + self.horizontal_station_v1_goal_x_offset
                 self.joint_angles_for_goal_position[1] = self.joint_angles_for_goal_position[1] - self.raspberry_pi_camera_horizontal_station_v1_x_offset + self.horizontal_station_v1_goal_x_offset
                 self.joint_angles_for_goal_position[2] = self.joint_angles_for_goal_position[2] - self.raspberry_pi_camera_horizontal_station_v1_z_offset + self.horizontal_station_v1_goal_z_offset
 
-            self.num_waypoints = 6
-            self.trajectory = numpy.zeros([self.num_waypoints,6])
-            self.trajectory[0] = self.joint_angles_for_raspberry_pi_camera_position
-            self.trajectory[1] = self.joint_angles_for_intermediate_position
-            self.trajectory[2] = self.joint_angles_for_goal_position
-            self.trajectory[3] = self.joint_angles_for_goal_position
-            self.trajectory[4] = self.joint_angles_for_intermediate_position
-            self.trajectory[5] = self.joint_angles_for_raspberry_pi_camera_position
         elif(self.actuator == "V2"):
             self.raspberry_pi_camera_position = self.station_object_position_in_3d_robot_coordinates
 
@@ -245,21 +245,11 @@ class TheBoatDoctorPlanner:
             print("Raspberry Pi Camera Position: " + str(self.raspberry_pi_camera_position))
 
             self.joint_angles_for_raspberry_pi_camera_position = self.tbd_ik.solve_ik(self.raspberry_pi_camera_position, self.station_orientation)
-            self.joint_angles_for_intermediate_position = numpy.copy(self.joint_angles_for_raspberry_pi_camera_position)
             self.joint_angles_for_goal_position = numpy.copy(self.joint_angles_for_raspberry_pi_camera_position)
 
-            self.joint_angles_for_intermediate_position[2] = self.joint_angles_for_intermediate_position[2] - self.raspberry_pi_camera_vertical_station_v2_z_offset + self.vertical_station_v2_goal_z_offset
             self.joint_angles_for_goal_position[1] = self.joint_angles_for_goal_position[1] - self.raspberry_pi_camera_vertical_station_v2_x_offset + self.vertical_station_v2_goal_x_offset
             self.joint_angles_for_goal_position[2] = self.joint_angles_for_goal_position[2] - self.raspberry_pi_camera_vertical_station_v2_z_offset + self.vertical_station_v2_goal_z_offset
             
-            self.num_waypoints = 6
-            self.trajectory = numpy.zeros([self.num_waypoints,6])
-            self.trajectory[0] = self.joint_angles_for_raspberry_pi_camera_position
-            self.trajectory[1] = self.joint_angles_for_intermediate_position
-            self.trajectory[2] = self.joint_angles_for_goal_position
-            self.trajectory[3] = self.joint_angles_for_goal_position
-            self.trajectory[4] = self.joint_angles_for_intermediate_position
-            self.trajectory[5] = self.joint_angles_for_raspberry_pi_camera_position
         elif(self.actuator == "V3"):
             self.raspberry_pi_camera_position = self.station_object_position_in_3d_robot_coordinates
 
@@ -277,36 +267,27 @@ class TheBoatDoctorPlanner:
             print("Raspberry Pi Camera Position: " + str(self.raspberry_pi_camera_position))
 
             self.joint_angles_for_raspberry_pi_camera_position = self.tbd_ik.solve_ik(self.raspberry_pi_camera_position, self.station_orientation)
-            self.joint_angles_for_intermediate_position = numpy.copy(self.joint_angles_for_raspberry_pi_camera_position)
             self.joint_angles_for_goal_position = numpy.copy(self.joint_angles_for_raspberry_pi_camera_position)
 
             if(self.station_orientation == "vertical"):
-                self.joint_angles_for_intermediate_position[2] = self.joint_angles_for_intermediate_position[2] - self.raspberry_pi_camera_vertical_station_v3_z_offset + self.vertical_station_v3_goal_z_offset
                 self.joint_angles_for_goal_position[1] = self.joint_angles_for_goal_position[1] - self.raspberry_pi_camera_vertical_station_v3_x_offset + self.vertical_station_v3_goal_x_offset
                 self.joint_angles_for_goal_position[2] = self.joint_angles_for_goal_position[2] - self.raspberry_pi_camera_vertical_station_v3_z_offset + self.vertical_station_v3_goal_z_offset
             else:
-                self.joint_angles_for_intermediate_position[1] = self.joint_angles_for_intermediate_position[1] - self.raspberry_pi_camera_horizontal_station_v3_x_offset + self.horizontal_station_v3_goal_x_offset
                 self.joint_angles_for_goal_position[1] = self.joint_angles_for_goal_position[1] - self.raspberry_pi_camera_horizontal_station_v3_x_offset + self.horizontal_station_v3_goal_x_offset
                 self.joint_angles_for_goal_position[2] = self.joint_angles_for_goal_position[2] - self.raspberry_pi_camera_horizontal_station_v3_z_offset + self.horizontal_station_v3_goal_z_offset
 
-            self.num_waypoints = 6
-            self.trajectory = numpy.zeros([self.num_waypoints,6])
-            self.trajectory[0] = self.joint_angles_for_raspberry_pi_camera_position
-            self.trajectory[1] = self.joint_angles_for_intermediate_position
-            self.trajectory[2] = self.joint_angles_for_goal_position
-            self.trajectory[3] = self.joint_angles_for_goal_position
-            self.trajectory[4] = self.joint_angles_for_intermediate_position
-            self.trajectory[5] = self.joint_angles_for_raspberry_pi_camera_position
+        elif(self.actuator == "A" or self.actuator == "B"):
 
+            self.desired_z_movement_distance = 0
 
     def print_current_gantry_position(self):
         self.current_gantry_position = self.tbd_controller.get_current_gantry_position()
-        print("Current Gantry Positions: " + str(self.current_gantry_position))
+        print("Current Gantry Position: [" + str(self.current_gantry_position[0]) + ", " + str(self.current_gantry_position[1]) + "]")
 
     def move_gantry(self, desired_positions):
         self.print_current_gantry_position()
 
-        print("Desired Gantry Positions: " + str(desired_positions))
+        print("Desired Gantry Position: " + str(desired_positions))
         self.done_moving_gantry_flag = self.tbd_controller.move_gantry(desired_positions)
         while(self.done_moving_gantry_flag != True):
                 self.done_moving_gantry_flag = self.tbd_controller.move_gantry(desired_positions)
@@ -320,12 +301,11 @@ class TheBoatDoctorPlanner:
             self.done_moving_arm_flag = self.tbd_controller.move_arm(desired_arm_thetas)
 
     def move_to_raspberry_pi_camera_position(self):
-
         ## Move Gantry to Raspberry Pi Camera location
-        self.move_gantry([self.trajectory[0][1], self.trajectory[0][2]])
+        self.move_gantry([self.joint_angles_for_raspberry_pi_camera_position[1], self.joint_angles_for_raspberry_pi_camera_position[2]])
 
         ## Move Arm to Raspberry Pi Camera location
-        self.move_arm([self.trajectory[0][3], self.trajectory[0][4], self.trajectory[0][5]])
+        self.move_arm([self.joint_angles_for_raspberry_pi_camera_position[3], self.joint_angles_for_raspberry_pi_camera_position[4], self.joint_angles_for_raspberry_pi_camera_position[5]])
             
     def determine_station_orientation_using_raspberry_pi_camera(self):
         ## Get the current angle of the station
@@ -354,9 +334,8 @@ class TheBoatDoctorPlanner:
             elif(self.direction == "-"):
                 self.desired_station_angle_in_degrees = (self.current_station_angle_in_degrees - self.degree + 180) % 360 - 180 
 
-        else:
+        elif(self.actuator == "V3"):
             self.desired_station_position = self.actuations[0][0]
-
 
             if(self.station_orientation == "vertical"):
                 # Open
@@ -376,27 +355,32 @@ class TheBoatDoctorPlanner:
                 elif(self.desired_station_position == "1"):
                     self.desired_station_angle_in_degrees = 90
 
+        elif(self.actuator == "A" or self.actuator == "B"):
+            self.desired_station_angle_in_degrees = 0
+
         print("Desired Station Angle: " + str(self.desired_station_angle_in_degrees))
 
     def update_waypoints_with_mission_goal(self):
         if(abs(self.desired_station_angle_in_degrees - self.current_station_angle_in_degrees) < self.angle_threshold_in_degrees):
             return
         else:
-            desired_end_effector_angle_in_radians = (self.desired_station_angle_in_degrees - self.current_station_angle_in_degrees) * math.pi / 180
-            self.trajectory[3][5] = desired_end_effector_angle_in_radians
-            self.trajectory[4][5] = desired_end_effector_angle_in_radians
+            self.desired_end_effector_angle_in_radians = (self.desired_station_angle_in_degrees - self.current_station_angle_in_degrees) * math.pi / 180
         
-
     def move_to_station_object(self):
         self.home_arm()
 
         ## Move Arm and Gantry towards the station
-        self.move_gantry([self.trajectory[1][1], self.trajectory[1][2]])
-        self.move_arm([self.trajectory[1][3], self.trajectory[1][4], self.trajectory[1][5]])
-        self.move_gantry([self.trajectory[2][1], self.trajectory[2][2]])
+        if(self.station_orientation == "vertical"):
+            self.move_gantry([self.joint_angles_for_raspberry_pi_camera_position[1], self.joint_angles_for_goal_position[2]])
+            self.move_arm([self.joint_angles_for_goal_position[3], self.joint_angles_for_goal_position[4], self.joint_angles_for_goal_position[5]])
+            self.move_gantry([self.joint_angles_for_goal_position[1], self.joint_angles_for_goal_position[2]])
+        else:
+            self.move_gantry([self.joint_angles_for_raspberry_pi_camera_position[1], self.joint_angles_for_goal_position[2]])
+            self.move_gantry([self.joint_angles_for_goal_position[1], self.joint_angles_for_goal_position[2]])
+            self.move_arm([self.joint_angles_for_goal_position[3], self.joint_angles_for_goal_position[4], self.joint_angles_for_goal_position[5]])
 
     def actuate_end_effector(self):
-        self.move_arm([self.trajectory[3][3], self.trajectory[3][4], self.trajectory[3][5]])
+        self.move_arm([self.joint_angles_for_goal_position[3], self.joint_angles_for_goal_position[4], self.desired_end_effector_angle_in_radians])
 
     def turn_on_pump(self):
         self.tbd_controller.pump_switch("on")
@@ -407,11 +391,20 @@ class TheBoatDoctorPlanner:
         time.sleep(1)
 
     def return_to_raspberry_pi_camera_position(self):
-        ## Move Gantry back to the raspberry pi camera position
-        self.move_gantry([self.trajectory[4][1], self.trajectory[4][2]])
-        self.home_arm()
-        self.move_gantry([self.trajectory[5][1], self.trajectory[5][2]])
-        self.move_arm([self.trajectory[5][3], self.trajectory[5][4], self.trajectory[5][5]])
+
+        ## Home the arm and move the X Gantry back to the raspberry pi camera position
+        if(self.station_orientation == "vertical"):
+            self.move_gantry([self.joint_angles_for_raspberry_pi_camera_position[1], self.joint_angles_for_goal_position[2]])
+            self.home_arm()
+        else:
+            self.home_arm()
+            self.move_gantry([self.joint_angles_for_raspberry_pi_camera_position[1], self.joint_angles_for_goal_position[2]])
+        
+        ## Move the Z Gantry back to the Raspberry Pi Camera location
+        self.move_gantry([self.joint_angles_for_raspberry_pi_camera_position[1], self.joint_angles_for_raspberry_pi_camera_position[2]])
+
+        ## Move Arm back to the Raspberry Pi Camera location
+        self.move_arm([self.joint_angles_for_raspberry_pi_camera_position[3], self.joint_angles_for_raspberry_pi_camera_position[4], self.joint_angles_for_raspberry_pi_camera_position[5]])
 
     def determine_station_orientation_using_raspberry_pi_camera_2(self):
         tbd_cv2 = TheBoatDoctorCV(self.actuator)
@@ -420,6 +413,16 @@ class TheBoatDoctorPlanner:
         while(self.current_station_angle_in_degrees == 10000):
             #tbd_cv2 = TheBoatDoctorCV(self.actuator)
             self.current_station_angle_in_degrees = float(tbd_cv2.get_station_info_pi())
+
+        if(self.actuator == "V3"):
+            if(abs(90 - abs(self.current_station_angle_in_degrees)) < self.v3_valve_threshold):
+                self.current_station_angle_in_degrees = 90
+            elif(abs(self.current_station_angle_in_degrees) < self.v3_valve_threshold):
+                self.current_station_angle_in_degrees = 0
+
+            if(self.station_orientation == "vertical"):
+                self.current_station_angle_in_degrees = -self.current_station_angle_in_degrees
+
         print("Current Station Angle: " + str(self.current_station_angle_in_degrees))
 
     def get_station_orientation(self):
