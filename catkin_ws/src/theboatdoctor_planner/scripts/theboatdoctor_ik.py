@@ -30,6 +30,8 @@ class TheBoatDoctorIK:
         self.z_arm_min_vert = -10
         self.z_arm_min_horz = -18
         self.z_arm_max_horz = 3
+        self.x_arm_max_horz = 18
+        self.x_arm_min_horz = 8.2
 
     def solve_ik(self, desired_end_effector_location, station_orientation):
 
@@ -52,18 +54,20 @@ class TheBoatDoctorIK:
         z_gan = self.z_gan_min
         z = desired_end_effector_location[2]
         x = desired_end_effector_location[0]
-        while(z - z_gan > self.z_arm_max_horz):
-            z_gan += 1
-        while(z - z_gan < self.z_arm_min_horz):
-            z_gan -=1
-        if (z_gan > self.z_gan_max):
-            z_gan = self.z_gan_max
-        if (z_gan < self.z_gan_min):
-            z_gan = self.z_gan_min
-        z_arm = z - z_gan
+
+        x_gan = self.x_gan_min
+        while(x - x_gan > self.x_arm_max_horz):
+            x_gan += 1
+        while(x - x_gan < self.x_arm_min_horz):
+            x_gan -=1
+        if (x_gan > self.x_gan_max):
+            x_gan = self.x_gan_max
+        if (x_gan < self.x_gan_min):
+            x_gan = self.x_gan_min
+        x_arm = x - x_gan
 
         # calc angles based on position
-        theta1 = math.asin((z_arm+self.l3_horz)/self.l2)
+        theta1 = math.acos((x_arm - self.l1)/self.l2)
         theta2 = -math.pi/2 - theta1   
 
         # calc x values
