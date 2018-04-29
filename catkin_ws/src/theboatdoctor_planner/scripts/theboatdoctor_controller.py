@@ -16,6 +16,17 @@ class TheBoatDoctorController:
 		self.front_ultrasonic_range = 0.0
 		self.right_ultrasonic_range = 0.0
 
+		self.minimum_robot_base_x_threshold = 0.23
+        self.minimum_robot_base_y_threshold = 0.23
+        self.maximum_robot_base_x_threshold = 1.0
+        self.maximum_robot_base_y_threshold = 1.5
+        self.minimum_x_gantry_threshold = 0.0
+        self.maximum_x_gantry_threshold = 0.23
+        self.minimum_z_gantry_threshold = 0.0
+        self.maximum_z_gantry_threshold = 0.33
+        self.minimum_turntable_threshold = -math.pi / 2
+        self.maximum_turntable_threshold = math.pi / 2
+
 		self.reset_pub = rospy.Publisher('/TheBoatDoctor/Reset', Empty, queue_size=1)
 		self.home_pub = rospy.Publisher('/TheBoatDoctor/Home', Empty, queue_size=1)
 		self.move_robot_base_pub = rospy.Publisher('/TheBoatDoctor/move_robot_base', Pose2D, queue_size=10);
@@ -63,9 +74,18 @@ class TheBoatDoctorController:
 			done_homing_msg = rospy.wait_for_message('/TheBoatDoctor/done_homing', Bool, timeout = 30)
 			return done_homing_msg.data and done_homing_arm
 		except:
+			print("Timeout waiting for done_homing_msg.")
 			return False
 
 	def move_robot_base(self, desired_robot_base_position):
+		if(desired_robot_base_position[0] < minimum_robot_base_x_threshold or desired_robot_base_position[0] > maximum_robot_base_x_threshold):
+			print("Desired Robot Base X Position (" + str(desired_robot_base_position[0]) + ") is outside of the possible X Robot Position range.")
+			return False
+
+		if(desired_robot_base_position[1] < minimum_robot_base_y_threshold or desired_robot_base_position[1] > maximum_robot_base_z_threshold):
+			print("Desired Robot Base Y Position (" + str(desired_robot_base_position[1]) + ") is outside of the possible Z Robot Position range.")
+			return False
+
 		pose_2d_msg = Pose2D()
 		pose_2d_msg.x = round(desired_robot_base_position[0], 4)
 		pose_2d_msg.y = round(desired_robot_base_position[1], 4)
@@ -78,9 +98,19 @@ class TheBoatDoctorController:
 			done_moving_robot_base_msg = rospy.wait_for_message('/TheBoatDoctor/done_moving_robot_base', Bool, timeout = 30)
 			return done_moving_robot_base_msg.data
 		except:
+			print("Timeout waiting for done_moving_robot_base_msg.")
 			return False
 
 	def move_gantry(self, desired_gantry_position):
+
+		if(desired_gantry_position[0] < minimum_x_gantry_threshold or desired_gantry_position[0] > maximum_x_gantry_threshold):
+			print("Desired X Gantry Position (" + str(desired_gantry_position[0]) + ") is outside of the possible X Gantry range.")
+			return False
+
+		if(desired_gantry_position[1] < minimum_z_gantry_threshold or desired_gantry_position[1] > maximum_z_gantry_threshold):
+			print("Desired Z Gantry Position (" + str(desired_gantry_position[1]) + ") is outside of the possible Z Gantry range.")
+			return False
+
 		pose_2d_msg = Pose2D()
 		pose_2d_msg.x = round(desired_gantry_position[0], 4)
 		pose_2d_msg.y = round(desired_gantry_position[1], 4)
@@ -92,9 +122,14 @@ class TheBoatDoctorController:
 			done_moving_gantry_msg = rospy.wait_for_message('/TheBoatDoctor/done_moving_gantry', Bool, timeout = 30)
 			return done_moving_gantry_msg.data
 		except:
+			print("Timeout waiting for done_moving_gantry_msg.")
 			return False
 		
 	def turn_turntable(self, desired_theta):
+		if(desired_theta < minimum_turntable_threshold or desired_theta > maximum_turntable_threshold):
+			print("Desired Theta (" + str(desired_theta) + ") is outside of the possible turntable range.")
+			return False
+
 		pose_2d_msg = Pose2D()
 		pose_2d_msg.theta = round(desired_theta, 4)
 
@@ -105,6 +140,7 @@ class TheBoatDoctorController:
 			done_turning_turntable_msg = rospy.wait_for_message('/TheBoatDoctor/done_turning_turntable', Bool, timeout = 5)
 			return done_turning_turntable_msg.data
 		except:
+			print("Timeout waiting for done_turning_turntable_msg.")
 			return False
 
 	def move_arm(self, desired_arm_angles):
@@ -119,6 +155,7 @@ class TheBoatDoctorController:
 			done_moving_arm_msg = rospy.wait_for_message('TheBoatDoctor/done_moving_arm', Bool, timeout = 5)
 			return done_moving_arm_msg.data
 		except:
+			print("Timeout waiting for done_moving_arm_msg.")
 			return False
 
 	def get_current_base_position(self):
@@ -127,6 +164,7 @@ class TheBoatDoctorController:
 			current_base_position = [pose_2d_msg.x,pose_2d_msg.y,pose_2d_msg.theta]
 			return current_base_position
 		except:
+			print("Timeout waiting for pose_2d_msg.")
 			return [0.0, 0.0, 0.0]
 
 	def get_current_turntable_degree(self):
@@ -141,6 +179,7 @@ class TheBoatDoctorController:
 					i = i + 1
 			return math.degrees(joint_state_msg.position[turntable_ind])
 		except:
+			print("Timeout waiting for joint_state_msg.")
 			return 0.0
 
 	def get_current_gantry_position(self):
@@ -156,6 +195,7 @@ class TheBoatDoctorController:
 				i = i + 1
 			return [joint_state_msg.position[x_gantry_ind], joint_state_msg.position[z_gantry_ind]]
 		except:
+			print("Timeout waiting for joint_state_msg.")
 			return [0.0, 0.0]
 
 	def pump_switch(self, switch):
@@ -170,6 +210,7 @@ class TheBoatDoctorController:
 			pump_status_msg = rospy.wait_for_message('/TheBoatDoctor/pump_status', Bool, timeout = 3)
 			return pump_status_msg.data
 		except:
+			print("Timeout waiting for pump_status_msg.")
 			return False
 
 	def led_switch(self, switch):
@@ -186,4 +227,5 @@ class TheBoatDoctorController:
 			led_status_msg = rospy.wait_for_message('/TheBoatDoctor/led_status', Bool, timeout = 3)
 			return led_status_msg.data
 		except:
+			print("Timeout waiting for led_status_msg.")
 			return False
