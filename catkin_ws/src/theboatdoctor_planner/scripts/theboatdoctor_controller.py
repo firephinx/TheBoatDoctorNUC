@@ -82,7 +82,7 @@ class TheBoatDoctorController:
 			print("Desired Robot Base X Position (" + str(desired_robot_base_position[0]) + ") is outside of the possible X Robot Position range.")
 			return False
 
-		if(desired_robot_base_position[1] < minimum_robot_base_y_threshold or desired_robot_base_position[1] > maximum_robot_base_z_threshold):
+		if(desired_robot_base_position[1] < minimum_robot_base_y_threshold or desired_robot_base_position[1] > maximum_robot_base_y_threshold):
 			print("Desired Robot Base Y Position (" + str(desired_robot_base_position[1]) + ") is outside of the possible Z Robot Position range.")
 			return False
 
