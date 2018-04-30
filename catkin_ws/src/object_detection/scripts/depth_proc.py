@@ -42,7 +42,7 @@ from object_detection.srv import *
 
 class image_converter:
 
-  def __init__(self,type):
+  def __init__(self,type,stationF):
     #self.out = cv2.VideoWriter('outpy.avi',cv2.VideoWriter_fourcc('X','V','I','D'), 10, (270,480))
     #fourcc = cv2.VideoWriter_fourcc(*'XVID')
     #self.out = cv2.VideoWriter('output.avi',fourcc, 20.0, (640,480))
@@ -285,19 +285,25 @@ class image_converter:
 					#self.pub_actuator(X,Y,depth)
 					self.broadcast_tf(-Y,X,depth)
 					rospy.sleep(0.01)
-					(trans,rot)=self.tf_listener.lookupTransform('/IK_reference','/actuator',rospy.Time(0))
-					print trans[0],trans[1],trans[2]
-					#return X,Y,depth
-					if self.type ==  2:
-						error=0 
-						return trans[0],trans[1],trans[2],subType,error,None
-					else:
-						if subType is None: 
-							error=1
-							return trans[0],trans[1],trans[2],subType,error,None  
-						else: 
-							error=0
-							return trans[0],trans[1],trans[2],subType,error,None  ## none is breakerstatus
+					try:
+						(trans,rot)=self.tf_listener.lookupTransform('/IK_reference','/actuator',rospy.Time(0))
+						print trans[0],trans[1],trans[2]
+						#return X,Y,depth
+						if self.type ==  2:
+							error=0 
+							return trans[0],trans[1],trans[2],subType,error,None
+						else:
+							if subType is None: 
+								error=1
+								return trans[0],trans[1],trans[2],subType,error,None  
+							else: 
+								error=0
+								return trans[0],trans[1],trans[2],subType,error,None  ## none is breakerstatus
+					except:
+						print "[depth_proc/img_proc] I can't find IK_reference" 
+						error=1
+						return -1000000,-100000,-100000,None,error,None 
+			
 			else:
 				print "[depth_proc/img_proc] I can't find actuator" 
 				error=1
@@ -486,7 +492,7 @@ class image_converter:
 
 
 def localize_actuators(msg):
-	ic = image_converter(msg.want)
+	ic = image_converter(msg.Type,msg.subType)
 	rospy.spin() 
 	print "im here"
 

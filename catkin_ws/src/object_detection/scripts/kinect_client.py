@@ -9,14 +9,15 @@ import argparse
 ######### cmd args ########
 parser = argparse.ArgumentParser(description='kinect_service paramers')
 parser.add_argument('--type', type=int, help='actuator type')
+parser.add_argument('--subType',type=int,help='actuator subType')
 ######################################## 
 
 
-def client(want):
+def client(Type,subType):
 	rospy.wait_for_service("kinect2/locations") 
 	get_status_info=rospy.ServiceProxy("kinect2/locations",callKinect)
 	print 2
-	get_status_info(want)
+	get_status_info(Type,subType)
 	print 1
 	#print resp1	
 
@@ -24,6 +25,6 @@ def client(want):
 if __name__=="__main__":
 	rospy.init_node('kinect_client', anonymous=False)
 	args = parser.parse_args()
-	client(args.type)
+	client(args.type,args.subType)
 	
 

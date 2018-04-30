@@ -28,7 +28,8 @@ class TheBoatDoctorCV():
 
 	def get_actuator_location(self):
 		Type=str(self.type)
-		command="gnome-terminal -e 'rosrun object_detection kinect_client.py --type {0}'".format(Type)
+		subType=str(self.subType)
+		command="gnome-terminal -e 'rosrun object_detection kinect_client.py --type {0} --subType {1}'".format(Type,subType)
 		if self.firstCall==1:
 			#os.system("gnome-terminal -e 'rosrun object_detection pi_cam_client.py --type 3'") ## call rosservice in a new terminal
 			os.system(command) ## call rosservice in a new terminal 
@@ -89,7 +90,7 @@ class TheBoatDoctorCV():
 
 if __name__=="__main__":
 	detector=TheBoatDoctorCV(3,0)
-	location=detector.get_actuator_status()
+	location=detector.get_actuator_location()
 	print location
 	print "finished"
 
