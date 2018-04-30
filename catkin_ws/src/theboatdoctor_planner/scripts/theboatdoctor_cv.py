@@ -97,7 +97,7 @@ class TheBoatDoctorCV():
  					else:
  						self.station_orientation = ''
  						self.station_orientation_num = -1
- 				return (station_object_position_in_3d, station_orientation)
+ 				return (station_object_position_in_3d, self.station_orientation)
  			
 		else: 
  			msg = rospy.wait_for_message('/kinect2/actuator_location', Float32MultiArray) ## message received from publish topic in kinect 
@@ -110,6 +110,7 @@ class TheBoatDoctorCV():
  	def get_station_info_pi(self):
  		Type=str(self.type)
  		subType=str(self.station_orientation_num)
+ 		print "station_orientation", subType
 		command="gnome-terminal -e 'rosrun object_detection pi_cam_client.py --type {0} --subType {1}'".format(Type, subType)
 		#print command
 		#command="xterm -hold -e 'source /home/theboatdoctor-nuc/.bashrc && rosservice call /raspicam_service/actuator_status {0}'".format(Type)		

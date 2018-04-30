@@ -47,10 +47,10 @@ class TheBoatDoctorPlanner:
 
         ## Horizontal Station Offsets
         ## V1 Offsets
-        self.raspberry_pi_camera_horizontal_station_v1_x_offset = -0.13
-        self.raspberry_pi_camera_horizontal_station_v1_z_offset = 0.0
-        self.horizontal_station_v1_goal_x_offset = -0.08
-        self.horizontal_station_v1_goal_z_offset = 0.0
+        self.raspberry_pi_camera_horizontal_station_v1_x_offset = -0.15
+        self.raspberry_pi_camera_horizontal_station_v1_z_offset = -0.03
+        self.horizontal_station_v1_goal_x_offset = -0.096
+        self.horizontal_station_v1_goal_z_offset = -0.08
 
         ## V3 Offsets
         self.raspberry_pi_camera_horizontal_station_v3_x_offset = -0.06
@@ -87,7 +87,8 @@ class TheBoatDoctorPlanner:
         elif (self.station == "B"):
             self.station_base_coords = [0.419, 0.984, 0.0]
         elif (self.station == "C"):
-            self.station_base_coords = [0.419, 0.734, 0.0]
+            #self.station_base_coords = [0.419, 0.734, 0.0]
+            self.station_base_coords = [0.389, 0.734, 0.0]
         elif (self.station == "D"):
             self.station_base_coords = [0.419, 0.464, 0.0]
         elif (self.station == "E"):
@@ -325,7 +326,7 @@ class TheBoatDoctorPlanner:
                 self.joint_angles_for_goal_position[1] = self.joint_angles_for_goal_position[1] - self.raspberry_pi_camera_horizontal_station_v3_x_offset + self.horizontal_station_v3_goal_x_offset
                 self.joint_angles_for_goal_position[2] = self.joint_angles_for_goal_position[2] - self.raspberry_pi_camera_horizontal_station_v3_z_offset + self.horizontal_station_v3_goal_z_offset
 
-        elif(actuator == "A" or actuator == "B"):
+        elif(self.actuator == "A" or self.actuator == "B"):
             
             self.joint_angles_for_goal_positions.resize(self.num_breakers_to_actuate)
 
@@ -400,7 +401,7 @@ class TheBoatDoctorPlanner:
         print("Current Station Angle: " + str(self.current_station_angle_in_degrees))
 
     def determine_mission_goal(self):
-        if(actuator == "A" or actuator == "B"):
+        if(self.actuator == "A" or self.actuator == "B"):
             pass
         else:    
             if(self.actuator == "V1" or self.actuator == "V2"):
@@ -435,6 +436,19 @@ class TheBoatDoctorPlanner:
 
             print("Desired Station Angle: " + str(self.desired_station_angle_in_degrees))
 
+    def update_waypoints_with_mission_goal_from_mission_file(self):
+        if(self.actuator == "V1" or self.actuator == "V2"):
+            self.direction = self.actuations[0][0]
+            self.degree = float(self.actuations[0][1:])
+            if(self.direction == "+"):
+                self.desired_end_effector_angle_in_radians = self.degree * math.pi / 180
+
+            elif(self.direction == "-"):
+                self.desired_end_effector_angle_in_radians = -self.degree * math.pi / 180
+
+        elif(self.actuator == "V3"):
+            self.update_waypoints_with_mission_goal()
+
     def update_waypoints_with_mission_goal(self):
         if(abs(self.desired_station_angle_in_degrees - self.current_station_angle_in_degrees) < self.angle_threshold_in_degrees):
             return
@@ -457,11 +471,25 @@ class TheBoatDoctorPlanner:
     def actuate_end_effector(self):
         self.move_arm([self.joint_angles_for_goal_position[3], self.joint_angles_for_goal_position[4], self.desired_end_effector_angle_in_radians])
 
+    def turn_on_leds(self):
+        print("Turning on LEDs")
+        self.tbd_controller.led_switch("on")
+        time.sleep(1)
+
+    def turn_off_leds(self):
+        print("Turning off LEDs")
+        self.tbd_controller.led_switch("off")
+        time.sleep(1)
+
     def turn_on_pump(self):
+        print("Turning on pump")
         self.tbd_controller.pump_switch("on")
+        time.sleep(1)
 
     def turn_off_pump(self):
+        print("Turning off pump")
         self.tbd_controller.pump_switch("off")
+        time.sleep(1)
 
     def return_to_raspberry_pi_camera_position(self):
 
@@ -502,7 +530,7 @@ class TheBoatDoctorPlanner:
         return self.station_orientation
 
     def verify_task_is_completed(self):
-        if(actuator == "A" or actuator == "B"):
+        if(self.actuator == "A" or self.actuator == "B"):
             self.num_breakers_in_task = len(self.actuations) / 2
             self.num_breakers_to_actuate = 0
 

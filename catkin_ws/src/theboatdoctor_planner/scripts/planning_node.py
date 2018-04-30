@@ -59,7 +59,7 @@ if __name__ == '__main__':
 
             tbd_planner.determine_mission_goal()
 
-            tbd_planner.update_waypoints_with_mission_goal()
+            tbd_planner.update_waypoints_with_mission_goal_from_mission_file()
 
             tbd_planner.move_to_station_object()
 
@@ -97,7 +97,14 @@ if __name__ == '__main__':
 
             tbd_planner.move_to_raspberry_pi_camera_position()
 
-            tbd_planner.determine_station_orientation_using_raspberry_pi_camera()
+            if(tbd_planner.get_station_orientation() == "horizontal"):
+                tbd_planner.turn_on_leds()
+
+                tbd_planner.determine_station_orientation_using_raspberry_pi_camera()
+
+                tbd_planner.turn_off_leds()
+            else:
+                tbd_planner.determine_station_orientation_using_raspberry_pi_camera()
 
             tbd_planner.determine_mission_goal()
 
@@ -105,7 +112,7 @@ if __name__ == '__main__':
                 print("Task is already completed.")
                 continue
 
-            tbd_planner.update_waypoints_with_mission_goal()
+            tbd_planner.update_waypoints_with_mission_goal_from_mission_file()
 
             tbd_planner.move_to_station_object()
 
@@ -117,7 +124,14 @@ if __name__ == '__main__':
 
             tbd_planner.return_to_raspberry_pi_camera_position()
 
-            tbd_planner.determine_station_orientation_using_raspberry_pi_camera_2()
+            if(tbd_planner.get_station_orientation() == "horizontal"):
+                tbd_planner.turn_on_leds()
+
+                tbd_planner.determine_station_orientation_using_raspberry_pi_camera_2()
+
+                tbd_planner.turn_off_leds()
+            else:
+                tbd_planner.determine_station_orientation_using_raspberry_pi_camera_2()
 
             task_completed_flag = tbd_planner.verify_task_is_completed()
 
@@ -136,7 +150,14 @@ if __name__ == '__main__':
 
                 tbd_planner.return_to_raspberry_pi_camera_position()
 
-                tbd_planner.determine_station_orientation_using_raspberry_pi_camera_2()
+                if(tbd_planner.get_station_orientation() == "horizontal"):
+                    tbd_planner.turn_on_leds()
+
+                    tbd_planner.determine_station_orientation_using_raspberry_pi_camera_2()
+
+                    tbd_planner.turn_off_leds()
+                else:
+                    tbd_planner.determine_station_orientation_using_raspberry_pi_camera_2()
 
                 task_completed_flag = tbd_planner.verify_task_is_completed()
 

@@ -23,7 +23,7 @@ class TheBoatDoctorIK:
 
         # Limits in inches
         self.x_gan_min = 0
-        self.x_gan_max = 9
+        self.x_gan_max = 7
         self.z_gan_min = 0
         self.z_gan_max = 13
         self.z_arm_max_vert = 10
@@ -88,7 +88,53 @@ class TheBoatDoctorIK:
 
         x_base = x - x_temp - x_gan
         z_gan = z - z_temp
+        print("x_base = " + str(x_base))
         return np.array([0, in_to_m(x_gan), in_to_m(z_gan), -theta1, theta2, 0])
+
+        # theta1 = 0.0
+        # theta2 = -math.pi/2 - theta1
+
+        # z = desired_end_effector_location[2]
+        # x = desired_end_effector_location[0]
+
+        # x_gan = x - self.l1 - self.l2
+        # z_gan = z + self.l3_horz
+
+        # x_gan = self.x_gan_min
+        # while(x - x_gan > self.x_arm_max_horz):
+        #     x_gan += 1
+        # while(x - x_gan < self.x_arm_min_horz):
+        #     x_gan -=1
+        # if (x_gan > self.x_gan_max):
+        #     x_gan = self.x_gan_max
+        # if (x_gan < self.x_gan_min):
+        #     x_gan = self.x_gan_min
+        # x_arm = x - x_gan
+
+        # print("x_arm = " + str(x_arm))
+        # print("x_gan = " + str(x_gan))
+        # print("(x_arm - self.l1)/self.l2 = " + str((x_arm - self.l1)/self.l2))
+
+        # # calc angles based on position
+           
+
+        # # calc x values
+        # x_temp = self.l1 + self.l2 * math.cos(theta1)
+        # z_temp = self.l2 * math.sin(theta1) - self.l3_horz
+
+        # x_tot = x - x_temp
+        # if(x_tot < self.x_gan_min):
+        #     x_gan = self.x_gan_min
+        # elif ( x_tot > self.x_gan_max):
+        #     x_gan = self.x_gan_max
+        # else:
+        #     x_gan = x - x_temp
+
+        # x_base = x - x_temp - x_gan
+        # z_gan = z - z_temp
+        # return np.array([0, in_to_m(x_gan), in_to_m(z_gan), -theta1, theta2, 0])
+
+
 
     def calc_ik_vert(self, desired_end_effector_location):
         # position given is relative to base
