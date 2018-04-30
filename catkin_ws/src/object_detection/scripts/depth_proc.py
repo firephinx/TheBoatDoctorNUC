@@ -85,7 +85,7 @@ class image_converter:
     self.Z=[]
     self.SUBTYPE=[] ## subtype of some acutators 
     self.bStatus=[] ### breakerStatus
-    self.dataQ=11	 ### num of images to process, use odd number to break tie  
+    self.dataQ=11	### num of images to process, use odd number to break tie  
 
 
 

@@ -659,7 +659,7 @@ class kinect_process(rgb_process):
 			#### ends ####
 			##### find white #########
 
-			low_th=np.array([50,0,210])
+			low_th=np.array([50,0,220])
 			high_th=np.array([100,50,255])
 			mask=self.th_hsv(masked_img,low_th,high_th)
 			if mask is None: 
@@ -1583,7 +1583,7 @@ class pi_cam_process(rgb_process):
 					vx,vy,_,_=self.find_line(cnt,img_visual)
 					angle=np.angle(vx+vy*1j,deg=True)
 					print "The swithc is ", angle, "deg" 
-					return angle 
+					return abs(angle) 
 					#x,y,w,h=self.unroated_box(cnt,img_visual)
 					#masked_img=self.get_ROI((x,y,w,h),img_visual)
 
