@@ -28,11 +28,13 @@ if __name__ == '__main__':
 
         tbd_planner.home_robot()
 
-        # tbd_planner.move_to_station(station)
+        tbd_planner.set_station(station)
 
-        tbd_planner.turn_turntable_to_station(station)
+        tbd_planner.move_to_station()
 
-        # Substitute Deep Neural Network Here
+        tbd_planner.turn_turntable_to_station()
+
+        # Substitute Deep Neural Network Station Recognition Here
 
         actuator = elements[0][1:]
         actuations = elements[1:]
@@ -42,45 +44,66 @@ if __name__ == '__main__':
 
         tbd_planner.start_vision()
 
-        tbd_planner.position_arm_for_vision()
-
-        tbd_planner.determine_station_position_and_orientation_using_kinect()
-
-        tbd_planner.generate_robot_trajectory_using_ik()
-
-        tbd_planner.move_to_raspberry_pi_camera_position()
-
-        tbd_planner.determine_station_orientation_using_raspberry_pi_camera()
-
-        tbd_planner.determine_mission_goal()
-
-        tbd_planner.update_waypoints_with_mission_goal()
-
-        if(tbd_planner.verify_task_is_completed()):
-            print("Task is already completed.")
-            continue
-
-        tbd_planner.move_to_station_object()
-
-        tbd_planner.turn_on_pump()
-
-        tbd_planner.actuate_end_effector()
-
-        tbd_planner.turn_off_pump()
-
-        if(actuator == "A" or actuator == "B"):
-            tbd_planner.position_arm_for_vision()
-        else:
-            tbd_planner.return_to_raspberry_pi_camera_position()
-
-            tbd_planner.determine_station_orientation_using_raspberry_pi_camera_2()
-
-        task_completed_flag = tbd_planner.verify_task_is_completed()
+        tbd_planner.position_arm_for_kinect_vision()
 
         num_attempts = 1
 
-        while(task_completed_flag == False and num_attempts < 3):
-            num_attempts = num_attempts + 1
+        if(actuator == "A" or actuator == "B"):
+            tbd_planner.determine_breaker_positions_and_orientations_using_kinect()
+
+            if(tbd_planner.verify_task_is_completed()):
+                print("Task is already completed.")
+                continue
+
+            tbd_planner.generate_robot_trajectory_using_ik()
+
+            tbd_planner.determine_mission_goal()
+
+            tbd_planner.update_waypoints_with_mission_goal()
+
+            tbd_planner.move_to_station_object()
+
+            tbd_planner.turn_on_pump()
+
+            tbd_planner.actuate_end_effector()
+
+            tbd_planner.turn_off_pump()
+
+            tbd_planner.position_arm_for_kinect_vision()
+
+            task_completed_flag = tbd_planner.verify_task_is_completed()
+
+            while(task_completed_flag == False and num_attempts < 3):
+                num_attempts = num_attempts + 1
+
+                tbd_planner.update_waypoints_with_mission_goal()
+
+                tbd_planner.move_to_station_object()
+
+                tbd_planner.turn_on_pump()
+
+                tbd_planner.actuate_end_effector()
+
+                tbd_planner.turn_off_pump()
+
+                tbd_planner.position_arm_for_kinect_vision()
+
+                task_completed_flag = tbd_planner.verify_task_is_completed()
+
+        else:
+            tbd_planner.determine_station_position_and_orientation_using_kinect()
+
+            tbd_planner.generate_robot_trajectory_using_ik()
+
+            tbd_planner.move_to_raspberry_pi_camera_position()
+
+            tbd_planner.determine_station_orientation_using_raspberry_pi_camera()
+
+            tbd_planner.determine_mission_goal()
+
+            if(tbd_planner.verify_task_is_completed()):
+                print("Task is already completed.")
+                continue
 
             tbd_planner.update_waypoints_with_mission_goal()
 
@@ -97,6 +120,25 @@ if __name__ == '__main__':
             tbd_planner.determine_station_orientation_using_raspberry_pi_camera_2()
 
             task_completed_flag = tbd_planner.verify_task_is_completed()
+
+            while(task_completed_flag == False and num_attempts < 3):
+                num_attempts = num_attempts + 1
+
+                tbd_planner.update_waypoints_with_mission_goal()
+
+                tbd_planner.move_to_station_object()
+
+                tbd_planner.turn_on_pump()
+
+                tbd_planner.actuate_end_effector()
+
+                tbd_planner.turn_off_pump()
+
+                tbd_planner.return_to_raspberry_pi_camera_position()
+
+                tbd_planner.determine_station_orientation_using_raspberry_pi_camera_2()
+
+                task_completed_flag = tbd_planner.verify_task_is_completed()
 
         if(num_attempts == 3):
             print("Attempted the task 3 times, but was unable to complete the task. Moving on to the next task.")

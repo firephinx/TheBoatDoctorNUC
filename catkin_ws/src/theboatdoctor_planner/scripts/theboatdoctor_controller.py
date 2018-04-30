@@ -29,6 +29,8 @@ class TheBoatDoctorController:
 
         self.reset_pub = rospy.Publisher('/TheBoatDoctor/Reset', Empty, queue_size=1)
         self.home_pub = rospy.Publisher('/TheBoatDoctor/Home', Empty, queue_size=1)
+        self.home_gantry_pub = rospy.Publisher('/TheBoatDoctor/HomeGantry', Empty, queue_size=1)
+        self.home_turntable_pub = rospy.Publisher('/TheBoatDoctor/HomeTurntable', Empty, queue_size=1)
         self.move_robot_base_pub = rospy.Publisher('/TheBoatDoctor/move_robot_base', Pose2D, queue_size=10);
         self.move_gantry_pub = rospy.Publisher('/TheBoatDoctor/move_gantry', Pose2D, queue_size=10);
         self.turn_turntable_pub = rospy.Publisher('/TheBoatDoctor/turn_turntable', Pose2D, queue_size=10);
@@ -58,8 +60,36 @@ class TheBoatDoctorController:
     def home_arm(self):
         return self.move_arm([-math.pi / 2, -math.pi / 2, 0])
 
-    def position_arm_for_vision(self):
+    def position_arm_for_kinect_vision(self):
         return self.move_arm([-math.pi * 3 / 5, -math.pi * 3 / 5, 0])
+
+    def home_gantry(self):
+
+        empty_msg = Empty()
+
+        self.home_gantry_pub.publish(empty_msg)
+        self.home_gantry_pub.publish(empty_msg)
+
+        try:
+            done_homing_msg = rospy.wait_for_message('/TheBoatDoctor/done_homing', Bool, timeout = 30)
+            return done_homing_msg.data and done_homing_arm
+        except:
+            print("Timeout waiting for done_homing_msg.")
+            return False
+
+    def home_turntable(self):
+
+        empty_msg = Empty()
+
+        self.home_turntable_pub.publish(empty_msg)
+        self.home_turntable_pub.publish(empty_msg)
+
+        try:
+            done_homing_msg = rospy.wait_for_message('/TheBoatDoctor/done_homing', Bool, timeout = 30)
+            return done_homing_msg.data and done_homing_arm
+        except:
+            print("Timeout waiting for done_homing_msg.")
+            return False
 
     def home_robot(self):
 

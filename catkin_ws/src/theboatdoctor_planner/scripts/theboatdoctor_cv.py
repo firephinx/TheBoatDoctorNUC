@@ -14,8 +14,26 @@ import signal
 
 class TheBoatDoctorCV():
 	
-	def __init__(self,Type):
+	def __init__(self, Type, station, station_orientation):
 		#rospy.init_node('CV_node', anonymous=False)
+		self.station = station
+		self.corner = 0
+
+		if(self.station == "E"):
+			self.corner = 1
+		elif(self.station == "F"):
+			self.corner = 2
+
+		self.station_orientation = station_orientation
+
+		self.station_orientation_num = -1
+
+		if(self.station_orientation == "horizontal"):
+			self.station_orientation_num = 0
+		elif(self.station_orientation == "vertical"):
+			self.station_orientation_num = 1
+		else:
+			print("station_orientation was not provided.")
 
 		self.data=None
 		self.firstCall=1
@@ -36,7 +54,8 @@ class TheBoatDoctorCV():
 
 	def get_station_info_kinect(self):
 		Type=str(self.type)
-		command="gnome-terminal -e 'rosrun object_detection kinect_client.py --type {0}'".format(Type)
+		subType=str(self.corner)
+		command="gnome-terminal -e 'rosrun object_detection kinect_client.py --type {0} --subType {1}'".format(Type, subType)
 		if self.firstCall==1:
 			#os.system("gnome-terminal -e 'rosrun object_detection pi_cam_client.py --type 3'") ## call rosservice in a new terminal
 			os.system(command) ## call rosservice in a new terminal 
@@ -59,21 +78,25 @@ class TheBoatDoctorCV():
  					station_orientation = ['','','']
  					for i in xrange(3):
  						if(self.data[i+9] == 1):
- 							station_orientation[i] = 'up'
+ 							station_orientation[i] = "U"
  						else:
- 							station_orientation[i] = 'down'
+ 							station_orientation[i] = "D"
  					return (station_object_position_in_3d, station_orientation)
  				elif(self.type == 2):
  					station_object_position_in_3d = self.data[0:3]
- 					station_orientation = 'vertical'
+ 					self.station_orientation = 'vertical'
+					self.station_orientation_num = 1
  				else:
  					station_object_position_in_3d = self.data[0:3]
  					if(self.data[3] == 1):
- 						station_orientation = 'vertical'
+ 						self.station_orientation = 'vertical'
+ 						self.station_orientation_num = 1
  					elif(self.data[3] == 2): 
- 						station_orientation = 'horizontal'
+ 						self.station_orientation = 'horizontal'
+ 						self.station_orientation_num = 0
  					else:
- 						station_orientation = ''
+ 						self.station_orientation = ''
+ 						self.station_orientation_num = -1
  				return (station_object_position_in_3d, station_orientation)
  			
 		else: 
@@ -86,7 +109,8 @@ class TheBoatDoctorCV():
 
  	def get_station_info_pi(self):
  		Type=str(self.type)
-		command="gnome-terminal -e 'rosrun object_detection pi_cam_client.py --type {0}'".format(Type)
+ 		subType=str(self.station_orientation_num)
+		command="gnome-terminal -e 'rosrun object_detection pi_cam_client.py --type {0} --subType {1}'".format(Type, subType)
 		#print command
 		#command="xterm -hold -e 'source /home/theboatdoctor-nuc/.bashrc && rosservice call /raspicam_service/actuator_status {0}'".format(Type)		
 		if self.firstCall_pi==1:
