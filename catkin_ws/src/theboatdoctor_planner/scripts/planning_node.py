@@ -16,9 +16,9 @@ if __name__ == '__main__':
 
     f = open(args.missionfilepathname, "r")
     commands = f.readlines()
-    for s in commands:
-        s = s[0:len(s)-1]
-        elements = s.split(' ')
+    for task in commands:
+        task = task.strip()
+        elements = task.split(' ')
         station = elements[0][0]
         if (station != "A" and station != "B" and station != "C" and station != "D" and station != "E" and station != "F" and station != "G" and station != "H"):
             print("Invalid station or task in mission file.")
@@ -28,7 +28,7 @@ if __name__ == '__main__':
 
         tbd_planner.home_robot()
 
-        tbd_planner.move_to_station(station)
+        # tbd_planner.move_to_station(station)
 
         tbd_planner.turn_turntable_to_station(station)
 
@@ -45,9 +45,6 @@ if __name__ == '__main__':
         tbd_planner.position_arm_for_vision()
 
         tbd_planner.determine_station_position_and_orientation_using_kinect()
-
-        if(tbd_planner.get_station_orientation() == "horizontal"):
-            continue
 
         tbd_planner.generate_robot_trajectory_using_ik()
 
@@ -71,13 +68,19 @@ if __name__ == '__main__':
 
         tbd_planner.turn_off_pump()
 
-        tbd_planner.return_to_raspberry_pi_camera_position()
+        if(actuator == "A" or actuator == "B"):
+            tbd_planner.position_arm_for_vision()
+        else:
+            tbd_planner.return_to_raspberry_pi_camera_position()
 
-        tbd_planner.determine_station_orientation_using_raspberry_pi_camera_2()
+            tbd_planner.determine_station_orientation_using_raspberry_pi_camera_2()
 
         task_completed_flag = tbd_planner.verify_task_is_completed()
 
-        while(task_completed_flag == False):
+        num_attempts = 1
+
+        while(task_completed_flag == False and num_attempts < 3):
+            num_attempts = num_attempts + 1
 
             tbd_planner.update_waypoints_with_mission_goal()
 
@@ -95,6 +98,9 @@ if __name__ == '__main__':
 
             task_completed_flag = tbd_planner.verify_task_is_completed()
 
-        print("Task is completed.")
+        if(num_attempts == 3):
+            print("Attempted the task 3 times, but was unable to complete the task. Moving on to the next task.")
+        else:
+            print("Task is completed.")
 
     f.close()

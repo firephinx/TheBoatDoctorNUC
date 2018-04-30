@@ -17,20 +17,20 @@ class TheBoatDoctorPlanner:
         ## V1 Offsets
         self.raspberry_pi_camera_vertical_station_v1_x_offset = -0.2
         self.raspberry_pi_camera_vertical_station_v1_z_offset = -0.06
-        self.vertical_station_v1_goal_x_offset = -0.086
+        self.vertical_station_v1_goal_x_offset = -0.08
         self.vertical_station_v1_goal_z_offset = 0.01
 
         ## V2 Offsets
         self.raspberry_pi_camera_vertical_station_v2_x_offset = -0.2
         self.raspberry_pi_camera_vertical_station_v2_z_offset = -0.06
-        self.vertical_station_v2_goal_x_offset = -0.075
-        self.vertical_station_v2_goal_z_offset = 0.02
+        self.vertical_station_v2_goal_x_offset = -0.08
+        self.vertical_station_v2_goal_z_offset = 0.03
 
         ## V3 Offsets
-        self.raspberry_pi_camera_vertical_station_v3_x_offset = -0.25
+        self.raspberry_pi_camera_vertical_station_v3_x_offset = -0.2
         self.raspberry_pi_camera_vertical_station_v3_z_offset = -0.07
-        self.vertical_station_v3_goal_x_offset = -0.14
-        self.vertical_station_v3_goal_z_offset = 0.0
+        self.vertical_station_v3_goal_x_offset = -0.069
+        self.vertical_station_v3_goal_z_offset = -0.03
 
         ## Breaker Offsets
         self.raspberry_pi_camera_vertical_station_breaker_x_offset = -0.2
@@ -40,10 +40,10 @@ class TheBoatDoctorPlanner:
 
         ## Horizontal Station Offsets
         ## V1 Offsets
-        self.raspberry_pi_camera_horizontal_station_v1_x_offset = -0.06
-        self.raspberry_pi_camera_horizontal_station_v1_z_offset = 0.2
-        self.horizontal_station_v1_goal_x_offset = -0.086
-        self.horizontal_station_v1_goal_z_offset = 0.01
+        self.raspberry_pi_camera_horizontal_station_v1_x_offset = -0.13
+        self.raspberry_pi_camera_horizontal_station_v1_z_offset = 0.0
+        self.horizontal_station_v1_goal_x_offset = -0.08
+        self.horizontal_station_v1_goal_z_offset = 0.0
 
         ## V3 Offsets
         self.raspberry_pi_camera_horizontal_station_v3_x_offset = -0.06
@@ -196,12 +196,21 @@ class TheBoatDoctorPlanner:
         self.tbd_controller.position_arm_for_vision()
 
     def determine_station_position_and_orientation_using_kinect(self):
-        (self.station_object_position_in_3d_camera_coordinates, self.station_orientation) = self.tbd_cv.get_station_info_kinect()
+        if(self.actuator == "A" or self.actuator == "B"):
+            (self.station_object_positions_in_3d_camera_coordinates, self.station_orientations) = self.tbd_cv.get_station_info_kinect()
+            self.station_object_positions_in_3d_robot_coordinates.resize(3)
+            for i in range(3):
+                print("Station object position in 3D camera coordinates: " + str(self.station_object_positions_in_3d_camera_coordinates[i]))
+                print("Station orientation: " + self.station_orientations[i])
+                self.station_object_positions_in_3d_robot_coordinates[i] = self.cam_to_ik(numpy.array(self.station_object_positions_in_3d_camera_coordinates[i]))
+                print("Station object position in 3D robot coordinates: " + str(self.station_object_positions_in_3d_robot_coordinates))
+        else:    
+            (self.station_object_position_in_3d_camera_coordinates, self.station_orientation) = self.tbd_cv.get_station_info_kinect()
 
-        print("Station object position in 3D camera coordinates: " + str(self.station_object_position_in_3d_camera_coordinates))
-        print("Station orientation: " + self.station_orientation)
-        self.station_object_position_in_3d_robot_coordinates = self.cam_to_ik(numpy.array(self.station_object_position_in_3d_camera_coordinates))
-        print("Station object position in 3D robot coordinates: " + str(self.station_object_position_in_3d_robot_coordinates))
+            print("Station object position in 3D camera coordinates: " + str(self.station_object_position_in_3d_camera_coordinates))
+            print("Station orientation: " + self.station_orientation)
+            self.station_object_position_in_3d_robot_coordinates = self.cam_to_ik(numpy.array(self.station_object_position_in_3d_camera_coordinates))
+            print("Station object position in 3D robot coordinates: " + str(self.station_object_position_in_3d_robot_coordinates))
 
     ######### TODO: Make Better for all stations
     def generate_robot_trajectory_using_ik(self):
@@ -222,6 +231,12 @@ class TheBoatDoctorPlanner:
             print("Raspberry Pi Camera Position: " + str(self.raspberry_pi_camera_position))
 
             self.joint_angles_for_raspberry_pi_camera_position = self.tbd_ik.solve_ik(self.raspberry_pi_camera_position, self.station_orientation)
+            
+            if(abs(self.joint_angles_for_raspberry_pi_camera_position[1]) < 0.000001):
+                self.joint_angles_for_raspberry_pi_camera_position[1] = 0.0
+            if(abs(self.joint_angles_for_raspberry_pi_camera_position[2]) < 0.000001):
+                self.joint_angles_for_raspberry_pi_camera_position[2] = 0.0
+
             self.joint_angles_for_goal_position = numpy.copy(self.joint_angles_for_raspberry_pi_camera_position)
 
             if(self.station_orientation == "vertical"):
@@ -245,6 +260,12 @@ class TheBoatDoctorPlanner:
             print("Raspberry Pi Camera Position: " + str(self.raspberry_pi_camera_position))
 
             self.joint_angles_for_raspberry_pi_camera_position = self.tbd_ik.solve_ik(self.raspberry_pi_camera_position, self.station_orientation)
+            
+            if(abs(self.joint_angles_for_raspberry_pi_camera_position[1]) < 0.000001):
+                self.joint_angles_for_raspberry_pi_camera_position[1] = 0.0
+            if(abs(self.joint_angles_for_raspberry_pi_camera_position[2]) < 0.000001):
+                self.joint_angles_for_raspberry_pi_camera_position[2] = 0.0
+
             self.joint_angles_for_goal_position = numpy.copy(self.joint_angles_for_raspberry_pi_camera_position)
 
             self.joint_angles_for_goal_position[1] = self.joint_angles_for_goal_position[1] - self.raspberry_pi_camera_vertical_station_v2_x_offset + self.vertical_station_v2_goal_x_offset
@@ -267,6 +288,12 @@ class TheBoatDoctorPlanner:
             print("Raspberry Pi Camera Position: " + str(self.raspberry_pi_camera_position))
 
             self.joint_angles_for_raspberry_pi_camera_position = self.tbd_ik.solve_ik(self.raspberry_pi_camera_position, self.station_orientation)
+            
+            if(abs(self.joint_angles_for_raspberry_pi_camera_position[1]) < 0.000001):
+                self.joint_angles_for_raspberry_pi_camera_position[1] = 0.0
+            if(abs(self.joint_angles_for_raspberry_pi_camera_position[2]) < 0.000001):
+                self.joint_angles_for_raspberry_pi_camera_position[2] = 0.0
+
             self.joint_angles_for_goal_position = numpy.copy(self.joint_angles_for_raspberry_pi_camera_position)
 
             if(self.station_orientation == "vertical"):
@@ -278,6 +305,7 @@ class TheBoatDoctorPlanner:
 
         elif(self.actuator == "A" or self.actuator == "B"):
 
+            self.num_breakers = len(self.actuations) / 2
             self.desired_z_movement_distance = 0
 
     def print_current_gantry_position(self):
@@ -301,6 +329,8 @@ class TheBoatDoctorPlanner:
             self.done_moving_arm_flag = self.tbd_controller.move_arm(desired_arm_thetas)
 
     def move_to_raspberry_pi_camera_position(self):
+        self.home_arm()
+
         ## Move Gantry to Raspberry Pi Camera location
         self.move_gantry([self.joint_angles_for_raspberry_pi_camera_position[1], self.joint_angles_for_raspberry_pi_camera_position[2]])
 
@@ -357,6 +387,7 @@ class TheBoatDoctorPlanner:
 
         elif(self.actuator == "A" or self.actuator == "B"):
             self.desired_station_angle_in_degrees = 0
+            self.num_breakers_to_actuate = len(self.actuations) / 2
 
         print("Desired Station Angle: " + str(self.desired_station_angle_in_degrees))
 
@@ -384,11 +415,9 @@ class TheBoatDoctorPlanner:
 
     def turn_on_pump(self):
         self.tbd_controller.pump_switch("on")
-        time.sleep(1)
 
     def turn_off_pump(self):
         self.tbd_controller.pump_switch("off")
-        time.sleep(1)
 
     def return_to_raspberry_pi_camera_position(self):
 
@@ -429,4 +458,5 @@ class TheBoatDoctorPlanner:
         return self.station_orientation
 
     def verify_task_is_completed(self):
+        print("Degree Error = " + str(abs(self.desired_station_angle_in_degrees - self.current_station_angle_in_degrees) % 360))
         return (self.actuator == "A" or self.actuator == "B" or (abs(self.desired_station_angle_in_degrees - self.current_station_angle_in_degrees) % 360  < self.task_completion_angle_threshold_in_degrees))

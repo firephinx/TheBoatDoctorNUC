@@ -23,7 +23,7 @@ class TheBoatDoctorIK:
 
         # Limits in inches
         self.x_gan_min = 0
-        self.x_gan_max = 10
+        self.x_gan_max = 9
         self.z_gan_min = 0
         self.z_gan_max = 13
         self.z_arm_max_vert = 10
@@ -66,6 +66,10 @@ class TheBoatDoctorIK:
             x_gan = self.x_gan_min
         x_arm = x - x_gan
 
+        print("x_arm = " + str(x_arm))
+        print("x_gan = " + str(x_gan))
+        print("(x_arm - self.l1)/self.l2 = " + str((x_arm - self.l1)/self.l2))
+
         # calc angles based on position
         theta1 = math.acos((x_arm - self.l1)/self.l2)
         theta2 = -math.pi/2 - theta1   
@@ -100,6 +104,10 @@ class TheBoatDoctorIK:
         if (z_gan < self.z_gan_min):
             z_gan = self.z_gan_min
         z_arm = z - z_gan
+
+        print("z_arm = " + str(z_arm))
+        print("z_gan = " + str(z_gan))
+        print("z_arm/self.l2 = " + str(z_arm/self.l2))
 
         # calc angles based on position
         theta1 = math.asin(z_arm/self.l2)
