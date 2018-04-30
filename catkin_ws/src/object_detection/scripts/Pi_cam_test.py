@@ -17,9 +17,9 @@ from object_detection.srv import *
 
 
 
-## type 1: shuttle valvue 
-## type 2: orange vale 
-## type 3: spigot valve 
+## type 1: shuttle valvue   0: horizontal 1:vertical  
+## type 2: orange vale      
+## type 3: spigot valve     0: horizontal 1:vertical
 ## type 4: breaker 
 
 
@@ -36,7 +36,7 @@ from object_detection.srv import *
 
 class image_converter:
 
-  def __init__(self,type):
+  def __init__(self,type,subType):
     #self.out = cv2.VideoWriter('outpy.avi',cv2.VideoWriter_fourcc('X','V','I','D'), 10, (270,480))
     #fourcc = cv2.VideoWriter_fourcc(*'XVID')
     #self.out = cv2.VideoWriter('output.avi',fourcc, 20.0, (640,480))
@@ -52,6 +52,7 @@ class image_converter:
     #self.pub = rospy.Publisher('/kinect2/qhd/RGB_proc', Image, queue_size=10)
     #self.image_sub2 = rospy.Subscriber("/kinect2/sd/image_depth",Image,self.Depth_proc)
     self.type=type 
+    self.subType=subType ## this is the sub type for an actuator
     self.dataNum=0 
     self.dataQ=11
 
@@ -71,7 +72,7 @@ class image_converter:
       # key=cv2.waitKey(20)
 
       PI=pi_cam_process(cv_image)
-      value=PI.locate_green(self.type,cv_image)  ## will be all in str type
+      value=PI.locate_green(self.type,cv_image,self.subType)  ## will be all in str type
       if value is not None: 
         self.dataNum+=1
         if self.type ==1 or self.type==2 or self.type==3:
@@ -171,7 +172,7 @@ class image_converter:
 
 
 def get_actuator_status(msg):
-  ic = image_converter(msg.want)
+  ic = image_converter(msg.Type,msg.subType)
   rospy.spin()
 
 if __name__ == '__main__':

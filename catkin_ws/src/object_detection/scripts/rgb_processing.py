@@ -704,7 +704,7 @@ class kinect_process(rgb_process):
 
 	def spigot_proc(self,img,area_th):
 		low_th=np.array([100,200,100]) ## 100 200 100
-		high_th=np.array([200,255,200]) ## 150 255 200
+		high_th=np.array([200,255,230]) ## 150 255 200
 		mask=self.th_hsv(img,low_th,high_th)
 		target_mask=self.findTarget(mask,area_th)
 		##### helper line ###############
@@ -758,8 +758,8 @@ class kinect_process(rgb_process):
 
 			##### find white #########
 
-			low_th=np.array([50,0,200])
-			high_th=np.array([120,50,255])
+			low_th=np.array([50,0,230])        ## day  [50,0,200]
+			high_th=np.array([120,50,255])     ## day  [120,50,255]
 			mask=self.th_hsv(masked_img,low_th,high_th)
 			if mask is None: 
 				print "[rgb_processing/spigot_sub_proc] I can't find white part of spigot valve in hsv"
@@ -861,6 +861,7 @@ class kinect_process(rgb_process):
 
 		
 		elif type==3: ### spigot valve 
+			print "spigot test" 
 			blob_area_th=50
 			target_mask=self.spigot_proc(masked_img,blob_area_th)
 			if target_mask is None: 
@@ -954,13 +955,19 @@ class pi_cam_process(rgb_process):
 
 
 
-	def green_tip_small(self,img,area_th):
-			######## the function process breaker 
+	def green_tip_small(self,img,area_th,subType):
+			######## the function process spigot
 			####### input: RGB image 
 			#cv2.imshow("result4",img)
 			#cv2.waitKey(0)
-			low_th=np.array([30,30,30])
-			high_th=np.array([100,140,100])
+			if subType==0:
+				low_th=np.array([50,50,100])
+				high_th=np.array([120,120,150])
+			elif subType==1:
+				low_th=np.array([30,30,30])
+				high_th=np.array([100,140,100])
+			else: 
+				print "please type either 0 (horizontal) or 1 (vertical) for subType"
 			mask=self.th_hsv(img,low_th,high_th)
 			target_mask=self.findTarget(mask,area_th)
 			if target_mask is None:
@@ -1015,13 +1022,19 @@ class pi_cam_process(rgb_process):
 		  	return target_mask
 
 
-	def small_proc(self,img,area_th):
+	def small_proc(self,img,area_th,subType):
 			######## the function process small valve 
 			####### input: RGB image 
 			#cv2.imshow("result4",img)
 			#cv2.waitKey(0)
-			low_th=np.array([100,200,60])
-			high_th=np.array([150,255,140])
+			if subType==0:
+				low_th=np.array([100,200,60])
+				high_th=np.array([150,255,140])
+			elif subType==1:
+				low_th=np.array([100,200,60])
+				high_th=np.array([150,255,140])
+			else:
+				print "please type either 0 (horizontal) or 1 (vertical) for subType"
 			mask=self.th_hsv(img,low_th,high_th)
 			target_mask=self.findTarget(mask,area_th)
 			
@@ -1301,10 +1314,10 @@ class pi_cam_process(rgb_process):
 		  		#cv2.waitKey(200)
 		  	##### helper line ###############
 		  	#print 1
-			mask_final=np.uint8(target_mask)
-			masked_img=cv2.bitwise_and(img,img,mask=mask_final)
-			cv2.imshow("masked_img",masked_img)
-			cv2.waitKey(20)
+			# mask_final=np.uint8(target_mask)
+			# masked_img=cv2.bitwise_and(img,img,mask=mask_final)
+			# cv2.imshow("masked_img",masked_img)
+			# cv2.waitKey(20)
 			###############################
 			return target_mask
 
@@ -1459,14 +1472,14 @@ class pi_cam_process(rgb_process):
 	  	##### helper line ###############
 	  	#print 1
 	  	#print 1
-		mask_final=np.uint8(target_mask)
+		# mask_final=np.uint8(target_mask)
 
-		# cv2.imshow("masked_img_black_box2q",img)
-		# cv2.waitKey(20)
+		# # cv2.imshow("masked_img_black_box2q",img)
+		# # cv2.waitKey(20)
 		
-		masked_img=cv2.bitwise_and(img,img,mask=mask_final)
-		cv2.imshow("masked_img_black_box",masked_img)
-		cv2.waitKey(20)
+		# masked_img=cv2.bitwise_and(img,img,mask=mask_final)
+		# cv2.imshow("masked_img_black_box",masked_img)
+		# cv2.waitKey(20)
 		###############################
 		return target_mask
 
@@ -1493,7 +1506,7 @@ class pi_cam_process(rgb_process):
 	######### ends ######################
 
 
-	def locate_green(self,type,img,station_F=0):
+	def locate_green(self,type,img,subType,station_F=0):
 			masked_img=self.mask(img,station_F)
 			img_visual=copy.deepcopy(img)
 			if type==2: ## orange valve
@@ -1533,7 +1546,7 @@ class pi_cam_process(rgb_process):
 
 			elif type==3: ## spigot valve 
 				small_area_th=10000
-				small_mask=self.small_proc(masked_img,small_area_th)
+				small_mask=self.small_proc(masked_img,small_area_th,subType)
 
 				iterations=3
 				kernel=np.ones((13,13),np.uint8)
@@ -1549,7 +1562,7 @@ class pi_cam_process(rgb_process):
 
 				#print tips_center  
 					tip_area_th=400
-					tip_mask=self.green_tip_small(masked_img,tip_area_th)
+					tip_mask=self.green_tip_small(masked_img,tip_area_th,subType)
 					cnt_area_th=400
 					iterations=2
 					kernel=np.ones((5,5),np.uint8)

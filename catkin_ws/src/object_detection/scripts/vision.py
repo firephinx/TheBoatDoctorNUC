@@ -19,11 +19,12 @@ import signal
 
 class TheBoatDoctorCV():
 	
-	def __init__(self,Type):
+	def __init__(self,Type,subType):
 		rospy.init_node('test', anonymous=False)
 		self.type=Type
 		self.data=None
 		self.firstCall=1 
+		self.subType=subType
 
 	def get_actuator_location(self):
 		Type=str(self.type)
@@ -57,7 +58,8 @@ class TheBoatDoctorCV():
 
  	def get_actuator_status(self):
  		Type=str(self.type)
-		command="gnome-terminal -e 'rosrun object_detection pi_cam_client.py --type {0}'".format(Type)
+ 		subType=str(self.subType)
+		command="gnome-terminal -e 'rosrun object_detection pi_cam_client.py --type {0} --subType {1}'".format(Type,subType)
 		#print command
 		#command="xterm -hold -e 'source /home/theboatdoctor-nuc/.bashrc && rosservice call /raspicam_service/actuator_status {0}'".format(Type)		
 		if self.firstCall==1:
@@ -86,7 +88,7 @@ class TheBoatDoctorCV():
 
 
 if __name__=="__main__":
-	detector=TheBoatDoctorCV(2)
+	detector=TheBoatDoctorCV(3,0)
 	location=detector.get_actuator_status()
 	print location
 	print "finished"
