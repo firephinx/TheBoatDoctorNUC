@@ -51,23 +51,27 @@ if __name__ == '__main__':
         if(actuator == "A" or actuator == "B"):
             tbd_planner.determine_breaker_positions_and_orientations_using_kinect()
 
+            tbd_planner.determine_mission_goal()
+
             if(tbd_planner.verify_task_is_completed()):
                 print("Task is already completed.")
                 continue
 
             tbd_planner.generate_robot_trajectory_using_ik()
 
-            tbd_planner.determine_mission_goal()
+            tbd_planner.update_waypoints_with_mission_goal()
 
-            tbd_planner.update_waypoints_with_mission_goal_from_mission_file()
+            num_breakers_to_actuate = tbd_planner.get_num_breakers_to_actuate()
 
-            tbd_planner.move_to_station_object()
+            for i in xrange(num_breakers_to_actuate):
 
-            tbd_planner.turn_on_pump()
+                tbd_planner.move_to_breaker(i)
 
-            tbd_planner.actuate_end_effector()
+                tbd_planner.turn_on_pump()
 
-            tbd_planner.turn_off_pump()
+                tbd_planner.actuate_wrist()
+
+                tbd_planner.turn_off_pump()
 
             tbd_planner.position_arm_for_kinect_vision()
 
@@ -80,17 +84,27 @@ if __name__ == '__main__':
             while(task_completed_flag == False and num_attempts < 3):
                 num_attempts = num_attempts + 1
 
+                tbd_planner.generate_robot_trajectory_using_ik()
+
                 tbd_planner.update_waypoints_with_mission_goal()
 
-                tbd_planner.move_to_station_object()
+                num_breakers_to_actuate = tbd_planner.get_num_breakers_to_actuate()
 
-                tbd_planner.turn_on_pump()
+                for i in xrange(num_breakers_to_actuate):
 
-                tbd_planner.actuate_end_effector()
+                    tbd_planner.move_to_breaker(i)
 
-                tbd_planner.turn_off_pump()
+                    tbd_planner.turn_on_pump()
+
+                    tbd_planner.actuate_wrist()
+
+                    tbd_planner.turn_off_pump()
 
                 tbd_planner.position_arm_for_kinect_vision()
+
+                tbd_planner.start_vision()
+
+                tbd_planner.determine_breaker_positions_and_orientations_using_kinect()
 
                 task_completed_flag = tbd_planner.verify_task_is_completed()
 
@@ -136,11 +150,13 @@ if __name__ == '__main__':
 
                     tbd_planner.move_to_shuttlecock_valve()
 
-                    tbd_planner.actuate_shuttlecock_valve()
+                    tbd_planner.actuate_wrist()
                 else:
                     tbd_planner.actuate_end_effector()
 
                     tbd_planner.move_gantry_to_actuate_shuttlecock_valve()
+
+                    tbd_planner.home_arm_with_goal_end_effector_angle()
 
             else:
 

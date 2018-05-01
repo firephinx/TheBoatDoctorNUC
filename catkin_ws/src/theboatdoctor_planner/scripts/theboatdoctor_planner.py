@@ -35,8 +35,7 @@ class TheBoatDoctorPlanner:
         ## Breaker Offsets
         self.raspberry_pi_camera_vertical_station_breaker_x_offset = -0.2
         self.raspberry_pi_camera_vertical_station_breaker_z_offset = -0.06
-        self.vertical_station_breaker_goal_x_offset = -0.086
-        self.vertical_station_breaker_goal_z_offset = 0.01
+        self.breaker_goal_wrist_flip_theta = math.pi / 18
 
         self.breaker_1_x_offset = 0.0
         self.breaker_1_z_offset = 0.0
@@ -55,14 +54,15 @@ class TheBoatDoctorPlanner:
         ## V3 Offsets
         self.raspberry_pi_camera_horizontal_station_v3_x_offset = -0.17
         self.raspberry_pi_camera_horizontal_station_v3_z_offset = 0.03
-        self.horizontal_station_open_v3_goal_x_offset = 0.13
-        self.horizontal_station_open_v3_goal_z_offset = -0.1
-        self.horizontal_station_open_v3_goal_x_gantry_offset = 0.08
+        self.horizontal_station_open_v3_goal_x_offset = 0.08
+        self.horizontal_station_open_v3_goal_z_offset = -0.09
+        self.horizontal_station_open_v3_goal_x_gantry_offset = 0.07
         self.horizontal_station_closed_v3_goal_x_offset = 0.13
         self.horizontal_station_closed_v3_goal_z_offset = -0.04
         self.horizontal_station_closed_v3_goal_x_gantry_offset = 0.15
         self.horizontal_station_closed_v3_goal_2_x_offset = -0.03
         self.horizontal_station_closed_v3_goal_2_z_offset = 0.08
+        self.horizontal_station_closed_v3_wrist_flip_theta = -math.pi / 2
 
         ## Thresholds
         self.angle_threshold_in_degrees = 3
@@ -81,6 +81,8 @@ class TheBoatDoctorPlanner:
         self.desired_station_angle_in_degrees = 0
         self.desired_z_movement_distance = 0
         self.station_orientation = ''
+        self.breaker_positions_in_3d_robot_coordinates = [0, 0, 0]
+        self.joint_angles_for_goal_positions = numpy.zeros([1,6])
 
     def cam_to_ik(self, cam_coord):
         r_y_90 = numpy.array([ [0, 0, 1], [0, 1, 0], [-1, 0, 0] ])
@@ -212,6 +214,10 @@ class TheBoatDoctorPlanner:
 
     def set_actuator(self, actuator):
         self.actuator = actuator
+
+        if(self.actuator == "V2" or self.actuator == "A" or self.actuator == "B"):
+            self.station_orientation == "vertical"
+
         print("Actuator: " + self.actuator)
 
     def set_actuations(self, actuations):
@@ -231,11 +237,13 @@ class TheBoatDoctorPlanner:
         self.tbd_controller.position_arm_for_kinect_vision()
 
     def determine_breaker_positions_and_orientations_using_kinect(self):
-        (self.breaker_positions_in_3d_camera_coordinates, self.breaker_orientations) = self.tbd_cv.get_station_info_kinect()
-        self.breaker_positions_in_3d_robot_coordinates.resize(3)
+        (self.breaker_positions_in_3d_camera_coordinates, self.current_breaker_positions) = self.tbd_cv.get_station_info_kinect()
+        
+        self.current_breaker_positions = ['U', 'D', 'U']
+
         for i in range(3):
             print("Breaker " + str(i) + " position in 3D camera coordinates: " + str(self.breaker_positions_in_3d_camera_coordinates[i]))
-            print("Breaker " + str(i) + " orientation: " + self.breaker_orientations[i])
+            print("Breaker " + str(i) + " orientation: " + self.current_breaker_positions[i])
             self.breaker_positions_in_3d_robot_coordinates[i] = self.cam_to_ik(numpy.array(self.breaker_positions_in_3d_camera_coordinates[i]))
             print("Station object position in 3D robot coordinates: " + str(self.breaker_positions_in_3d_robot_coordinates))
 
@@ -249,6 +257,7 @@ class TheBoatDoctorPlanner:
 
     ######### TODO: Make Better for all stations
     def generate_robot_trajectory_using_ik(self):
+        ## Gate Valves
         if(self.actuator == "V1"):
             self.raspberry_pi_camera_position = self.station_object_position_in_3d_robot_coordinates
 
@@ -281,6 +290,7 @@ class TheBoatDoctorPlanner:
                 self.joint_angles_for_goal_position[1] = self.joint_angles_for_goal_position[1] - self.raspberry_pi_camera_horizontal_station_v1_x_offset + self.horizontal_station_v1_goal_x_offset
                 self.joint_angles_for_goal_position[2] = self.joint_angles_for_goal_position[2] - self.raspberry_pi_camera_horizontal_station_v1_z_offset + self.horizontal_station_v1_goal_z_offset
 
+        ## Orange Valve
         elif(self.actuator == "V2"):
             self.raspberry_pi_camera_position = self.station_object_position_in_3d_robot_coordinates
 
@@ -306,6 +316,7 @@ class TheBoatDoctorPlanner:
             self.joint_angles_for_goal_position[1] = self.joint_angles_for_goal_position[1] - self.raspberry_pi_camera_vertical_station_v2_x_offset + self.vertical_station_v2_goal_x_offset
             self.joint_angles_for_goal_position[2] = self.joint_angles_for_goal_position[2] - self.raspberry_pi_camera_vertical_station_v2_z_offset + self.vertical_station_v2_goal_z_offset
             
+        ## Shuttlecock Valves    
         elif(self.actuator == "V3"):
             self.raspberry_pi_camera_position = self.station_object_position_in_3d_robot_coordinates
 
@@ -335,34 +346,36 @@ class TheBoatDoctorPlanner:
                 self.joint_angles_for_goal_position[1] = self.joint_angles_for_goal_position[1] - self.raspberry_pi_camera_vertical_station_v3_x_offset + self.vertical_station_v3_goal_x_offset
                 self.joint_angles_for_goal_position[2] = self.joint_angles_for_goal_position[2] - self.raspberry_pi_camera_vertical_station_v3_z_offset + self.vertical_station_v3_goal_z_offset
             
+        ## Breakers
         elif(self.actuator == "A" or self.actuator == "B"):
             
-            self.joint_angles_for_goal_positions.resize(self.num_breakers_to_actuate)
+            self.joint_angles_for_goal_positions = numpy.zeros([self.num_breakers_to_actuate,6])
 
             for i in range(self.num_breakers_to_actuate):
                 breaker_index = 0
                 breaker_x_offset = 0.0
                 breaker_z_offset = 0.0
-                if(self.actuations[2*i] == "B1"):
+                if(self.breaker_commands[2*i] == "B1"):
                     breaker_index = 0
-                    breaker_x_offset = breaker_1_x_offset
-                    breaker_z_offset = breaker_1_z_offset
-                elif(self.actuations[2*i] == "B2"):
+                    breaker_x_offset = self.breaker_1_x_offset
+                    breaker_z_offset = self.breaker_1_z_offset
+                elif(self.breaker_commands[2*i] == "B2"):
                     breaker_index = 1
-                    breaker_x_offset = breaker_2_x_offset
-                    breaker_z_offset = breaker_2_z_offset
-                elif(self.actuations[2*i] == "B3"):
+                    breaker_x_offset = self.breaker_2_x_offset
+                    breaker_z_offset = self.breaker_2_z_offset
+                elif(self.breaker_commands[2*i] == "B3"):
                     breaker_index = 2
-                    breaker_x_offset = breaker_3_x_offset
-                    breaker_z_offset = breaker_3_z_offset
+                    breaker_x_offset = self.breaker_3_x_offset
+                    breaker_z_offset = self.breaker_3_z_offset
                 else:
                     print("Invalid breaker in mission file")
                     break
                 breaker_goal_position = self.breaker_positions_in_3d_robot_coordinates[breaker_index]
                 breaker_goal_position[0] = breaker_goal_position[0] + breaker_x_offset
                 breaker_goal_position[2] = breaker_goal_position[2] + breaker_z_offset
+                print("Breaker goal position: [ " + str(breaker_goal_position[0]) + ", " + str(breaker_goal_position[1]) + ", " + str(breaker_goal_position[2]) + "]")
                 self.joint_angles_for_goal_positions[i] = self.tbd_ik.solve_ik(breaker_goal_position, "vertical")
-               
+                              
     def print_current_gantry_position(self):
         self.current_gantry_position = self.tbd_controller.get_current_gantry_position()
         print("Current Gantry Position: [" + str(self.current_gantry_position[0]) + ", " + str(self.current_gantry_position[1]) + "]")
@@ -398,6 +411,7 @@ class TheBoatDoctorPlanner:
         while(self.current_station_angle_in_degrees == 10000):
             self.current_station_angle_in_degrees = float(self.tbd_cv.get_station_info_pi())
 
+        ## Shuttlecock Valves Only
         if(self.actuator == "V3"):
             if(abs(90 - abs(self.current_station_angle_in_degrees)) < self.v3_valve_threshold):
                 self.current_station_angle_in_degrees = 90
@@ -410,9 +424,32 @@ class TheBoatDoctorPlanner:
         print("Current Station Angle: " + str(self.current_station_angle_in_degrees))
 
     def determine_mission_goal(self):
+        ## Breakers
         if(self.actuator == "A" or self.actuator == "B"):
-            pass
-        else:    
+            self.desired_breaker_positions = numpy.copy(self.current_breaker_positions)
+
+            self.num_breakers_in_task = len(self.actuations) / 2
+
+            print("Num Breakers in task: " + str(self.num_breakers_in_task))
+
+            for i in range(self.num_breakers_in_task):
+                breaker_index = 0
+                if(self.actuations[2*i] == "B1"):
+                    breaker_index = 0
+                elif(self.actuations[2*i] == "B2"):
+                    breaker_index = 1
+                elif(self.actuations[2*i] == "B3"):
+                    breaker_index = 2
+                else:
+                    print("Invalid breaker in mission file")
+                    return False
+                print("Desired breaker position: " + self.actuations[2*i+1])
+                self.desired_breaker_positions[breaker_index] = self.actuations[2*i+1]
+
+            print("Desired Breaker Positions: " + str(self.desired_breaker_positions))
+
+        else:   
+            ## Gate and Orange Valves 
             if(self.actuator == "V1" or self.actuator == "V2"):
                 self.direction = self.actuations[0][0]
                 self.degree = float(self.actuations[0][1:])
@@ -422,6 +459,7 @@ class TheBoatDoctorPlanner:
                 elif(self.direction == "-"):
                     self.desired_station_angle_in_degrees = (self.current_station_angle_in_degrees - self.degree + 180) % 360 - 180 
 
+            ## Shuttlecock Valves
             elif(self.actuator == "V3"):
                 self.desired_station_position = self.actuations[0][0]
 
@@ -446,6 +484,7 @@ class TheBoatDoctorPlanner:
             print("Desired Station Angle: " + str(self.desired_station_angle_in_degrees))
 
     def update_waypoints_with_mission_goal_from_mission_file(self):
+        ## Gate and Orange Valves
         if(self.actuator == "V1" or self.actuator == "V2"):
             self.direction = self.actuations[0][0]
             self.degree = float(self.actuations[0][1:])
@@ -455,6 +494,7 @@ class TheBoatDoctorPlanner:
             elif(self.direction == "-"):
                 self.desired_end_effector_angle_in_radians = -self.degree * math.pi / 180
 
+        ## Shuttlecock Valves
         elif(self.actuator == "V3"):
             self.update_waypoints_with_mission_goal()
 
@@ -473,6 +513,8 @@ class TheBoatDoctorPlanner:
                     self.joint_angles_for_goal_position_2[2] = self.joint_angles_for_goal_position_2[2] + self.horizontal_station_closed_v3_goal_2_z_offset
                 
                     self.joint_angles_for_x_gantry_actuation_position[1] = self.joint_angles_for_x_gantry_actuation_position[1] - self.horizontal_station_closed_v3_goal_x_gantry_offset 
+                
+                    self.desired_wrist_angle_in_radians = self.horizontal_station_closed_v3_wrist_flip_theta
                 else:
                     goal_position[0] = goal_position[0] + self.horizontal_station_open_v3_goal_x_offset
                     goal_position[2] = goal_position[2] + self.horizontal_station_open_v3_goal_z_offset
@@ -484,12 +526,29 @@ class TheBoatDoctorPlanner:
                     
                     self.joint_angles_for_x_gantry_actuation_position[1] = self.joint_angles_for_x_gantry_actuation_position[1] + self.horizontal_station_open_v3_goal_x_gantry_offset 
 
+                    self.joint_angles_for_x_gantry_actuation_position[5] = self.desired_end_effector_angle_in_radians
+                    # self.joint_angles_for_goal_position = numpy.copy(self.joint_angles_for_raspberry_pi_camera_position)
+
+                    # self.joint_angles_for_goal_position[1] = self.joint_angles_for_goal_position[1] + self.horizontal_station_open_v3_goal_x_offset
+
+                    # self.joint_angles_for_goal_position[2] = self.joint_angles_for_goal_position[2] + self.horizontal_station_open_v3_goal_z_offset
+
+                    # self.joint_angles_for_goal_position_2 = self.joint_angles_for_goal_position
+
     def update_waypoints_with_mission_goal(self):
-        if(abs(self.desired_station_angle_in_degrees - self.current_station_angle_in_degrees) < self.angle_threshold_in_degrees):
-            return
+        ## Breakers
+        if(self.actuator == "A" or self.actuator == "B"):
+            for i in range(self.num_breakers_to_actuate):
+                if(self.breaker_commands[2*i + 1] == "U"):
+                    self.desired_wrist_angle_in_radians = self.breaker_goal_wrist_flip_theta
+                else:
+                    self.desired_wrist_angle_in_radians = -self.breaker_goal_wrist_flip_theta
         else:
-            self.desired_end_effector_angle_in_radians = (self.desired_station_angle_in_degrees - self.current_station_angle_in_degrees) * math.pi / 180
-        
+            if(abs(self.desired_station_angle_in_degrees - self.current_station_angle_in_degrees) < self.angle_threshold_in_degrees):
+                return
+            else:
+                self.desired_end_effector_angle_in_radians = (self.desired_station_angle_in_degrees - self.current_station_angle_in_degrees) * math.pi / 180
+            
     def move_to_station_object(self):
         self.home_arm()
 
@@ -503,6 +562,29 @@ class TheBoatDoctorPlanner:
             self.move_gantry([self.joint_angles_for_goal_position[1], self.joint_angles_for_goal_position[2]])
             self.move_arm([self.joint_angles_for_goal_position[3], self.joint_angles_for_goal_position[4], self.joint_angles_for_goal_position[5]])
 
+    def move_to_breaker(self, breaker_command_index):
+        self.home_robot()
+        
+        breaker_to_actuate = self.breaker_commands[2*breaker_command_index]
+
+        if(breaker_to_actuate == "B1"):
+            self.turn_turntable(-5)
+            self.move_gantry([0.0, self.joint_angles_for_goal_position[2]])
+            self.move_arm([self.joint_angles_for_goal_position[3], self.joint_angles_for_goal_position[4], self.joint_angles_for_goal_position[5]])
+            self.move_gantry([self.joint_angles_for_goal_position[1], self.joint_angles_for_goal_position[2]])
+        
+        elif(breaker_to_actuate == "B2"):
+            self.turn_turntable(0)
+            self.move_gantry([0.0, self.joint_angles_for_goal_position[2]])
+            self.move_arm([self.joint_angles_for_goal_position[3], self.joint_angles_for_goal_position[4], self.joint_angles_for_goal_position[5]])
+            self.move_gantry([self.joint_angles_for_goal_position[1], self.joint_angles_for_goal_position[2]])
+        
+        elif(breaker_to_actuate == "B3"):
+            self.turn_turntable(5)
+            self.move_gantry([0.0, self.joint_angles_for_goal_position[2]])
+            self.move_arm([self.joint_angles_for_goal_position[3], self.joint_angles_for_goal_position[4], self.joint_angles_for_goal_position[5]])
+            self.move_gantry([self.joint_angles_for_goal_position[1], self.joint_angles_for_goal_position[2]])
+        
     def move_gantry_to_actuate_shuttlecock_valve(self):
         self.move_gantry([self.joint_angles_for_x_gantry_actuation_position[1], self.joint_angles_for_x_gantry_actuation_position[2]])
 
@@ -514,8 +596,8 @@ class TheBoatDoctorPlanner:
         self.move_gantry([self.joint_angles_for_goal_position_2[1], self.joint_angles_for_goal_position_2[2]])
         self.move_arm([self.joint_angles_for_goal_position_2[3], self.joint_angles_for_goal_position_2[4], self.joint_angles_for_goal_position_2[5]])
 
-    def actuate_shuttlecock_valve(self):
-        self.move_arm([self.joint_angles_for_goal_position_2[3], self.joint_angles_for_goal_position_2[4] - (math.pi / 2), self.joint_angles_for_goal_position_2[5]])
+    def actuate_wrist(self):
+        self.move_arm([self.joint_angles_for_goal_position_2[3], self.joint_angles_for_goal_position_2[4] + horizontal_station_closed_v3_wrist_flip_theta, self.joint_angles_for_goal_position_2[5]])
 
     def actuate_end_effector(self):
         self.move_arm([self.joint_angles_for_goal_position[3], self.joint_angles_for_goal_position[4], self.desired_end_effector_angle_in_radians])
@@ -581,32 +663,25 @@ class TheBoatDoctorPlanner:
     def get_station_orientation(self):
         return self.station_orientation
 
+    def get_num_breakers_to_actuate(self):
+        return self.num_breakers_to_actuate
+
     def verify_task_is_completed(self):
         if(self.actuator == "A" or self.actuator == "B"):
-            self.num_breakers_in_task = len(self.actuations) / 2
             self.num_breakers_to_actuate = 0
             self.breaker_commands = []
 
-            for i in range(self.num_breakers_in_task):
-                breaker_index = 0
-                if(self.actuations[2*i] == "B1"):
-                    breaker_index = 0
-                elif(self.actuations[2*i] == "B2"):
-                    breaker_index = 1
-                elif(self.actuations[2*i] == "B3"):
-                    breaker_index = 2
-                else:
-                    print("Invalid breaker in mission file")
-                    return False
-                desired_breaker_position = self.actuations[2*i+1]
-
+            for i in range(3):
                 # Check if the breakers are already in their desired positions.
-                if(self.breaker_orientations[breaker_index] == current_b desired_breaker_position):
-                    continue
-                else:
+                if(self.current_breaker_positions[i] != self.desired_breaker_positions[i]):
                     self.num_breakers_to_actuate = self.num_breakers_to_actuate + 1
-                    self.breaker_commands.append(self.actuations[2*i])
-                    self.breaker_commands.append(self.actuations[2*i+1])
+                    if(i == 0):
+                        self.breaker_commands.append("B1")
+                    elif(i == 1):
+                        self.breaker_commands.append("B2")
+                    elif(i == 2):
+                        self.breaker_commands.append("B3")
+                    self.breaker_commands.append(self.desired_breaker_positions[i])
 
             if(self.num_breakers_to_actuate == 0):
                 return True
