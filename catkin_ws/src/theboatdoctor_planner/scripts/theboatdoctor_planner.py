@@ -238,13 +238,11 @@ class TheBoatDoctorPlanner:
 
     def determine_breaker_positions_and_orientations_using_kinect(self):
         (self.breaker_positions_in_3d_camera_coordinates, self.current_breaker_positions) = self.tbd_cv.get_station_info_kinect()
-        
-        self.current_breaker_positions = ['U', 'D', 'U']
 
         for i in range(3):
-            print("Breaker " + str(i) + " position in 3D camera coordinates: " + str(self.breaker_positions_in_3d_camera_coordinates[i]))
+            print("Breaker " + str(i) + " position in 3D camera coordinates: " + str(self.breaker_positions_in_3d_camera_coordinates[3*i:3*(i+1)]))
             print("Breaker " + str(i) + " orientation: " + self.current_breaker_positions[i])
-            self.breaker_positions_in_3d_robot_coordinates[i] = self.cam_to_ik(numpy.array(self.breaker_positions_in_3d_camera_coordinates[i]))
+            self.breaker_positions_in_3d_robot_coordinates[i] = self.cam_to_ik(numpy.array(self.breaker_positions_in_3d_camera_coordinates[3*i:3*(i+1)]))
             print("Station object position in 3D robot coordinates: " + str(self.breaker_positions_in_3d_robot_coordinates))
 
     def determine_station_position_and_orientation_using_kinect(self):   
