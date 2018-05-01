@@ -60,6 +60,9 @@ class TheBoatDoctorController:
     def home_arm(self):
         return self.move_arm([-math.pi / 2, -math.pi / 2, 0])
 
+    def home_arm_with_goal_end_effector_angle(self, desired_end_effector_theta):
+        return self.move_arm([-math.pi / 2, -math.pi / 2, desired_end_effector_theta])
+
     def position_arm_for_kinect_vision(self):
         return self.move_arm([-math.pi * 3 / 5, -math.pi * 3 / 5, 0])
 
@@ -237,7 +240,7 @@ class TheBoatDoctorController:
         self.pump_pub.publish(bool_msg)
         self.pump_pub.publish(bool_msg)
         try:
-            pump_status_msg = rospy.wait_for_message('/TheBoatDoctor/pump_status', Bool, timeout = 3)
+            pump_status_msg = rospy.wait_for_message('/TheBoatDoctor/pump_status', Bool, timeout = 5)
             return pump_status_msg.data
         except:
             print("Timeout waiting for pump_status_msg.")

@@ -86,7 +86,7 @@ class image_converter:
     self.SUBTYPE=[] ## subtype of some acutators 
     self.bStatus=[] ### breakerStatus
     self.dataQ=11	### num of images to process, use odd number to break tie  
-
+    self.station=stationF
 
 
   def pub_actuator_Marker(self,x,y,z):
@@ -246,7 +246,7 @@ class image_converter:
 
 			#### find actuator ####
 			kinect=kinect_process(cv_color)
-			target_masks,subType,breakerStatus=kinect.locate_actuators(self.type,0,cv_color) 
+			target_masks,subType,breakerStatus=kinect.locate_actuators(self.type,self.station,cv_color) 
 			if target_masks is not None:
 				if self.type==4:
 					xyz=[]

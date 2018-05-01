@@ -114,36 +114,36 @@ if __name__ == '__main__':
 
             tbd_planner.update_waypoints_with_mission_goal_from_mission_file()
 
-            tbd_planner.move_to_station_object()
+            if(actuator == "V3" and tbd_planner.get_station_orientation() == "horizontal"):
 
-            tbd_planner.turn_on_pump()
+                tbd_planner.move_to_station_object()
 
-            tbd_planner.actuate_end_effector()
+                if(tbd_planner.get_current_station_angle_in_degrees() < 45):
+                    valve_orientation = "off"
+                else:
+                    valve_orientation = "on"
 
-            tbd_planner.turn_off_pump()
+                if(valve_orientation == "off"):    
+                    tbd_planner.turn_on_pump()
 
-            tbd_planner.return_to_raspberry_pi_camera_position()
+                    tbd_planner.move_gantry_to_actuate_shuttlecock_valve()
 
-            if(tbd_planner.get_station_orientation() == "horizontal"):
-                tbd_planner.turn_on_leds()
+                    tbd_planner.turn_off_pump()
 
-                tbd_planner.determine_station_orientation_using_raspberry_pi_camera_2()
+                    tbd_planner.move_to_shuttlecock_valve()
 
-                tbd_planner.turn_off_leds()
+                    tbd_planner.actuate_shuttlecock_valve()
+                else:
+                    tbd_planner.actuate_end_effector()
+
+                    tbd_planner.move_gantry_to_actuate_shuttlecock_valve()
+
             else:
-                tbd_planner.determine_station_orientation_using_raspberry_pi_camera_2()
-
-            task_completed_flag = tbd_planner.verify_task_is_completed()
-
-            while(task_completed_flag == False and num_attempts < 3):
-                num_attempts = num_attempts + 1
-
-                tbd_planner.update_waypoints_with_mission_goal()
 
                 tbd_planner.move_to_station_object()
 
                 tbd_planner.turn_on_pump()
-
+                    
                 tbd_planner.actuate_end_effector()
 
                 tbd_planner.turn_off_pump()
@@ -161,8 +161,37 @@ if __name__ == '__main__':
 
                 task_completed_flag = tbd_planner.verify_task_is_completed()
 
+                while(task_completed_flag == False and num_attempts < 3):
+                    num_attempts = num_attempts + 1
+
+                    tbd_planner.update_waypoints_with_mission_goal()
+
+                    tbd_planner.move_to_station_object()
+
+                    tbd_planner.turn_on_pump()
+
+                    tbd_planner.actuate_end_effector()
+
+                    tbd_planner.turn_off_pump()
+
+                    if(num_attempts == 3):
+                        tbd_planner.home_arm_with_goal_end_effector_angle()
+                    else:
+                        tbd_planner.return_to_raspberry_pi_camera_position()
+
+                        if(tbd_planner.get_station_orientation() == "horizontal"):
+                            tbd_planner.turn_on_leds()
+
+                            tbd_planner.determine_station_orientation_using_raspberry_pi_camera_2()
+
+                            tbd_planner.turn_off_leds()
+                        else:
+                            tbd_planner.determine_station_orientation_using_raspberry_pi_camera_2()
+
+                        task_completed_flag = tbd_planner.verify_task_is_completed()
+
         if(num_attempts == 3):
-            print("Attempted the task 3 times, but was unable to complete the task. Moving on to the next task.")
+            print("Attempted the task 3 times. Moving on to the next task.")
         else:
             print("Task is completed.")
 

@@ -14,6 +14,7 @@ parser.add_argument('--subType',type=int,help='actuator subType')
 
 
 def client(Type,subType):
+	print "subType",subType
 	rospy.wait_for_service("kinect2/locations") 
 	get_status_info=rospy.ServiceProxy("kinect2/locations",callKinect)
 	print 2

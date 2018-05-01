@@ -36,7 +36,7 @@ class rgb_process(object):
 			#print np.shape(mask)
 			#print np.shape(mask[:,0])
 			
-			if station_F==0:
+			if station_F==2:
 				for i in np.arange(int(self.left_coln*coln),int((self.left_coln+self.wide_range)*coln)):  ## can be optimzied here  
 					mask[:,i]=255
 				for j in np.arange(0,int(row*(1-self.height_range))):  ##3  can be optimized here 
@@ -44,9 +44,21 @@ class rgb_process(object):
 					# print int((self.left_coln+self.wide_range)*coln)
 					mask[j,int(self.left_coln*coln):int((self.left_coln+self.wide_range)*coln)]=0
 			elif station_F ==1:
-				for i in np.arange(int((self.left_coln-self.offset)*coln),int((self.left_coln+self.wide_range_corner-self.offset)*coln)):
+				for i in np.arange(int(self.left_coln_cornerE*coln),int((self.left_coln_cornerE+self.wide_range_cornerE)*coln)):  ## can be optimzied here  
 					mask[:,i]=255
+				for j in np.arange(0,int(row*(1-self.height_range_cornerE))):  ##3  can be optimized here 
+					# print int(self.left_coln*coln)
+					# print int((self.left_coln+self.wide_range)*coln)
+					mask[j,int(self.left_coln_cornerE*coln):int((self.left_coln_cornerE+self.wide_range_cornerE)*coln)]=0
 
+			else:
+				for i in np.arange(int(self.left_coln*coln),int((self.left_coln+self.wide_range)*coln)):  ## can be optimzied here  
+					mask[:,i]=255
+				for j in np.arange(0,int(row*(1-self.height_range))):  ##3  can be optimized here 
+					# print int(self.left_coln*coln)
+					# print int((self.left_coln+self.wide_range)*coln)
+					mask[j,int(self.left_coln*coln):int((self.left_coln+self.wide_range)*coln)]=0
+			
 			masked_img=cv2.bitwise_and(img,img,mask=mask)
 			###### helper function ##########
 			# cv2.imshow('result',masked_img)
@@ -178,8 +190,9 @@ class kinect_process(rgb_process):
 
 
 
-		self.wide_range_corner=0.3;  ### how much colns to save 
-		self.left_coln_corner=np.true_divide(1-self.wide_range_corner,2); ### empty number of left and right colns
+		self.wide_range_cornerE=0.3;  ### how much colns to save 
+		self.left_coln_cornerE=np.true_divide(1-self.wide_range_cornerE-0.2,2); ### empty number of left and right colns
+		self.height_range_cornerE=0.5 ### how much rows to save from bottom 
 		self.offset=0.2
 		self.img=img
 
@@ -600,7 +613,7 @@ class kinect_process(rgb_process):
 				return None,None
 
 
-	def shuttle_proc(self,img,area_th):
+	def shuttle_proc(self,img,area_th,station_F):
 			######## the function process breaker 
 			####### input: RGB image 
 			#cv2.imshow("result4",img)
@@ -608,8 +621,15 @@ class kinect_process(rgb_process):
 			
 			#low_th=np.array([70,200,200])
 			#high_th=np.array([150,255,255])
-			low_th=np.array([100,100,100]) ## 100 200 100
-			high_th=np.array([150,240,240]) ## 150 255 200
+			print station_F
+			if station_F==1:  ### for shuttle_proc at F 
+				low_th=np.array([80,150,170]) ## day: 100 150 50
+				high_th=np.array([130,220,220]) ## day: 150 220 100 
+			else:
+				low_th=np.array([100,100,100]) ## 100 200 100
+				high_th=np.array([150,240,240]) ## 150 255 200
+
+
 			mask=self.th_hsv(img,low_th,high_th)
 			target_mask=self.findTarget(mask,area_th)
 			##### helper line ###############
@@ -624,7 +644,7 @@ class kinect_process(rgb_process):
 		  	# cv2.waitKey(20)	
 		  	return target_mask  ## can be mask or None 
 
-	def shuttle_sub_proc(self,img,target_mask_valve,blob_th_white,area_th_white,area_th_valve):
+	def shuttle_sub_proc(self,img,target_mask_valve,blob_th_white,area_th_white,area_th_valve,station_F):
 		img_visual=copy.deepcopy(img)
 		
 		##### white part ROI #### 
@@ -658,9 +678,14 @@ class kinect_process(rgb_process):
 			# cv2.waitKey(20)
 			#### ends ####
 			##### find white #########
+			if station_F==1: ## if at station E
+				low_th=np.array([50,0,200])
+				high_th=np.array([100,50,255])
+			else:
+				low_th=np.array([50,0,220])
+				high_th=np.array([100,50,255])
 
-			low_th=np.array([50,0,220])
-			high_th=np.array([100,50,255])
+
 			mask=self.th_hsv(masked_img,low_th,high_th)
 			if mask is None: 
 				print "[rgb_processing/shuttle_sub_proc] I can't find white part of shuttle valve in hsv"
@@ -758,7 +783,7 @@ class kinect_process(rgb_process):
 
 			##### find white #########
 
-			low_th=np.array([50,0,230])        ## day  [50,0,200]
+			low_th=np.array([50,0,200])        ## day  [50,0,200] night [50,0,230]
 			high_th=np.array([120,50,255])     ## day  [120,50,255]
 			mask=self.th_hsv(masked_img,low_th,high_th)
 			if mask is None: 
@@ -834,7 +859,7 @@ class kinect_process(rgb_process):
 		
 		if type==1: ### shuttle 
 			blob_area_th=30
-			target_mask=self.shuttle_proc(masked_img,blob_area_th)
+			target_mask=self.shuttle_proc(masked_img,blob_area_th,station_F)
 			if target_mask is None: 
 				print "[rgb_processing/locate_actuators]: can't find shuttle valve"
 				subType=None
@@ -845,7 +870,7 @@ class kinect_process(rgb_process):
 				blob_th_white=50
 				#subType=None
 				masked_img=self.mask(img2,station_F)
-				subType=self.shuttle_sub_proc(masked_img,target_mask,blob_th_white,area_th_white,area_th_valve)     
+				subType=self.shuttle_sub_proc(masked_img,target_mask,blob_th_white,area_th_white,area_th_valve,station_F)     
 				if subType is None: 
 					print "[rgb_processing/locate_actuators]: can't find shuttle valve subtype"
 		

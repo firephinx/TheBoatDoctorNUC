@@ -30,7 +30,7 @@ class TheBoatDoctorPlanner:
         self.raspberry_pi_camera_vertical_station_v3_x_offset = -0.2
         self.raspberry_pi_camera_vertical_station_v3_z_offset = -0.07
         self.vertical_station_v3_goal_x_offset = -0.069
-        self.vertical_station_v3_goal_z_offset = -0.03
+        self.vertical_station_v3_goal_z_offset = -0.02
 
         ## Breaker Offsets
         self.raspberry_pi_camera_vertical_station_breaker_x_offset = -0.2
@@ -47,16 +47,22 @@ class TheBoatDoctorPlanner:
 
         ## Horizontal Station Offsets
         ## V1 Offsets
-        self.raspberry_pi_camera_horizontal_station_v1_x_offset = -0.15
-        self.raspberry_pi_camera_horizontal_station_v1_z_offset = -0.03
-        self.horizontal_station_v1_goal_x_offset = -0.096
-        self.horizontal_station_v1_goal_z_offset = -0.08
+        self.raspberry_pi_camera_horizontal_station_v1_x_offset = -0.16
+        self.raspberry_pi_camera_horizontal_station_v1_z_offset = -0.02
+        self.horizontal_station_v1_goal_x_offset = -0.09
+        self.horizontal_station_v1_goal_z_offset = -0.07
 
         ## V3 Offsets
-        self.raspberry_pi_camera_horizontal_station_v3_x_offset = -0.06
-        self.raspberry_pi_camera_horizontal_station_v3_z_offset = 0.2
-        self.horizontal_station_v3_goal_x_offset = -0.086
-        self.horizontal_station_v3_goal_z_offset = 0.01
+        self.raspberry_pi_camera_horizontal_station_v3_x_offset = -0.17
+        self.raspberry_pi_camera_horizontal_station_v3_z_offset = 0.03
+        self.horizontal_station_open_v3_goal_x_offset = 0.13
+        self.horizontal_station_open_v3_goal_z_offset = -0.1
+        self.horizontal_station_open_v3_goal_x_gantry_offset = 0.08
+        self.horizontal_station_closed_v3_goal_x_offset = 0.13
+        self.horizontal_station_closed_v3_goal_z_offset = -0.04
+        self.horizontal_station_closed_v3_goal_x_gantry_offset = 0.15
+        self.horizontal_station_closed_v3_goal_2_x_offset = -0.03
+        self.horizontal_station_closed_v3_goal_2_z_offset = 0.08
 
         ## Thresholds
         self.angle_threshold_in_degrees = 3
@@ -92,7 +98,7 @@ class TheBoatDoctorPlanner:
         elif (self.station == "D"):
             self.station_base_coords = [0.419, 0.464, 0.0]
         elif (self.station == "E"):
-            self.station_base_coords = [0.419, 0.414, 0.0]
+            self.station_base_coords = [0.339, 0.314, 0.0]
         elif (self.station == "F"):
             self.station_base_coords = [0.419, 0.414, 0.0]
         elif (self.station == "G"):
@@ -114,10 +120,10 @@ class TheBoatDoctorPlanner:
             self.station_turntable_degree = 90
         elif(self.station == "F"):
             # ensure the turntable is at 60 degrees
-            self.station_turntable_degree = 60
+            self.station_turntable_degree = 75
         elif (self.station == "E"):
-            #ensure the turntable is at 30 degrees
-            self.station_turntable_degree = 30
+            #ensure the turntable is at 10 degrees
+            self.station_turntable_degree = 10
         else:
             #ensure the turntable is at 0 degrees
             self.station_turntable_degree = 0
@@ -139,6 +145,11 @@ class TheBoatDoctorPlanner:
         print("Homing arm")
         self.tbd_controller.home_arm()
         print("Done homing arm")
+
+    def home_arm_with_goal_end_effector_angle(self):
+        print("Homing arm with goal end effector angle")
+        self.tbd_controller.home_arm_with_goal_end_effector_angle(self.desired_end_effector_angle_in_radians)
+        print("Done homing arm with goal end effector angle")
 
     def home_gantry(self):
         print("Homing gantry")
@@ -164,6 +175,7 @@ class TheBoatDoctorPlanner:
             self.done_moving_robot_base_flag = self.tbd_controller.move_robot_base(desired_coords)
 
         self.print_current_base_position()
+
 
     def move_to_station(self):
         # determine the station base coords
@@ -322,10 +334,7 @@ class TheBoatDoctorPlanner:
             if(self.station_orientation == "vertical"):
                 self.joint_angles_for_goal_position[1] = self.joint_angles_for_goal_position[1] - self.raspberry_pi_camera_vertical_station_v3_x_offset + self.vertical_station_v3_goal_x_offset
                 self.joint_angles_for_goal_position[2] = self.joint_angles_for_goal_position[2] - self.raspberry_pi_camera_vertical_station_v3_z_offset + self.vertical_station_v3_goal_z_offset
-            else:
-                self.joint_angles_for_goal_position[1] = self.joint_angles_for_goal_position[1] - self.raspberry_pi_camera_horizontal_station_v3_x_offset + self.horizontal_station_v3_goal_x_offset
-                self.joint_angles_for_goal_position[2] = self.joint_angles_for_goal_position[2] - self.raspberry_pi_camera_horizontal_station_v3_z_offset + self.horizontal_station_v3_goal_z_offset
-
+            
         elif(self.actuator == "A" or self.actuator == "B"):
             
             self.joint_angles_for_goal_positions.resize(self.num_breakers_to_actuate)
@@ -426,7 +435,7 @@ class TheBoatDoctorPlanner:
                         self.desired_station_angle_in_degrees = 0
 
                 elif(self.station_orientation == "horizontal"):
-                    # Open
+                    # Openself.horizontal_station_v3_goal_z_gantry_offset = 0.05
                     if(self.desired_station_position == "0"):
                         self.desired_station_angle_in_degrees = 0
 
@@ -449,6 +458,32 @@ class TheBoatDoctorPlanner:
         elif(self.actuator == "V3"):
             self.update_waypoints_with_mission_goal()
 
+            if(self.station_orientation == "horizontal"): 
+                goal_position = self.station_object_position_in_3d_robot_coordinates
+
+                if(self.desired_end_effector_angle_in_radians > 0):
+                    
+                    goal_position[0] = goal_position[0] + self.horizontal_station_closed_v3_goal_x_offset
+                    goal_position[2] = goal_position[2] + self.horizontal_station_closed_v3_goal_z_offset
+                    self.joint_angles_for_goal_position = self.tbd_ik.solve_ik(goal_position, "vertical")
+
+                    self.joint_angles_for_x_gantry_actuation_position = numpy.copy(self.joint_angles_for_goal_position)
+                    self.joint_angles_for_goal_position_2 = numpy.copy(self.joint_angles_for_goal_position)
+                    self.joint_angles_for_goal_position_2[1] = self.joint_angles_for_goal_position_2[1] + self.horizontal_station_closed_v3_goal_2_x_offset
+                    self.joint_angles_for_goal_position_2[2] = self.joint_angles_for_goal_position_2[2] + self.horizontal_station_closed_v3_goal_2_z_offset
+                
+                    self.joint_angles_for_x_gantry_actuation_position[1] = self.joint_angles_for_x_gantry_actuation_position[1] - self.horizontal_station_closed_v3_goal_x_gantry_offset 
+                else:
+                    goal_position[0] = goal_position[0] + self.horizontal_station_open_v3_goal_x_offset
+                    goal_position[2] = goal_position[2] + self.horizontal_station_open_v3_goal_z_offset
+                    self.joint_angles_for_goal_position = self.tbd_ik.solve_ik(goal_position, "vertical")
+
+                    self.desired_end_effector_angle_in_radians = -2*math.pi
+
+                    self.joint_angles_for_x_gantry_actuation_position = numpy.copy(self.joint_angles_for_goal_position)
+                    
+                    self.joint_angles_for_x_gantry_actuation_position[1] = self.joint_angles_for_x_gantry_actuation_position[1] + self.horizontal_station_open_v3_goal_x_gantry_offset 
+
     def update_waypoints_with_mission_goal(self):
         if(abs(self.desired_station_angle_in_degrees - self.current_station_angle_in_degrees) < self.angle_threshold_in_degrees):
             return
@@ -467,6 +502,20 @@ class TheBoatDoctorPlanner:
             self.move_gantry([self.joint_angles_for_raspberry_pi_camera_position[1], self.joint_angles_for_goal_position[2]])
             self.move_gantry([self.joint_angles_for_goal_position[1], self.joint_angles_for_goal_position[2]])
             self.move_arm([self.joint_angles_for_goal_position[3], self.joint_angles_for_goal_position[4], self.joint_angles_for_goal_position[5]])
+
+    def move_gantry_to_actuate_shuttlecock_valve(self):
+        self.move_gantry([self.joint_angles_for_x_gantry_actuation_position[1], self.joint_angles_for_x_gantry_actuation_position[2]])
+
+    def move_to_shuttlecock_valve(self):
+        self.home_arm()
+
+        ## Move Arm and Gantry towards the station
+        self.move_gantry([self.joint_angles_for_x_gantry_actuation_position[1], self.joint_angles_for_goal_position_2[2]])
+        self.move_gantry([self.joint_angles_for_goal_position_2[1], self.joint_angles_for_goal_position_2[2]])
+        self.move_arm([self.joint_angles_for_goal_position_2[3], self.joint_angles_for_goal_position_2[4], self.joint_angles_for_goal_position_2[5]])
+
+    def actuate_shuttlecock_valve(self):
+        self.move_arm([self.joint_angles_for_goal_position_2[3], self.joint_angles_for_goal_position_2[4] - (math.pi / 2), self.joint_angles_for_goal_position_2[5]])
 
     def actuate_end_effector(self):
         self.move_arm([self.joint_angles_for_goal_position[3], self.joint_angles_for_goal_position[4], self.desired_end_effector_angle_in_radians])
@@ -498,7 +547,7 @@ class TheBoatDoctorPlanner:
             self.move_gantry([self.joint_angles_for_raspberry_pi_camera_position[1], self.joint_angles_for_goal_position[2]])
             self.home_arm()
         else:
-            self.home_arm()
+            self.home_arm_with_goal_end_effector_angle()
             self.move_gantry([self.joint_angles_for_raspberry_pi_camera_position[1], self.joint_angles_for_goal_position[2]])
         
         ## Move the Z Gantry back to the Raspberry Pi Camera location
@@ -525,6 +574,9 @@ class TheBoatDoctorPlanner:
                 self.current_station_angle_in_degrees = -self.current_station_angle_in_degrees
 
         print("Current Station Angle: " + str(self.current_station_angle_in_degrees))
+
+    def get_current_station_angle_in_degrees(self):
+        return self.current_station_angle_in_degrees
 
     def get_station_orientation(self):
         return self.station_orientation

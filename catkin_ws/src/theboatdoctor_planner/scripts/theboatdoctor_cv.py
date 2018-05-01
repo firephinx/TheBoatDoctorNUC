@@ -110,7 +110,7 @@ class TheBoatDoctorCV():
  	def get_station_info_pi(self):
  		Type=str(self.type)
  		subType=str(self.station_orientation_num)
- 		print "station_orientation", subType
+ 		#print "station_orientation", subType
 		command="gnome-terminal -e 'rosrun object_detection pi_cam_client.py --type {0} --subType {1}'".format(Type, subType)
 		#print command
 		#command="xterm -hold -e 'source /home/theboatdoctor-nuc/.bashrc && rosservice call /raspicam_service/actuator_status {0}'".format(Type)		
