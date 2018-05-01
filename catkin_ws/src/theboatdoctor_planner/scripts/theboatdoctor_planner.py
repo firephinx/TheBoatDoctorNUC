@@ -585,6 +585,7 @@ class TheBoatDoctorPlanner:
         if(self.actuator == "A" or self.actuator == "B"):
             self.num_breakers_in_task = len(self.actuations) / 2
             self.num_breakers_to_actuate = 0
+            self.breaker_commands = []
 
             for i in range(self.num_breakers_in_task):
                 breaker_index = 0
@@ -598,8 +599,19 @@ class TheBoatDoctorPlanner:
                     print("Invalid breaker in mission file")
                     return False
                 desired_breaker_position = self.actuations[2*i+1]
-                # Check if the breaker is already in the desired position.
-            return True
+
+                # Check if the breakers are already in their desired positions.
+                if(self.breaker_orientations[breaker_index] == current_b desired_breaker_position):
+                    continue
+                else:
+                    self.num_breakers_to_actuate = self.num_breakers_to_actuate + 1
+                    self.breaker_commands.append(self.actuations[2*i])
+                    self.breaker_commands.append(self.actuations[2*i+1])
+
+            if(self.num_breakers_to_actuate == 0):
+                return True
+            else:
+                return False
         else: 
             print("Degree Error = " + str(abs(self.desired_station_angle_in_degrees - self.current_station_angle_in_degrees) % 360))
             return (abs(self.desired_station_angle_in_degrees - self.current_station_angle_in_degrees) % 360  < self.task_completion_angle_threshold_in_degrees)

@@ -71,6 +71,10 @@ if __name__ == '__main__':
 
             tbd_planner.position_arm_for_kinect_vision()
 
+            tbd_planner.start_vision()
+
+            tbd_planner.determine_breaker_positions_and_orientations_using_kinect()
+
             task_completed_flag = tbd_planner.verify_task_is_completed()
 
             while(task_completed_flag == False and num_attempts < 3):
