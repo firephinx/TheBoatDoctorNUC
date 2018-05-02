@@ -35,14 +35,21 @@ class TheBoatDoctorPlanner:
         ## Breaker Offsets
         self.raspberry_pi_camera_vertical_station_breaker_x_offset = -0.2
         self.raspberry_pi_camera_vertical_station_breaker_z_offset = -0.06
-        self.breaker_goal_wrist_flip_theta = math.pi / 18
+        self.breaker_goal_elbow_flip_up_theta = math.pi / 9
+        self.breaker_goal_wrist_flip_down_theta = -math.pi / 18
 
-        self.breaker_1_x_offset = 0.0
-        self.breaker_1_z_offset = 0.0
-        self.breaker_2_x_offset = 0.0
-        self.breaker_2_z_offset = 0.0
+        self.breaker_1_turntable_degree_offset = -7.5
+        self.breaker_2_turntable_degree_offset = -2.5
+        self.breaker_3_turntable_degree_offset = 2.5
+
+        self.breaker_1_x_offset = -0.06
+        self.breaker_1_z_offset = -0.03
+        self.breaker_2_x_offset = -0.05
+        self.breaker_2_z_offset = 0.03
+        # self.breaker_2_x_offset = -0.03
+        # self.breaker_2_z_offset = -0.02
         self.breaker_3_x_offset = 0.0
-        self.breaker_3_z_offset = 0.0
+        self.breaker_3_z_offset = 0.09
 
         ## Horizontal Station Offsets
         ## V1 Offsets
@@ -241,7 +248,7 @@ class TheBoatDoctorPlanner:
 
         for i in range(3):
             print("Breaker " + str(i) + " position in 3D camera coordinates: " + str(self.breaker_positions_in_3d_camera_coordinates[3*i:3*(i+1)]))
-            print("Breaker " + str(i) + " orientation: " + self.current_breaker_positions[i])
+            print("Breaker " + str(i) + " position: " + self.current_breaker_positions[i])
             self.breaker_positions_in_3d_robot_coordinates[i] = self.cam_to_ik(numpy.array(self.breaker_positions_in_3d_camera_coordinates[3*i:3*(i+1)]))
             print("Station object position in 3D robot coordinates: " + str(self.breaker_positions_in_3d_robot_coordinates))
 
@@ -511,8 +518,8 @@ class TheBoatDoctorPlanner:
                     self.joint_angles_for_goal_position_2[2] = self.joint_angles_for_goal_position_2[2] + self.horizontal_station_closed_v3_goal_2_z_offset
                 
                     self.joint_angles_for_x_gantry_actuation_position[1] = self.joint_angles_for_x_gantry_actuation_position[1] - self.horizontal_station_closed_v3_goal_x_gantry_offset 
-                
-                    self.desired_wrist_angle_in_radians = self.horizontal_station_closed_v3_wrist_flip_theta
+
+                    self.desired_wrist_angles_in_radians = [self.horizontal_station_closed_v3_wrist_flip_theta]
                 else:
                     goal_position[0] = goal_position[0] + self.horizontal_station_open_v3_goal_x_offset
                     goal_position[2] = goal_position[2] + self.horizontal_station_open_v3_goal_z_offset
@@ -536,11 +543,12 @@ class TheBoatDoctorPlanner:
     def update_waypoints_with_mission_goal(self):
         ## Breakers
         if(self.actuator == "A" or self.actuator == "B"):
+            self.desired_wrist_angles_in_radians = []
             for i in range(self.num_breakers_to_actuate):
                 if(self.breaker_commands[2*i + 1] == "U"):
-                    self.desired_wrist_angle_in_radians = self.breaker_goal_wrist_flip_theta
+                    self.desired_wrist_angles_in_radians.append(self.breaker_goal_elbow_flip_up_theta)
                 else:
-                    self.desired_wrist_angle_in_radians = -self.breaker_goal_wrist_flip_theta
+                    self.desired_wrist_angles_in_radians.append(self.breaker_goal_wrist_flip_down_theta)
         else:
             if(abs(self.desired_station_angle_in_degrees - self.current_station_angle_in_degrees) < self.angle_threshold_in_degrees):
                 return
@@ -566,25 +574,31 @@ class TheBoatDoctorPlanner:
         breaker_to_actuate = self.breaker_commands[2*breaker_command_index]
 
         if(breaker_to_actuate == "B1"):
-            self.turn_turntable(-5)
-            self.move_gantry([0.0, self.joint_angles_for_goal_position[2]])
-            self.move_arm([self.joint_angles_for_goal_position[3], self.joint_angles_for_goal_position[4], self.joint_angles_for_goal_position[5]])
-            self.move_gantry([self.joint_angles_for_goal_position[1], self.joint_angles_for_goal_position[2]])
-        
+            self.turn_turntable(self.breaker_1_turntable_degree_offset)
+            self.move_gantry([0.0, self.joint_angles_for_goal_positions[breaker_command_index][2]])
+            self.move_arm([self.joint_angles_for_goal_positions[breaker_command_index][3], self.joint_angles_for_goal_positions[breaker_command_index][4], self.joint_angles_for_goal_positions[breaker_command_index][5]])
+            self.move_gantry([self.joint_angles_for_goal_positions[breaker_command_index][1], self.joint_angles_for_goal_positions[breaker_command_index][2]])
+            self.joint_angles_for_goal_position_2 = numpy.copy(self.joint_angles_for_goal_positions[breaker_command_index][:])
+
         elif(breaker_to_actuate == "B2"):
-            self.turn_turntable(0)
-            self.move_gantry([0.0, self.joint_angles_for_goal_position[2]])
-            self.move_arm([self.joint_angles_for_goal_position[3], self.joint_angles_for_goal_position[4], self.joint_angles_for_goal_position[5]])
-            self.move_gantry([self.joint_angles_for_goal_position[1], self.joint_angles_for_goal_position[2]])
-        
+            self.turn_turntable(self.breaker_2_turntable_degree_offset)
+            self.move_gantry([0.0, self.joint_angles_for_goal_positions[breaker_command_index][2]])
+            self.move_arm([self.joint_angles_for_goal_positions[breaker_command_index][3], self.joint_angles_for_goal_positions[breaker_command_index][4], self.joint_angles_for_goal_positions[breaker_command_index][5]])
+            self.move_gantry([self.joint_angles_for_goal_positions[breaker_command_index][1], self.joint_angles_for_goal_positions[breaker_command_index][2]])
+            self.joint_angles_for_goal_position_2 = numpy.copy(self.joint_angles_for_goal_positions[breaker_command_index][:])
+
         elif(breaker_to_actuate == "B3"):
-            self.turn_turntable(5)
-            self.move_gantry([0.0, self.joint_angles_for_goal_position[2]])
-            self.move_arm([self.joint_angles_for_goal_position[3], self.joint_angles_for_goal_position[4], self.joint_angles_for_goal_position[5]])
-            self.move_gantry([self.joint_angles_for_goal_position[1], self.joint_angles_for_goal_position[2]])
-        
+            self.turn_turntable(self.breaker_3_turntable_degree_offset)
+            self.move_gantry([0.0, self.joint_angles_for_goal_positions[breaker_command_index][2]])
+            self.move_arm([self.joint_angles_for_goal_positions[breaker_command_index][3], self.joint_angles_for_goal_positions[breaker_command_index][4], self.joint_angles_for_goal_positions[breaker_command_index][5]])
+            self.move_gantry([self.joint_angles_for_goal_positions[breaker_command_index][1], self.joint_angles_for_goal_positions[breaker_command_index][2]])
+            self.joint_angles_for_goal_position_2 = numpy.copy(self.joint_angles_for_goal_positions[breaker_command_index][:])
+
     def move_gantry_to_actuate_shuttlecock_valve(self):
         self.move_gantry([self.joint_angles_for_x_gantry_actuation_position[1], self.joint_angles_for_x_gantry_actuation_position[2]])
+
+    def move_gantry_to_actuate_breaker(self):
+        self.move_gantry([self.joint_angles_for_goal_position_2[1], self.joint_angles_for_goal_position_2[2] + 0.05])
 
     def move_to_shuttlecock_valve(self):
         self.home_arm()
@@ -594,8 +608,11 @@ class TheBoatDoctorPlanner:
         self.move_gantry([self.joint_angles_for_goal_position_2[1], self.joint_angles_for_goal_position_2[2]])
         self.move_arm([self.joint_angles_for_goal_position_2[3], self.joint_angles_for_goal_position_2[4], self.joint_angles_for_goal_position_2[5]])
 
-    def actuate_wrist(self):
-        self.move_arm([self.joint_angles_for_goal_position_2[3], self.joint_angles_for_goal_position_2[4] + horizontal_station_closed_v3_wrist_flip_theta, self.joint_angles_for_goal_position_2[5]])
+    def actuate_wrist(self, wrist_angle_index):
+        self.move_arm([self.joint_angles_for_goal_position_2[3], self.joint_angles_for_goal_position_2[4] + self.desired_wrist_angles_in_radians[wrist_angle_index], self.joint_angles_for_goal_position_2[5]])
+
+    def actuate_elbow(self, elbow_angle_index):
+        self.move_arm([self.joint_angles_for_goal_position_2[3] + self.desired_wrist_angles_in_radians[elbow_angle_index], self.joint_angles_for_goal_position_2[4], self.joint_angles_for_goal_position_2[5]])
 
     def actuate_end_effector(self):
         self.move_arm([self.joint_angles_for_goal_position[3], self.joint_angles_for_goal_position[4], self.desired_end_effector_angle_in_radians])
@@ -657,6 +674,9 @@ class TheBoatDoctorPlanner:
 
     def get_current_station_angle_in_degrees(self):
         return self.current_station_angle_in_degrees
+
+    def get_desired_breaker_position(self, breaker_command_index):
+        return self.breaker_commands[2*breaker_command_index+1]
 
     def get_station_orientation(self):
         return self.station_orientation

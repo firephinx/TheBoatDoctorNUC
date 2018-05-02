@@ -73,15 +73,16 @@ class TheBoatDoctorCV():
  			if len(self.data)==1:
  				return 10000  ### error msg 
  			else:
- 				if(self.type == 4):
+ 				if(self.type == 41 or self.type == 42):
  					station_object_position_in_3d = self.data[0:9]
- 					station_orientation = ['','','']
+ 					self.station_positions = ['','','']
  					for i in xrange(3):
- 						if(self.data[i+9] == 1):
- 							station_orientation[i] = "U"
+ 						if(self.data[i+10] == 1):
+ 							self.station_positions[i] = 'U'
  						else:
- 							station_orientation[i] = "D"
- 					return (station_object_position_in_3d, station_orientation)
+ 							self.station_positions[i] = 'D'
+ 							
+ 					return (station_object_position_in_3d, self.station_positions)
  				elif(self.type == 2):
  					station_object_position_in_3d = self.data[0:3]
  					self.station_orientation = 'vertical'

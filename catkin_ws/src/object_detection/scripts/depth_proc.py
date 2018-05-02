@@ -141,12 +141,13 @@ class image_converter:
   		#print self.type
   		print "[Kinect] getting data"  		
   		x,y,z,subType,error,breakerStatus=self.img_proc()
+  		print 11111111111111111111111111111111111111, x,y,z,subType,error,breakerStatus 
   		if error==0: ## if no error 
   			self.dataNum+=1   			
 	  		if subType is None: ### convert subType to ROSmsg compatible data type 
 	  			subType=0
 
-	  		if self.type==4:
+	  		if self.type==41 or self.type==42:
 	  			self.SUBTYPE.append(subType)	  		
 	  			self.X.append(x) ## first breaker 
 	  			self.Y.append(y) ## second breaker 
@@ -158,7 +159,7 @@ class image_converter:
 		  		self.X.append(x)
 		  		self.Y.append(y)
 		  		self.Z.append(z)
-		  		self.	bStatus.append([0,0,0]) ### trivial since not used 
+		  		self.bStatus.append([0,0,0]) ### trivial since not used 
 	  		#print x,y,z
 	  	else:
 	  		message=String() 
@@ -247,6 +248,7 @@ class image_converter:
 			#### find actuator ####
 			kinect=kinect_process(cv_color)
 			target_masks,subType,breakerStatus=kinect.locate_actuators(self.type,self.station,cv_color) 
+			#print 222222222222222,target_masks,subType,breakerStatus
 			if target_masks is not None:
 				if self.type==41 or self.type==42:
 					xyz=[]

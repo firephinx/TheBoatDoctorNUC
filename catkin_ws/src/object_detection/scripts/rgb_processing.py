@@ -946,7 +946,7 @@ class kinect_process(rgb_process):
 			target_mask=None
 			subType=None 
 			breaker_states=None
-		if type==4:
+		if Type==41 or Type==42:
 			return target_mask,subType,breaker_states
 		else:
 			return target_mask,subType,None

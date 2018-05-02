@@ -59,17 +59,21 @@ if __name__ == '__main__':
 
             tbd_planner.generate_robot_trajectory_using_ik()
 
-            tbd_planner.update_waypoints_with_mission_goal()
-
             num_breakers_to_actuate = tbd_planner.get_num_breakers_to_actuate()
 
             for i in xrange(num_breakers_to_actuate):
+
+                tbd_planner.update_waypoints_with_mission_goal()
 
                 tbd_planner.move_to_breaker(i)
 
                 tbd_planner.turn_on_pump()
 
-                tbd_planner.actuate_wrist()
+                if(tbd_planner.get_desired_breaker_position(i) == "U" and actuator == "A"):
+                    #tbd_planner.actuate_wrist(i)
+                    tbd_planner.move_gantry_to_actuate_breaker()
+                else:
+                    tbd_planner.actuate_wrist(i)
 
                 tbd_planner.turn_off_pump()
 
@@ -96,7 +100,9 @@ if __name__ == '__main__':
 
                     tbd_planner.turn_on_pump()
 
-                    tbd_planner.actuate_wrist()
+                    tbd_planner.turn_on_pump()
+
+                    tbd_planner.actuate_wrist(i)
 
                     tbd_planner.turn_off_pump()
 
@@ -150,7 +156,7 @@ if __name__ == '__main__':
 
                     tbd_planner.move_to_shuttlecock_valve()
 
-                    tbd_planner.actuate_wrist()
+                    tbd_planner.actuate_wrist(0)
                 else:
                     tbd_planner.actuate_end_effector()
 
