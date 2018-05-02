@@ -37,12 +37,12 @@ class rgb_process(object):
 			#print np.shape(mask[:,0])
 			
 			if station_F==2:
-				for i in np.arange(int(self.left_coln*coln),int((self.left_coln+self.wide_range)*coln)):  ## can be optimzied here  
+				for i in np.arange(int(self.left_coln_cornerF*coln),int((self.left_coln_cornerF+self.wide_range_cornerF)*coln)):  ## can be optimzied here  
 					mask[:,i]=255
-				for j in np.arange(0,int(row*(1-self.height_range))):  ##3  can be optimized here 
+				for j in np.arange(0,int(row*(1-self.height_range_cornerF))):  ##3  can be optimized here 
 					# print int(self.left_coln*coln)
 					# print int((self.left_coln+self.wide_range)*coln)
-					mask[j,int(self.left_coln*coln):int((self.left_coln+self.wide_range)*coln)]=0
+					mask[j,int(self.left_coln_cornerF*coln):int((self.left_coln_cornerF+self.wide_range_cornerF)*coln)]=0
 			elif station_F ==1:
 				for i in np.arange(int(self.left_coln_cornerE*coln),int((self.left_coln_cornerE+self.wide_range_cornerE)*coln)):  ## can be optimzied here  
 					mask[:,i]=255
@@ -81,11 +81,11 @@ class rgb_process(object):
 				bound = cv2.boxPoints(rect)
 				bound = np.int0(bound)
 			#### helper lines: to see if contours are coorectly found #### 
-				cv2.drawContours(img,[bound],0,(0,255,0),2)
+				# cv2.drawContours(img,[bound],0,(0,255,0),2)
 			elif shape=="circle":
 				bound = cv2.fitEllipse(cnt)
 			###### helper lines: to see ....##########
-				cv2.ellipse(img,bound,(0,255,0),2)
+				# cv2.ellipse(img,bound,(0,255,0),2)
 		#cv2.imshow('result4',img)
 		#cv2.waitKey(0)	
 		return bound
@@ -184,8 +184,8 @@ class rgb_process(object):
 
 class kinect_process(rgb_process):
 	def __init__(self,img):
-		self.wide_range=0.4;  ### how much colns to save   0.3
-		self.left_coln=np.true_divide(1-self.wide_range,3); ### empty number of left and right colns ### was 2, changed it to 3 due to offset of kinect camera 
+		self.wide_range=0.23;   ### how much colns to save   0.3
+		self.left_coln=np.true_divide(1-self.wide_range+0.21,3); ### +0.2 empty number of left and right colns ### was 2, changed it to 3 due to offset of kinect camera 
 		self.height_range=0.5 ### how much rows to save from bottom 
 
 
@@ -193,10 +193,14 @@ class kinect_process(rgb_process):
 		self.wide_range_cornerE=0.3;  ### how much colns to save 
 		self.left_coln_cornerE=np.true_divide(1-self.wide_range_cornerE-0.2,2); ### empty number of left and right colns
 		self.height_range_cornerE=0.5 ### how much rows to save from bottom 
+
+
+		self.wide_range_cornerF=0.22;  ### how much colns to save 
+		self.left_coln_cornerF=np.true_divide(1-self.wide_range_cornerF-0.08,2); ### empty number of left and right colns
+		self.height_range_cornerF=0.5 ### how much rows to save from bottom 
+		
 		self.offset=0.2
 		self.img=img
-
-
 
 ####### helper functions ############
 	def find_contours_thresh(self,mask,area_th,img,kernel,iterations):
@@ -264,9 +268,9 @@ class kinect_process(rgb_process):
 			mask=cv2.dilate(mask,kernel,iterations=iterations)
 			_,contours,_= cv2.findContours(mask, 1, 2)
 			##### helper line #########
-			cv2.drawContours(img, contours, -1, (0,255,0), 3)
-			cv2.imshow("contours"+str(breaker),img)
-			cv2.waitKey(20)
+			# cv2.drawContours(img, contours, -1, (0,255,0), 3)
+			# cv2.imshow("contours"+str(breaker),img)
+			# cv2.waitKey(20)
 			##### helper line ends ########
 			#cnts= [cnt for cnt in contours if cv2.contourArea(cnt)>area_th]
 			length=len(contours)
@@ -307,9 +311,9 @@ class kinect_process(rgb_process):
 							print "[rgb_processing/find_three_contours_thresh]: I find 3 black_box" 
 						return cnts_chosen
 					##### helper function ends ######
-					cv2.drawContours(img, cnts_chosen, -1, (0,255,0), 3)
-					cv2.imshow("contours"+str(breaker),img)
-					cv2.waitKey(20)
+					# cv2.drawContours(img, cnts_chosen, -1, (0,255,0), 3)
+					# cv2.imshow("contours"+str(breaker),img)
+					# cv2.waitKey(20)
 					###### helper function ends ######
 				else:
 					if breaker==1:
@@ -346,11 +350,11 @@ class kinect_process(rgb_process):
 			y_start=int(y_min-breaker_height*scale_heigth)
 			y_end=int(y_min+breaker_height*scale_heigth)
 			mask[y_start:y_end+1,x_start:x_end+1]=255
-		####### helper function ######### 
+
 		masked_img=cv2.bitwise_and(img,img,mask=mask)
-		###### helper function ##########
-		cv2.imshow('black_box',masked_img)
-		cv2.waitKey(20)
+		# ###### helper function ##########
+		# cv2.imshow('black_box',masked_img)
+		# cv2.waitKey(20)
 		##### ends ##############
 		return masked_img		
 
@@ -381,20 +385,20 @@ class kinect_process(rgb_process):
 		  	##### helper line ###############
 		  	#print 1
 		  	#print 1
-			mask_final=np.uint8(target_mask)
+			# mask_final=np.uint8(target_mask)
 
-			# cv2.imshow("masked_img_black_box2q",img)
-			# cv2.waitKey(20)
+			# # cv2.imshow("masked_img_black_box2q",img)
+			# # cv2.waitKey(20)
 			
-			masked_img=cv2.bitwise_and(img,img,mask=mask_final)
-			cv2.imshow("masked_img_black_box",masked_img)
-			cv2.waitKey(20)
+			# masked_img=cv2.bitwise_and(img,img,mask=mask_final)
+			# cv2.imshow("masked_img_black_box",masked_img)
+			# cv2.waitKey(20)
 			###############################
 			return target_mask
 
 
 
-	def breaker_status(self,breakers_info,black_boxes_info):
+	def breaker_status(self,breakers_info,black_boxes_info,Type):
 			######## this function determines if a beaker is on or off 
 			######## input: breakers_info: dictionanry of berakers_info from left to right 
 			#######  black_boxes_info: dictionanry of black_boxes_info from left to right
@@ -404,10 +408,17 @@ class kinect_process(rgb_process):
 				breaker_Cy=breakers_info[i]["Cy"]
 				box_Cy=black_boxes_info[i]["Cy"]
 				print breaker_Cy, box_Cy
-				if abs(breaker_Cy-box_Cy)<3: 
-					state=-1 ### down 
+				if Type==41:
+					if abs(breaker_Cy-box_Cy)<3: 
+						state=-1 ### down 
+					else:
+						state=1 ### up
 				else:
-					state=1 ### up
+					print "difference", abs(breaker_Cy-box_Cy) 
+					if abs(breaker_Cy-box_Cy)<10: 
+						state=1 ### up 
+					else:
+						state=-1 ### down
 				states.append(state)
 			return states	
 
@@ -524,22 +535,35 @@ class kinect_process(rgb_process):
 	
 ########## proc each acutaor ###############
 
-	def breaker_proc(self,img,area_th):
+	def breaker_proc(self,img,area_th,Type):
 		######## the function process breaker 
 		####### input: RGB image 
 		#cv2.imshow("result4",img)
 		#cv2.waitKey(0)
 		img_up=copy.deepcopy(img)
-		
-		low_th=np.array([0,80,110])
-		high_th=np.array([50,220,255])
-		mask=self.th_hsv(img,low_th,high_th)
+		if Type==41: #### Type A breaker 
+			low_th=np.array([0,80,110])
+			high_th=np.array([50,220,255])
+			mask=self.th_hsv(img,low_th,high_th)
 
-		low_th_up=np.array([150,50,170])
-		high_th_up=np.array([200,120,255])
-		mask_up=self.th_hsv(img_up,low_th_up,high_th_up)
+			low_th_up=np.array([150,50,170])
+			high_th_up=np.array([200,120,255])
+			mask_up=self.th_hsv(img_up,low_th_up,high_th_up)
+			
+			mask=np.uint8(np.logical_or(mask,mask_up))
 		
-		mask=np.uint8(np.logical_or(mask,mask_up))
+		else: #### Type B breaker 
+			low_th=np.array([0,80,110])
+			high_th=np.array([50,220,255])
+			mask=self.th_hsv(img,low_th,high_th)
+
+			low_th_up=np.array([130,0,170])
+			high_th_up=np.array([190,70,255])
+			mask_up=self.th_hsv(img_up,low_th_up,high_th_up)
+			
+			mask=np.uint8(np.logical_or(mask,mask_up))
+
+
 
 		target_mask=self.findTarget(mask,area_th)
 		##### helper line ###############
@@ -577,7 +601,7 @@ class kinect_process(rgb_process):
 
 			
 
-	def breaker_status_proc(self,breaker_mask,img_visual):
+	def breaker_status_proc(self,breaker_mask,img_visual,Type):
 		cnt_area_th=10
 		iterations=3
 		kernel=np.ones((3,3),np.uint8)
@@ -605,7 +629,7 @@ class kinect_process(rgb_process):
 				else :
 					#print 11111111111111111111111111
 					black_box_info=self.find_multi_rect_centers(cnts,img_visual,breaker=0)
-					breaker_states=self.breaker_status(breaker_info,black_box_info)
+					breaker_states=self.breaker_status(breaker_info,black_box_info,Type)
 					print breaker_states
 					return breaker_masks,breaker_states
 			else:
@@ -846,7 +870,7 @@ class kinect_process(rgb_process):
 		#################################################
 
 
-	def locate_actuators(self,type,station_F,img):
+	def locate_actuators(self,Type,station_F,img):
 	#### process different type of actuato
 		#### input: img: RGB img
 		#### type: actutator type  1: B , 2: vertial 3: small 4: orange 5: L_shape 6: A  7:horizontal
@@ -857,7 +881,7 @@ class kinect_process(rgb_process):
 		masked_img=self.mask(img1,station_F)
 		#print np.shape(img)
 		
-		if type==1: ### shuttle 
+		if Type==1: ### shuttle 
 			blob_area_th=30
 			target_mask=self.shuttle_proc(masked_img,blob_area_th,station_F)
 			if target_mask is None: 
@@ -876,7 +900,7 @@ class kinect_process(rgb_process):
 		
 
 
-		elif type==2: ### organe 
+		elif Type==2: ### organe 
 			blob_area_th=200
 			target_mask=self.orange(masked_img,blob_area_th)
 			if target_mask is None: 
@@ -885,7 +909,7 @@ class kinect_process(rgb_process):
 
 
 		
-		elif type==3: ### spigot valve 
+		elif Type==3: ### spigot valve 
 			print "spigot test" 
 			blob_area_th=50
 			target_mask=self.spigot_proc(masked_img,blob_area_th)
@@ -904,15 +928,16 @@ class kinect_process(rgb_process):
 					print "[rgb_processing/locate_actuators]: can't find spigot valve subtype"
 		
 
-		elif type==4:   ### breaker 
+		elif Type==41 or Type==42:   ### breaker		
+			#img3=copy.deepcopy(img) 
 			blob_area_th=10
-			target_mask=self.breaker_proc(masked_img,blob_area_th)
+			target_mask=self.breaker_proc(masked_img,blob_area_th,Type)
 			subType=None ## breaker doesn't have sub type
 			breaker_states=None ## initialize breaker_states 
 			if target_mask is None: 
 				print "[rgb_processing/locate_actuators]: can't find breaker"
 			else:
-				target_mask,breaker_states=self.breaker_status_proc(target_mask,img2)
+				target_mask,breaker_states=self.breaker_status_proc(target_mask,img2,Type)
 
 
 
@@ -1357,9 +1382,9 @@ class pi_cam_process(rgb_process):
 			mask=cv2.dilate(mask,kernel,iterations=iterations)
 			_,contours,_= cv2.findContours(mask, 1, 2)
 			##### helper line #########
-			cv2.drawContours(img, contours, -1, (0,255,0), 3)
-			cv2.imshow("contours"+str(breaker),img)
-			cv2.waitKey(20)
+			# cv2.drawContours(img, contours, -1, (0,255,0), 3)
+			# cv2.imshow("contours"+str(breaker),img)
+			# cv2.waitKey(20)
 			##### helper line ends ########
 			#cnts= [cnt for cnt in contours if cv2.contourArea(cnt)>area_th]
 			length=len(contours)

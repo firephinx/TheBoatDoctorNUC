@@ -102,7 +102,7 @@ class TheBoatDoctorPlanner:
         elif (self.station == "E"):
             self.station_base_coords = [0.339, 0.314, 0.0]
         elif (self.station == "F"):
-            self.station_base_coords = [0.419, 0.414, 0.0]
+            self.station_base_coords = [0.239, 0.414, 0.0]
         elif (self.station == "G"):
             self.station_base_coords = [0.369, 0.414, 0.0]
         elif (self.station == "H"):

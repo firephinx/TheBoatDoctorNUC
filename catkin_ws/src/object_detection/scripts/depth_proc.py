@@ -170,7 +170,7 @@ class image_converter:
   			self.depth_sub.unregister()
   			self.color_sub.unregister()
   			self.cameraInfo_sub.unregister()
-  			if self.type==4:
+  			if self.type==41 or self.type==42:
   				pt1=np.mean(np.array(self.X),axis=0)
   				pt2=np.mean(np.array(self.Y),axis=0)
   				pt3=np.mean(np.array(self.Z),axis=0)
@@ -248,7 +248,7 @@ class image_converter:
 			kinect=kinect_process(cv_color)
 			target_masks,subType,breakerStatus=kinect.locate_actuators(self.type,self.station,cv_color) 
 			if target_masks is not None:
-				if self.type==4:
+				if self.type==41 or self.type==42:
 					xyz=[]
 					for target_mask in target_masks:
 						mask_final=np.uint8(target_mask)

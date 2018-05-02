@@ -46,9 +46,9 @@ class TheBoatDoctorCV():
 		elif(Type == 'V3'):
 			self.type = 1
 		elif(Type == 'A'):
-			self.type = 4
+			self.type = 41
 		elif(Type == 'B'):
-			self.type = 4
+			self.type = 42
 		else:
 			self.type = 0
 

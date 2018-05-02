@@ -89,7 +89,7 @@ class TheBoatDoctorCV():
 
 
 if __name__=="__main__":
-	detector=TheBoatDoctorCV(1,1)
+	detector=TheBoatDoctorCV(42,2)
 	location=detector.get_actuator_location()
 	print location
 	print "finished"
