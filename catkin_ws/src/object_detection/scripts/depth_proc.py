@@ -30,6 +30,8 @@ import tf.msg
 import geometry_msgs.msg
 
 
+import params 
+
 from object_detection.srv import *
 
 
@@ -85,7 +87,7 @@ class image_converter:
     self.Z=[]
     self.SUBTYPE=[] ## subtype of some acutators 
     self.bStatus=[] ### breakerStatus
-    self.dataQ=11	### num of images to process, use odd number to break tie  
+    self.dataQ=params.dataQ_kinect	### num of images to process, use odd number to break tie  
     self.station=stationF
 
 

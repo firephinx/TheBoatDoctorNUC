@@ -69,15 +69,20 @@ if __name__ == '__main__':
 
                 tbd_planner.turn_on_pump()
 
-                if(tbd_planner.get_desired_breaker_position(i) == "U" and actuator == "A"):
-                    #tbd_planner.actuate_wrist(i)
-                    tbd_planner.move_gantry_to_actuate_breaker()
-                else:
-                    tbd_planner.actuate_wrist(i)
+                # if((tbd_planner.get_desired_breaker_position(i) == "U" and actuator == "A") or
+                #    (tbd_planner.get_desired_breaker_position(i) == "D" and actuator == "B")):
+                #     #tbd_planner.actuate_wrist(i)
+                #     tbd_planner.move_gantry_to_actuate_breaker()
+                # else:
+                tbd_planner.actuate_wrist(i)
 
                 tbd_planner.turn_off_pump()
 
+                tbd_planner.home_arm_with_goal_end_effector_angle()
+
             tbd_planner.position_arm_for_kinect_vision()
+
+            tbd_planner.turn_turntable_to_station()
 
             tbd_planner.start_vision()
 

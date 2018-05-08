@@ -159,10 +159,6 @@ class TheBoatDoctorIK:
             z_gan = self.z_gan_min
         z_arm = z - z_gan
 
-        print("z_arm = " + str(z_arm))
-        print("z_gan = " + str(z_gan))
-        print("z_arm/self.l2 = " + str(z_arm/self.l2))
-
         # calc angles based on position
         theta1 = math.asin(z_arm/self.l2)
         theta2 = -theta1
@@ -180,5 +176,20 @@ class TheBoatDoctorIK:
             x_gan = x - x_temp
 
         x_base = x - x_temp - x_gan
-        z_gan = z - z_temp
+        if(x_base > 0):
+            z_gan = 3
+            z_arm = z - z_gan
+
+            print("z_arm = " + str(z_arm))
+            print("z_gan = " + str(z_gan))
+            print("z_arm/self.l2 = " + str(z_arm/self.l2))
+
+            # calc angles based on position
+            theta1 = math.asin(z_arm/self.l2)
+            theta2 = -theta1
+            x_temp = self.l1 + self.l2 * math.cos(theta1) + self.l3_vert
+            x_gan = x - x_temp
+        else:
+            z_gan = z - z_temp
+        
         return np.array([0, in_to_m(x_gan), in_to_m(z_gan), -theta1, theta2, 0])  

@@ -2,6 +2,7 @@ import numpy as np
 import cv2  
 import copy
 
+import params 
 
 
 
@@ -144,17 +145,19 @@ class rgb_process(object):
 		img_hsv=cv2.cvtColor(img,cv2.COLOR_BGR2HSV)
 		#print 2
 		##### helper line ######
-		# cv2.imshow("result1",img_hsv)
-		# cv2.waitKey(20)
+		if params.showImg==1:
+			cv2.imshow("result1",img_hsv)
+			cv2.waitKey(20)
 		#########################
 		mask=cv2.inRange(img_hsv,low_th,high_th) 
 		#cv2.imshow("result2",mask)
 		#cv2.waitKey(200)
 		#print 3
 		##### helper line ########
-		# img=cv2.bitwise_and(img_hsv,img_hsv,mask=mask)
-		# cv2.imshow("result2",img)
-		# cv2.waitKey(20)
+		if params.showImg==1:
+			img=cv2.bitwise_and(img_hsv,img_hsv,mask=mask)
+			cv2.imshow("result2",img)
+			cv2.waitKey(20)
 		#######################
 		return mask 
 
@@ -361,13 +364,17 @@ class kinect_process(rgb_process):
 
 
 
-	def black_box_proc(self,img,area_th):
+	def black_box_proc(self,img,area_th,Type):
 			######## the function process breaker 
 			####### input: RGB image 
 			#cv2.imshow("result4",img)
 			#cv2.waitKey(0)
-			low_th=np.array([50,50,0])      ## 0,0,0
-			high_th=np.array([120,150,90]) ##110,110,110
+			if Type==41:
+				low_th=params.breaker_A_blk_box_low_th      ## 0,0,0
+				high_th=params.breaker_A_blk_box_high_th ##110,110,110
+			else:
+				low_th=params.breaker_B_blk_box_low_th      ## 0,0,0
+				high_th=params.breaker_B_blk_box_high_th ##110,110,110
 			##low_th=np.array([10,10,10])
 			#high_th=np.array([15,15,15])
 			mask=self.th_hsv(img,low_th,high_th)
@@ -409,6 +416,7 @@ class kinect_process(rgb_process):
 				box_Cy=black_boxes_info[i]["Cy"]
 				print breaker_Cy, box_Cy
 				if Type==41:
+					print abs(breaker_Cy-box_Cy)
 					if abs(breaker_Cy-box_Cy)<3: 
 						state=-1 ### down 
 					else:
@@ -542,23 +550,23 @@ class kinect_process(rgb_process):
 		#cv2.waitKey(0)
 		img_up=copy.deepcopy(img)
 		if Type==41: #### Type A breaker 
-			low_th=np.array([0,80,110])
-			high_th=np.array([50,220,255])
+			low_th=params.breaker_A_low_th_up   ## up 
+			high_th=params.breaker_A_high_th_up
 			mask=self.th_hsv(img,low_th,high_th)
 
-			low_th_up=np.array([150,50,170])
-			high_th_up=np.array([200,120,255])
+			low_th_up=params.breaker_A_low_th_down   ##down 
+			high_th_up=params.breaker_A_high_th_down
 			mask_up=self.th_hsv(img_up,low_th_up,high_th_up)
 			
 			mask=np.uint8(np.logical_or(mask,mask_up))
 		
 		else: #### Type B breaker 
-			low_th=np.array([0,80,110])
-			high_th=np.array([50,220,255])
+			low_th=params.breaker_B_low_th_up
+			high_th=params.breaker_B_high_th_up
 			mask=self.th_hsv(img,low_th,high_th)
 
-			low_th_up=np.array([130,0,170])
-			high_th_up=np.array([190,70,255])
+			low_th_up=params.breaker_B_low_th_down
+			high_th_up=params.breaker_B_high_th_down
 			mask_up=self.th_hsv(img_up,low_th_up,high_th_up)
 			
 			mask=np.uint8(np.logical_or(mask,mask_up))
@@ -617,7 +625,7 @@ class kinect_process(rgb_process):
 			
 			masked_image=self.get_blackBox_ROI(breaker_info,img_process)
 			black_box_aera_th=50
-			black_box_mask=self.black_box_proc(masked_image,black_box_aera_th)
+			black_box_mask=self.black_box_proc(masked_image,black_box_aera_th,Type)
 			if black_box_mask is not None:
 				cnt_area_th=100
 				iterations=1
@@ -645,13 +653,17 @@ class kinect_process(rgb_process):
 			
 			#low_th=np.array([70,200,200])
 			#high_th=np.array([150,255,255])
-			print station_F
+			print "station", station_F
 			if station_F==1:  ### for shuttle_proc at F 
-				low_th=np.array([80,150,170]) ## day: 100 150 50
-				high_th=np.array([130,220,220]) ## day: 150 220 100 
+				#low_th=np.array([80,150,100]) ## day: 100 150 50
+				#high_th=np.array([130,220,150]) ## day: 150 220 100 
+				low_th=params.shuttle_low_th_F
+				high_th=params.shuttle_high_th_F
 			else:
-				low_th=np.array([100,100,100]) ## 100 200 100
-				high_th=np.array([150,240,240]) ## 150 255 200
+				#low_th=np.array([100,100,100]) ## 100 200 100
+				#high_th=np.array([150,240,240]) ## 150 255 200
+				low_th=params.shuttle_low_th
+				high_th=params.shuttle_high_th
 
 
 			mask=self.th_hsv(img,low_th,high_th)
@@ -703,11 +715,15 @@ class kinect_process(rgb_process):
 			#### ends ####
 			##### find white #########
 			if station_F==1: ## if at station E
-				low_th=np.array([50,0,200])
-				high_th=np.array([100,50,255])
+				#low_th=np.array([50,0,200])
+				#high_th=np.array([100,50,255])
+				low_th=params.shuttle_white_low_th_F
+				high_th=params.shuttle_white_high_th_F
 			else:
-				low_th=np.array([50,0,220])
-				high_th=np.array([100,50,255])
+				#low_th=np.array([50,0,220])
+				#high_th=np.array([100,50,255])
+				low_th=params.shuttle_white_low_th
+				high_th=params.shuttle_white_high_th
 
 
 			mask=self.th_hsv(masked_img,low_th,high_th)
@@ -751,9 +767,14 @@ class kinect_process(rgb_process):
 
 
 
-	def spigot_proc(self,img,area_th):
-		low_th=np.array([100,200,100]) ## 100 200 100
-		high_th=np.array([200,255,230]) ## 150 255 200
+	def spigot_proc(self,img,area_th,station_F):
+		if station_F==1:
+			low_th=params.spigot_low_th_F ## 100 200 100
+			high_th=params.spigot_high_th_F ## 150 255 200
+		else: 
+			low_th=params.spigot_low_th ## 100 200 100
+			high_th=params.spigot_high_th ## 150 255 200
+
 		mask=self.th_hsv(img,low_th,high_th)
 		target_mask=self.findTarget(mask,area_th)
 		##### helper line ###############
@@ -766,7 +787,7 @@ class kinect_process(rgb_process):
 		return target_mask
 
 
-	def spigot_sub_proc(self,img,target_mask_valve,blob_th_white,area_th_white,area_th_valve):
+	def spigot_sub_proc(self,img,target_mask_valve,blob_th_white,area_th_white,area_th_valve,station_F):
 		img_visual=copy.deepcopy(img)
 		
 		##### white part ROI #### 
@@ -806,9 +827,13 @@ class kinect_process(rgb_process):
 
 
 			##### find white #########
+			if station_F==1:
+				low_th=params.spigot_white_low_th_F        ## day  [50,0,200] night [50,0,230]
+				high_th=params.spigot_white_high_th_F     ## day  [120,50,255]
+			else:
+				low_th=params.spigot_white_low_th        ## day  [50,0,200] night [50,0,230]
+				high_th=params.spigot_white_high_th     ## day  [120,50,255]
 
-			low_th=np.array([50,0,200])        ## day  [50,0,200] night [50,0,230]
-			high_th=np.array([120,50,255])     ## day  [120,50,255]
 			mask=self.th_hsv(masked_img,low_th,high_th)
 			if mask is None: 
 				print "[rgb_processing/spigot_sub_proc] I can't find white part of spigot valve in hsv"
@@ -851,9 +876,14 @@ class kinect_process(rgb_process):
 
 
 	
-	def orange(self,img,area_th):
-		low_th=np.array([0,130,130])    # 0,130,200
-		high_th=np.array([20,220,255])  # 20,200,255
+	def orange(self,img,area_th,station_F):
+		if station_F==1:
+			low_th=params.orange_low_th_F    # 0,130,200
+			high_th=params.orange_high_th_F  # 20,200,255
+		else:
+			low_th=params.orange_low_th   # 0,130,200
+			high_th=params.orange_high_th  # 20,200,255
+
 		mask=self.th_hsv(img,low_th,high_th)
 		mask_final=np.uint8(mask)
 		target_mask=self.findTarget(mask,area_th)
@@ -902,7 +932,7 @@ class kinect_process(rgb_process):
 
 		elif Type==2: ### organe 
 			blob_area_th=200
-			target_mask=self.orange(masked_img,blob_area_th)
+			target_mask=self.orange(masked_img,blob_area_th,station_F)
 			if target_mask is None: 
 				print "[rgb_processing/locate_actuators]: can't find orange valve"
 			subType=None
@@ -912,7 +942,7 @@ class kinect_process(rgb_process):
 		elif Type==3: ### spigot valve 
 			print "spigot test" 
 			blob_area_th=50
-			target_mask=self.spigot_proc(masked_img,blob_area_th)
+			target_mask=self.spigot_proc(masked_img,blob_area_th,station_F)
 			if target_mask is None: 
 				print "[rgb_processing/locate_actuators]: can't find spigot valve"
 				subType=None
@@ -923,7 +953,7 @@ class kinect_process(rgb_process):
 				blob_th_white=20
 				#subType=None
 				masked_img=self.mask(img2,station_F)
-				subType=self.spigot_sub_proc(masked_img,target_mask,blob_th_white,area_th_white,area_th_valve)     
+				subType=self.spigot_sub_proc(masked_img,target_mask,blob_th_white,area_th_white,area_th_valve,station_F)     
 				if subType is None: 
 					print "[rgb_processing/locate_actuators]: can't find spigot valve subtype"
 		
@@ -976,8 +1006,8 @@ class pi_cam_process(rgb_process):
 			# low_th=np.array([30,30,190])
 			# high_th=np.array([100,100,230])
 
-			low_th=np.array([30,30,30])
-			high_th=np.array([100,140,100])
+			low_th=params.pi_orange_green_tip_low_th
+			high_th=params.pi_orange_green_tip_high_th
 
 			mask=self.th_hsv(img,low_th,high_th)
 			target_mask=self.findTarget(mask,area_th)
@@ -1011,11 +1041,11 @@ class pi_cam_process(rgb_process):
 			#cv2.imshow("result4",img)
 			#cv2.waitKey(0)
 			if subType==0:
-				low_th=np.array([50,50,100])
-				high_th=np.array([120,120,150])
+				low_th=params.pi_spigot_green_low_th_horizontal
+				high_th=params.pi_spigot_green_high_th_horizontal
 			elif subType==1:
-				low_th=np.array([30,30,30])
-				high_th=np.array([100,140,100])
+				low_th=params.pi_spigot_green_low_th_vertical
+				high_th=params.pi_spigot_green_high_th_vertical
 			else: 
 				print "please type either 0 (horizontal) or 1 (vertical) for subType"
 			mask=self.th_hsv(img,low_th,high_th)
@@ -1048,8 +1078,8 @@ class pi_cam_process(rgb_process):
 			####### input: RGB image 
 			#cv2.imshow("result4",img)
 			#cv2.waitKey(0)
-			low_th=np.array([0,100,80])
-			high_th=np.array([100,200,200])   ### b: 0 - 250 was also good 
+			low_th=params.pi_orange_low_th
+			high_th=params.pi_orange_high_th   ### b: 0 - 250 was also good 
 			mask=self.th_hsv(img,low_th,high_th)
 			target_mask=self.findTarget(mask,area_th)
 			
@@ -1078,11 +1108,11 @@ class pi_cam_process(rgb_process):
 			#cv2.imshow("result4",img)
 			#cv2.waitKey(0)
 			if subType==0:
-				low_th=np.array([100,200,60])
-				high_th=np.array([150,255,140])
+				low_th=params.pi_spigot_low_th_horizontal
+				high_th=params.pi_spigot_high_th_horizontal
 			elif subType==1:
-				low_th=np.array([100,200,60])
-				high_th=np.array([150,255,140])
+				low_th=params.pi_spigot_low_th_vertical
+				high_th=params.pi_spigot_high_th_vertical
 			else:
 				print "please type either 0 (horizontal) or 1 (vertical) for subType"
 			mask=self.th_hsv(img,low_th,high_th)
@@ -1111,8 +1141,8 @@ class pi_cam_process(rgb_process):
 			#cv2.imshow("result4",img)
 			#cv2.waitKey(0)
 			print "im here"
-			low_th=np.array([0,160,0])
-			high_th=np.array([150,255,220])
+			low_th=params.pi_shuttle_low_th
+			high_th=params.pi_shuttle_high_th
 			mask=self.th_hsv(img,low_th,high_th)
 			target_mask=self.findTarget(mask,area_th)
 			

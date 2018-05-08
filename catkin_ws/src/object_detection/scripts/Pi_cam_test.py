@@ -11,6 +11,8 @@ from rgb_processing import pi_cam_process
 import time 
 
 
+import params 
+
 from object_detection.srv import *
 
 ################### image-processing (will move later) #############
@@ -54,7 +56,7 @@ class image_converter:
     self.type=type 
     self.subType=subType ## this is the sub type for an actuator
     self.dataNum=0 
-    self.dataQ=11
+    self.dataQ=params.dataQ_pi
 
     self.values=[] 
 
