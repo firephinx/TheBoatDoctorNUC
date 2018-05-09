@@ -29,8 +29,8 @@ class TheBoatDoctorPlanner:
         ## V3 Offsets
         self.raspberry_pi_camera_vertical_station_v3_x_offset = -0.2
         self.raspberry_pi_camera_vertical_station_v3_z_offset = -0.07
-        self.vertical_station_v3_goal_x_offset = -0.09
-        self.vertical_station_v3_goal_z_offset = -0.02
+        self.vertical_station_v3_goal_x_offset = -0.07
+        self.vertical_station_v3_goal_z_offset = 0.0
 
         ## Breaker Offsets
         self.raspberry_pi_camera_vertical_station_breaker_x_offset = -0.2
@@ -43,37 +43,63 @@ class TheBoatDoctorPlanner:
         self.breaker_2_turntable_degree_offset = 0.0
         self.breaker_3_turntable_degree_offset = 5
 
-        self.breaker_1_up_x_offset = -0.05
-        self.breaker_1_up_z_offset = -0.03
-        self.breaker_2_up_x_offset = -0.03
-        self.breaker_2_up_z_offset = 0.033
-        self.breaker_3_up_x_offset = 0.0
-        self.breaker_3_up_z_offset = 0.09
+        self.breaker_1_a_x_offset = -0.05
+        self.breaker_1_a_z_offset = 0.01
+        self.breaker_2_a_x_offset = -0.03
+        self.breaker_2_a_z_offset = 0.06
+        self.breaker_3_a_x_offset = -0.01
+        self.breaker_3_a_z_offset = 0.14
 
-        self.breaker_1_down_x_offset = -0.05
-        self.breaker_1_down_z_offset = 0.01
-        self.breaker_2_down_x_offset = -0.03
-        self.breaker_2_down_z_offset = 0.06
-        self.breaker_3_down_x_offset = -0.01
-        self.breaker_3_down_z_offset = 0.14
+        self.breaker_1_b_x_offset = -0.05
+        self.breaker_1_b_z_offset = 0.01
+        self.breaker_2_b_x_offset = -0.03
+        self.breaker_2_b_z_offset = 0.06
+        self.breaker_3_b_x_offset = -0.01
+        self.breaker_3_b_z_offset = 0.1
 
-        self.corner_f_breaker_1_turntable_degree_offset = -2.5
-        self.corner_f_breaker_2_turntable_degree_offset = 2.5
-        self.corner_f_breaker_3_turntable_degree_offset = 6
+        self.corner_e_breaker_1_a_turntable_degree_offset = -7
+        self.corner_e_breaker_2_a_turntable_degree_offset = -3
+        self.corner_e_breaker_3_a_turntable_degree_offset = 3
 
-        self.corner_f_breaker_1_up_x_offset = -0.045
-        self.corner_f_breaker_1_up_z_offset = 0.01
-        self.corner_f_breaker_2_up_x_offset = -0.04
-        self.corner_f_breaker_2_up_z_offset = 0.04
-        self.corner_f_breaker_3_up_x_offset = -0.02
-        self.corner_f_breaker_3_up_z_offset = 0.11
+        self.corner_e_breaker_1_a_x_offset = -0.08
+        self.corner_e_breaker_1_a_z_offset = -0.07
+        self.corner_e_breaker_2_a_x_offset = -0.075
+        self.corner_e_breaker_2_a_z_offset = -0.01
+        self.corner_e_breaker_3_a_x_offset = -0.01
+        self.corner_e_breaker_3_a_z_offset = 0.07
 
-        self.corner_f_breaker_1_down_x_offset = -0.023
-        self.corner_f_breaker_1_down_z_offset = 0.02
-        self.corner_f_breaker_2_down_x_offset = -0.023
-        self.corner_f_breaker_2_down_z_offset = 0.08
-        self.corner_f_breaker_3_down_x_offset = -0.01
-        self.corner_f_breaker_3_down_z_offset = 0.18
+        self.corner_e_breaker_1_b_turntable_degree_offset = -10
+        self.corner_e_breaker_2_b_turntable_degree_offset = -3
+        self.corner_e_breaker_3_b_turntable_degree_offset = 2
+
+        self.corner_e_breaker_1_b_x_offset = -0.088
+        self.corner_e_breaker_1_b_z_offset = -0.1
+        self.corner_e_breaker_2_b_x_offset = -0.075
+        self.corner_e_breaker_2_b_z_offset = -0.03
+        self.corner_e_breaker_3_b_x_offset = -0.044
+        self.corner_e_breaker_3_b_z_offset = 0.03
+
+        self.corner_f_breaker_1_a_turntable_degree_offset = -2
+        self.corner_f_breaker_2_a_turntable_degree_offset = 2.5
+        self.corner_f_breaker_3_a_turntable_degree_offset = 7
+
+        self.corner_f_breaker_1_a_x_offset = -0.04
+        self.corner_f_breaker_1_a_z_offset = 0.03
+        self.corner_f_breaker_2_a_x_offset = -0.03
+        self.corner_f_breaker_2_a_z_offset = 0.09
+        self.corner_f_breaker_3_a_x_offset = -0.01
+        self.corner_f_breaker_3_a_z_offset = 0.18
+
+        self.corner_f_breaker_1_b_turntable_degree_offset = -2.5
+        self.corner_f_breaker_2_b_turntable_degree_offset = 2.5
+        self.corner_f_breaker_3_b_turntable_degree_offset = 6
+
+        self.corner_f_breaker_1_b_x_offset = -0.045
+        self.corner_f_breaker_1_b_z_offset = 0.01
+        self.corner_f_breaker_2_b_x_offset = -0.04
+        self.corner_f_breaker_2_b_z_offset = 0.04
+        self.corner_f_breaker_3_b_x_offset = -0.02
+        self.corner_f_breaker_3_b_z_offset = 0.11
 
         ## Horizontal Station Offsets
         ## V1 Offsets
@@ -411,7 +437,51 @@ class TheBoatDoctorPlanner:
             
             self.joint_angles_for_goal_positions = numpy.zeros([self.num_breakers_to_actuate,6])
 
-            if(self.station == "F"):
+            if(self.station == "E"):
+                for i in range(self.num_breakers_to_actuate):
+                    breaker_index = 0
+                    corner_e_breaker_x_offset = 0.0
+                    corner_e_breaker_z_offset = 0.0
+                    if(self.breaker_commands[2*i] == "B1"):
+                        breaker_index = 0
+                        if(self.breaker_commands[2*i+1] == "U"):
+                            corner_e_breaker_x_offset = self.corner_e_breaker_1_b_x_offset
+                            corner_e_breaker_z_offset = self.corner_e_breaker_1_b_z_offset
+                        else:
+                            corner_e_breaker_x_offset = self.corner_e_breaker_1_a_x_offset
+                            corner_e_breaker_z_offset = self.corner_e_breaker_1_a_z_offset
+
+                    elif(self.breaker_commands[2*i] == "B2"):
+                        breaker_index = 1
+                        if(self.breaker_commands[2*i+1] == "U"):
+                            corner_e_breaker_x_offset = self.corner_e_breaker_2_b_x_offset
+                            corner_e_breaker_z_offset = self.corner_e_breaker_2_b_z_offset
+                        else:
+                            corner_e_breaker_x_offset = self.corner_e_breaker_2_a_x_offset
+                            corner_e_breaker_z_offset = self.corner_e_breaker_2_a_z_offset
+
+                    elif(self.breaker_commands[2*i] == "B3"):
+                        breaker_index = 2
+                        if(self.breaker_commands[2*i+1] == "U"):
+                            corner_e_breaker_x_offset = self.corner_e_breaker_3_b_x_offset
+                            corner_e_breaker_z_offset = self.corner_e_breaker_3_b_z_offset
+                        else:
+                            corner_e_breaker_x_offset = self.corner_e_breaker_3_a_x_offset
+                            corner_e_breaker_z_offset = self.corner_e_breaker_3_a_z_offset
+                    else:
+                        print("Invalid breaker in mission file")
+                        break
+                    breaker_goal_position = self.breaker_positions_in_3d_robot_coordinates[breaker_index]
+                    breaker_goal_position[0] = breaker_goal_position[0] + corner_e_breaker_x_offset
+                    breaker_goal_position[2] = breaker_goal_position[2] + corner_e_breaker_z_offset
+                    print("Breaker goal position: [ " + str(breaker_goal_position[0]) + ", " + str(breaker_goal_position[1]) + ", " + str(breaker_goal_position[2]) + "]")
+                    self.joint_angles_for_goal_positions[i] = self.tbd_ik.solve_ik(breaker_goal_position, "vertical")
+            
+                    if(abs(self.joint_angles_for_goal_positions[i][1]) < 0.000001):
+                        self.joint_angles_for_goal_positions[i][1] = 0.0
+                    if(abs(self.joint_angles_for_goal_positions[i][2]) < 0.000001):
+                        self.joint_angles_for_goal_positions[i][2] = 0.0
+            elif(self.station == "F"):
                 for i in range(self.num_breakers_to_actuate):
                     breaker_index = 0
                     corner_f_breaker_x_offset = 0.0
@@ -419,29 +489,29 @@ class TheBoatDoctorPlanner:
                     if(self.breaker_commands[2*i] == "B1"):
                         breaker_index = 0
                         if(self.breaker_commands[2*i+1] == "U"):
-                            corner_f_breaker_x_offset = self.corner_f_breaker_1_up_x_offset
-                            corner_f_breaker_z_offset = self.corner_f_breaker_1_up_z_offset
+                            corner_f_breaker_x_offset = self.corner_f_breaker_1_b_x_offset
+                            corner_f_breaker_z_offset = self.corner_f_breaker_1_b_z_offset
                         else:
-                            corner_f_breaker_x_offset = self.corner_f_breaker_1_down_x_offset
-                            corner_f_breaker_z_offset = self.corner_f_breaker_1_down_z_offset
+                            corner_f_breaker_x_offset = self.corner_f_breaker_1_a_x_offset
+                            corner_f_breaker_z_offset = self.corner_f_breaker_1_a_z_offset
 
                     elif(self.breaker_commands[2*i] == "B2"):
                         breaker_index = 1
                         if(self.breaker_commands[2*i+1] == "U"):
-                            corner_f_breaker_x_offset = self.corner_f_breaker_2_up_x_offset
-                            corner_f_breaker_z_offset = self.corner_f_breaker_2_up_z_offset
+                            corner_f_breaker_x_offset = self.corner_f_breaker_2_b_x_offset
+                            corner_f_breaker_z_offset = self.corner_f_breaker_2_b_z_offset
                         else:
-                            corner_f_breaker_x_offset = self.corner_f_breaker_2_down_x_offset
-                            corner_f_breaker_z_offset = self.corner_f_breaker_2_down_z_offset
+                            corner_f_breaker_x_offset = self.corner_f_breaker_2_a_x_offset
+                            corner_f_breaker_z_offset = self.corner_f_breaker_2_a_z_offset
 
                     elif(self.breaker_commands[2*i] == "B3"):
                         breaker_index = 2
                         if(self.breaker_commands[2*i+1] == "U"):
-                            corner_f_breaker_x_offset = self.corner_f_breaker_3_up_x_offset
-                            corner_f_breaker_z_offset = self.corner_f_breaker_3_up_z_offset
+                            corner_f_breaker_x_offset = self.corner_f_breaker_3_b_x_offset
+                            corner_f_breaker_z_offset = self.corner_f_breaker_3_b_z_offset
                         else:
-                            corner_f_breaker_x_offset = self.corner_f_breaker_3_down_x_offset
-                            corner_f_breaker_z_offset = self.corner_f_breaker_3_down_z_offset
+                            corner_f_breaker_x_offset = self.corner_f_breaker_3_a_x_offset
+                            corner_f_breaker_z_offset = self.corner_f_breaker_3_a_z_offset
                     else:
                         print("Invalid breaker in mission file")
                         break
@@ -463,27 +533,27 @@ class TheBoatDoctorPlanner:
                     if(self.breaker_commands[2*i] == "B1"):
                         breaker_index = 0
                         if(self.breaker_commands[2*i+1] == "U"):
-                            breaker_x_offset = self.breaker_1_up_x_offset
-                            breaker_z_offset = self.breaker_1_up_z_offset
+                            breaker_x_offset = self.breaker_1_b_x_offset
+                            breaker_z_offset = self.breaker_1_b_z_offset
                         else:
-                            breaker_x_offset = self.breaker_1_down_x_offset
-                            breaker_z_offset = self.breaker_1_down_z_offset
+                            breaker_x_offset = self.breaker_1_a_x_offset
+                            breaker_z_offset = self.breaker_1_a_z_offset
                     elif(self.breaker_commands[2*i] == "B2"):
                         breaker_index = 1
                         if(self.breaker_commands[2*i+1] == "U"):
-                            breaker_x_offset = self.breaker_2_up_x_offset
-                            breaker_z_offset = self.breaker_2_up_z_offset
+                            breaker_x_offset = self.breaker_2_b_x_offset
+                            breaker_z_offset = self.breaker_2_b_z_offset
                         else:
-                            breaker_x_offset = self.breaker_2_down_x_offset
-                            breaker_z_offset = self.breaker_2_down_z_offset
+                            breaker_x_offset = self.breaker_2_a_x_offset
+                            breaker_z_offset = self.breaker_2_a_z_offset
                     elif(self.breaker_commands[2*i] == "B3"):
                         breaker_index = 2
                         if(self.breaker_commands[2*i+1] == "U"):
-                            breaker_x_offset = self.breaker_3_up_x_offset
-                            breaker_z_offset = self.breaker_3_up_z_offset
+                            breaker_x_offset = self.breaker_3_b_x_offset
+                            breaker_z_offset = self.breaker_3_b_z_offset
                         else:
-                            breaker_x_offset = self.breaker_3_down_x_offset
-                            breaker_z_offset = self.breaker_3_down_z_offset
+                            breaker_x_offset = self.breaker_3_a_x_offset
+                            breaker_z_offset = self.breaker_3_a_z_offset
                     else:
                         print("Invalid breaker in mission file")
                         break
@@ -763,23 +833,64 @@ class TheBoatDoctorPlanner:
         
         breaker_to_actuate = self.breaker_commands[2*breaker_command_index]
 
-        if(self.station == "F"):
+        if(self.station == "E"):
             if(breaker_to_actuate == "B1"):
-                self.turn_turntable(self.station_turntable_degree + self.corner_f_breaker_1_turntable_degree_offset)
+                if(self.actuator == "A"):
+                    self.turn_turntable(self.station_turntable_degree + self.corner_e_breaker_1_a_turntable_degree_offset)
+                else:
+                    self.turn_turntable(self.station_turntable_degree + self.corner_e_breaker_1_b_turntable_degree_offset)
                 self.move_gantry([0.0, self.joint_angles_for_goal_positions[breaker_command_index][2]])
                 self.move_arm([self.joint_angles_for_goal_positions[breaker_command_index][3], self.joint_angles_for_goal_positions[breaker_command_index][4], self.joint_angles_for_goal_positions[breaker_command_index][5]])
                 self.move_gantry([self.joint_angles_for_goal_positions[breaker_command_index][1], self.joint_angles_for_goal_positions[breaker_command_index][2]])
                 self.joint_angles_for_goal_position_2 = numpy.copy(self.joint_angles_for_goal_positions[breaker_command_index][:])
 
             elif(breaker_to_actuate == "B2"):
-                self.turn_turntable(self.station_turntable_degree + self.corner_f_breaker_2_turntable_degree_offset)
+                if(self.actuator == "A"):
+                    self.turn_turntable(self.station_turntable_degree + self.corner_e_breaker_2_a_turntable_degree_offset)
+                else:
+                    self.turn_turntable(self.station_turntable_degree + self.corner_e_breaker_2_b_turntable_degree_offset)
                 self.move_gantry([0.0, self.joint_angles_for_goal_positions[breaker_command_index][2]])
                 self.move_arm([self.joint_angles_for_goal_positions[breaker_command_index][3], self.joint_angles_for_goal_positions[breaker_command_index][4], self.joint_angles_for_goal_positions[breaker_command_index][5]])
                 self.move_gantry([self.joint_angles_for_goal_positions[breaker_command_index][1], self.joint_angles_for_goal_positions[breaker_command_index][2]])
                 self.joint_angles_for_goal_position_2 = numpy.copy(self.joint_angles_for_goal_positions[breaker_command_index][:])
 
             elif(breaker_to_actuate == "B3"):
-                self.turn_turntable(self.station_turntable_degree + self.corner_f_breaker_3_turntable_degree_offset)
+                if(self.actuator == "A"):
+                    self.turn_turntable(self.station_turntable_degree + self.corner_e_breaker_3_a_turntable_degree_offset)
+                else:
+                    self.turn_turntable(self.station_turntable_degree + self.corner_e_breaker_3_b_turntable_degree_offset)
+                self.move_gantry([0.0, self.joint_angles_for_goal_positions[breaker_command_index][2]])
+                self.move_arm([self.joint_angles_for_goal_positions[breaker_command_index][3], self.joint_angles_for_goal_positions[breaker_command_index][4], self.joint_angles_for_goal_positions[breaker_command_index][5]])
+                self.move_gantry([self.joint_angles_for_goal_positions[breaker_command_index][1], self.joint_angles_for_goal_positions[breaker_command_index][2]])
+                self.joint_angles_for_goal_position_2 = numpy.copy(self.joint_angles_for_goal_positions[breaker_command_index][:])
+
+        elif(self.station == "F"):
+            if(breaker_to_actuate == "B1"):
+                if(self.actuator == "A"):
+                    self.turn_turntable(self.station_turntable_degree + self.corner_f_breaker_1_a_turntable_degree_offset)
+                else:
+                    self.turn_turntable(self.station_turntable_degree + self.corner_f_breaker_1_b_turntable_degree_offset)
+                
+                self.move_gantry([0.0, self.joint_angles_for_goal_positions[breaker_command_index][2]])
+                self.move_arm([self.joint_angles_for_goal_positions[breaker_command_index][3], self.joint_angles_for_goal_positions[breaker_command_index][4], self.joint_angles_for_goal_positions[breaker_command_index][5]])
+                self.move_gantry([self.joint_angles_for_goal_positions[breaker_command_index][1], self.joint_angles_for_goal_positions[breaker_command_index][2]])
+                self.joint_angles_for_goal_position_2 = numpy.copy(self.joint_angles_for_goal_positions[breaker_command_index][:])
+
+            elif(breaker_to_actuate == "B2"):
+                if(self.actuator == "A"):
+                    self.turn_turntable(self.station_turntable_degree + self.corner_f_breaker_2_a_turntable_degree_offset)
+                else:
+                    self.turn_turntable(self.station_turntable_degree + self.corner_f_breaker_2_b_turntable_degree_offset)
+                self.move_gantry([0.0, self.joint_angles_for_goal_positions[breaker_command_index][2]])
+                self.move_arm([self.joint_angles_for_goal_positions[breaker_command_index][3], self.joint_angles_for_goal_positions[breaker_command_index][4], self.joint_angles_for_goal_positions[breaker_command_index][5]])
+                self.move_gantry([self.joint_angles_for_goal_positions[breaker_command_index][1], self.joint_angles_for_goal_positions[breaker_command_index][2]])
+                self.joint_angles_for_goal_position_2 = numpy.copy(self.joint_angles_for_goal_positions[breaker_command_index][:])
+
+            elif(breaker_to_actuate == "B3"):
+                if(self.actuator == "A"):
+                    self.turn_turntable(self.station_turntable_degree + self.corner_f_breaker_3_a_turntable_degree_offset)
+                else:
+                    self.turn_turntable(self.station_turntable_degree + self.corner_f_breaker_3_b_turntable_degree_offset)
                 self.move_gantry([0.0, self.joint_angles_for_goal_positions[breaker_command_index][2]])
                 self.move_arm([self.joint_angles_for_goal_positions[breaker_command_index][3], self.joint_angles_for_goal_positions[breaker_command_index][4], self.joint_angles_for_goal_positions[breaker_command_index][5]])
                 self.move_gantry([self.joint_angles_for_goal_positions[breaker_command_index][1], self.joint_angles_for_goal_positions[breaker_command_index][2]])

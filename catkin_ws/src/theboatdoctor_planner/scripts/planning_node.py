@@ -131,6 +131,10 @@ if __name__ == '__main__':
                 print("Skipping this station because the Kinect messed up.")
                 continue
 
+            if(station == "E" or station == "F"):
+                print("Valve is in the corner. Skipping this station.")
+                continue
+
             tbd_planner.generate_robot_trajectory_using_ik()
 
             tbd_planner.move_to_raspberry_pi_camera_position()
@@ -216,6 +220,14 @@ if __name__ == '__main__':
 
             if(kinect_vision_done_flag == False):
                 print("Skipping this station because the Kinect messed up.")
+                continue
+
+            if(station == "F"):
+                print("Station is F, skipping this station.")
+                continue
+
+            if(station == "E" and tbd_planner.get_station_orientation() == "vertical"):
+                print("Haven't tried this configuration yet. Skipping this station.")
                 continue
 
             if(station != "E" and tbd_planner.get_station_orientation() == "horizontal"):

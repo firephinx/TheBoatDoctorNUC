@@ -417,7 +417,7 @@ class kinect_process(rgb_process):
 				print breaker_Cy, box_Cy
 				if Type==41:
 					print abs(breaker_Cy-box_Cy)
-					if abs(breaker_Cy-box_Cy)<3: 
+					if abs(breaker_Cy-box_Cy)<5: 
 						state=-1 ### down 
 					else:
 						state=1 ### up
