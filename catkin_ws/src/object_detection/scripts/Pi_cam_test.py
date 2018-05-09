@@ -58,12 +58,16 @@ class image_converter:
     self.dataNum=0 
     self.dataQ=params.dataQ_pi
 
+    self.track=0 
+    self.max_track=params.max_track_pi
+
     self.values=[] 
 
   def RGB_proc(self,RGB_stream):
     try:
       #data.encoding='mono16'
       print "im in RGB_proc"
+      self.track+=1
       cv_image = self.bridge.imgmsg_to_cv2(RGB_stream, desired_encoding="bgr8")
       ####### after new mount, comment out the two lines below ####### 
       #cv_image=cv2.flip(cv_image,0)  ## flip image horizontally 
@@ -94,6 +98,17 @@ class image_converter:
         status.data=str(10000)  ### publish error for raspiCAM
         #self.error_pub.publish(status)
         self.status_pub.publish(status)
+
+
+
+      if self.track==self.max_track:
+        print "Pi cam failed"
+        self.image_sub.unregister()
+        Final_value=String() 
+        Final_value.data='failed'
+        #self.status_pub.publish(Final_value)  ## publish angle 
+        self.values=[]  ##  reset 
+        print "shutdown a node"
 
       if self.dataNum==self.dataQ:  ## analyze dataQ number of images
           if self.type ==1 or self.type==2 or self.type==3:

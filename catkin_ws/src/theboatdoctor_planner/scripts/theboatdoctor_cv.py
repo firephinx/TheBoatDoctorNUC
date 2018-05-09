@@ -61,45 +61,51 @@ class TheBoatDoctorCV():
 			os.system(command) ## call rosservice in a new terminal 
 			time.sleep(0.01) ## give time for os to start 
 			self.firstCall=0
-			msg = rospy.wait_for_message('/kinect2/actuator_location', Float32MultiArray) ## message received from publish topic in kinect 
- 			#msg = rospy.wait_for_message('test',Bool)
- 			self.data=msg.data
- 			command="/home/theboatdoctor-nuc/TheBoatDoctorNUC/catkin_ws/src/object_detection/scripts/kinect_client.py --type {0}".format(Type)
- 			pid=check_output(["pidof","python",command]) 
- 			print pid 
- 			#time.sleep(1000000) ## glook for pid			
- 			os.kill(int(pid.split(" ")[0]), signal.SIGKILL)
+			try:
+				msg = rospy.wait_for_message('/kinect2/actuator_location', Float32MultiArray, 15) ## message received from publish topic in kinect 
+	 			#msg = rospy.wait_for_message('test',Bool)
+	 			self.data=msg.data
+	 			command="/home/theboatdoctor-nuc/TheBoatDoctorNUC/catkin_ws/src/object_detection/scripts/kinect_client.py --type {0}".format(Type)
+	 			pid=check_output(["pidof","python",command]) 
+	 			print pid 
+	 			#time.sleep(1000000) ## glook for pid			
+	 			os.kill(int(pid.split(" ")[0]), signal.SIGKILL)
 
- 			if len(self.data)==1:
- 				return 10000  ### error msg 
- 			else:
- 				if(self.type == 41 or self.type == 42):
- 					station_object_position_in_3d = self.data[0:9]
- 					self.station_positions = ['','','']
- 					for i in xrange(3):
- 						if(self.data[i+10] == 1):
- 							self.station_positions[i] = 'U'
- 						else:
- 							self.station_positions[i] = 'D'
- 							
- 					return (station_object_position_in_3d, self.station_positions)
- 				elif(self.type == 2):
- 					station_object_position_in_3d = self.data[0:3]
- 					self.station_orientation = 'vertical'
-					self.station_orientation_num = 1
- 				else:
- 					station_object_position_in_3d = self.data[0:3]
- 					if(self.data[3] == 1):
- 						self.station_orientation = 'vertical'
- 						self.station_orientation_num = 1
- 					elif(self.data[3] == 2): 
- 						self.station_orientation = 'horizontal'
- 						self.station_orientation_num = 0
- 					else:
- 						self.station_orientation = ''
- 						self.station_orientation_num = -1
- 				return (station_object_position_in_3d, self.station_orientation)
- 			
+	 			if len(self.data)==1:
+	 				return 10000  ### error msg 
+	 			else:
+	 				if(self.type == 41 or self.type == 42):
+	 					station_object_position_in_3d = self.data[0:9]
+	 					self.station_positions = ['','','']
+	 					for i in xrange(3):
+	 						if(self.data[i+10] == 1):
+	 							self.station_positions[i] = 'U'
+	 						else:
+	 							self.station_positions[i] = 'D'
+	 							
+	 					return (station_object_position_in_3d, self.station_positions)
+	 				elif(self.type == 2):
+	 					station_object_position_in_3d = self.data[0:3]
+	 					self.station_orientation = 'vertical'
+						self.station_orientation_num = 1
+	 				else:
+	 					station_object_position_in_3d = self.data[0:3]
+	 					if(self.data[3] == 1):
+	 						self.station_orientation = 'vertical'
+	 						self.station_orientation_num = 1
+	 					elif(self.data[3] == 2): 
+	 						self.station_orientation = 'horizontal'
+	 						self.station_orientation_num = 0
+	 					else:
+	 						self.station_orientation = ''
+	 						self.station_orientation_num = -1
+	 				return (station_object_position_in_3d, self.station_orientation)
+ 			except:
+	 			pid=check_output(["pidof","python",command]) 
+	 			print pid 
+	 			#time.sleep(1000000) ## glook for pid			
+	 			os.kill(int(pid.split(" ")[0]), signal.SIGKILL)
+ 				return 10000
 		else: 
  			msg = rospy.wait_for_message('/kinect2/actuator_location', Float32MultiArray) ## message received from publish topic in kinect 
  			self.data=msg.data
@@ -119,17 +125,22 @@ class TheBoatDoctorCV():
 			os.system(command) ## call rosservice in a new terminal 
 			time.sleep(0.01)
 			self.firstCall_pi=0
-			msg = rospy.wait_for_message('/raspicam_node/actuator_status',String) ## message received from publish topic in raspcam
- 			self.data=msg.data
- 			print self.data
- 			command="/home/theboatdoctor-nuc/TheBoatDoctorNUC/catkin_ws/src/object_detection/scripts/pi_cam_client.py --type {0}".format(Type)
- 			pid=check_output(["pidof","python",command]) 
- 			os.kill(int(pid.split(" ")[0]), signal.SIGKILL)
+			try:
+				msg = rospy.wait_for_message('/raspicam_node/actuator_status', String, 5) ## message received from publish topic in raspcam
+	 			self.data=msg.data
+	 			print self.data
+	 			command="/home/theboatdoctor-nuc/TheBoatDoctorNUC/catkin_ws/src/object_detection/scripts/pi_cam_client.py --type {0}".format(Type)
+	 			pid=check_output(["pidof","python",command]) 
+	 			os.kill(int(pid.split(" ")[0]), signal.SIGKILL)
 
- 			if len(self.data)==1:
- 				return 10000  ### error msg 
- 			else:
- 				return self.data		
+	 			if len(self.data)==1:
+	 				return 10000  ### error msg 
+	 			else:
+	 				return self.data	
+	 		except:
+	 			pid=check_output(["pidof","python",command]) 
+	 			os.kill(int(pid.split(" ")[0]), signal.SIGKILL)
+	 			return 10000	
 
 		else: 
  			msg = rospy.wait_for_message('/raspicam_node/actuator_status', String) ## message received from publish topic in kinect 

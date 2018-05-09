@@ -58,6 +58,8 @@ class image_converter:
 
     self.marker=Marker()
 
+    self.max_track=params.max_track_kinect
+
     #self.image_sub = rospy.Subscriber("/kinect2/qhd/points",PointCloud2,self.depth_proc)
 
     self.depth_sub = message_filters.Subscriber("/kinect2/qhd/image_depth_rect",Image)
@@ -89,6 +91,8 @@ class image_converter:
     self.bStatus=[] ### breakerStatus
     self.dataQ=params.dataQ_kinect	### num of images to process, use odd number to break tie  
     self.station=stationF
+    self.track=0 
+  
 
 
   def pub_actuator_Marker(self,x,y,z):
@@ -143,7 +147,8 @@ class image_converter:
   		#print self.type
   		print "[Kinect] getting data"  		
   		x,y,z,subType,error,breakerStatus=self.img_proc()
-  		print 11111111111111111111111111111111111111, x,y,z,subType,error,breakerStatus 
+  		#print 11111111111111111111111111111111111111, x,y,z,subType,error,breakerStatus 
+  		self.track+=1
   		if error==0: ## if no error 
   			self.dataNum+=1   			
 	  		if subType is None: ### convert subType to ROSmsg compatible data type 
@@ -167,6 +172,21 @@ class image_converter:
 	  		message=String() 
 	  		message.data=str(error)
 	  		self.pub_error.publish(message)  ### publish error message, adjust robot position 	
+
+
+	  	if self.track==self.max_track:
+	  		print "Kinect failed"
+  			self.depth_sub.unregister()
+  			self.color_sub.unregister()
+  			self.cameraInfo_sub.unregister()
+  			location=Float32MultiArray()
+	  		location.data=[10000,10000]
+  			# self.pub_actuator_own.publish(location)
+  			self.X=[]  ## reset 
+  			self.Y=[]
+  			self.Z=[]
+  			self.SUBTYPE=[]
+  			self.bStatus=[]
 
   		if  self.dataNum==self.dataQ:
   			print "unsubscrib topic"

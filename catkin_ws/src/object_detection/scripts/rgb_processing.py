@@ -549,6 +549,7 @@ class kinect_process(rgb_process):
 		#cv2.imshow("result4",img)
 		#cv2.waitKey(0)
 		img_up=copy.deepcopy(img)
+		img_special=copy.deepcopy(img)
 		if Type==41: #### Type A breaker 
 			low_th=params.breaker_A_low_th_up   ## up 
 			high_th=params.breaker_A_high_th_up
@@ -557,8 +558,14 @@ class kinect_process(rgb_process):
 			low_th_up=params.breaker_A_low_th_down   ##down 
 			high_th_up=params.breaker_A_high_th_down
 			mask_up=self.th_hsv(img_up,low_th_up,high_th_up)
+
+
+			low_th_special=params.breaker_A_low_special
+			high_th_special=params.breaker_A_high_special
+			mask_special=self.th_hsv(img_special,low_th_special,high_th_special)
 			
 			mask=np.uint8(np.logical_or(mask,mask_up))
+			mask=np.uint8(np.logical_or(mask,mask_special))
 		
 		else: #### Type B breaker 
 			low_th=params.breaker_B_low_th_up
@@ -568,9 +575,14 @@ class kinect_process(rgb_process):
 			low_th_up=params.breaker_B_low_th_down
 			high_th_up=params.breaker_B_high_th_down
 			mask_up=self.th_hsv(img_up,low_th_up,high_th_up)
+
+			low_th_special=params.breaker_B_low_special
+			high_th_special=params.breaker_B_high_special
+			mask_special=self.th_hsv(img_special,low_th_special,high_th_special)
+
 			
 			mask=np.uint8(np.logical_or(mask,mask_up))
-
+			mask=np.uint8(np.logical_or(mask,mask_special))
 
 
 		target_mask=self.findTarget(mask,area_th)
@@ -1200,10 +1212,11 @@ class pi_cam_process(rgb_process):
 			Cx=np.average(box[:,0])  ### find X center of box 
 			Cy=np.average(box[:,1])  ### fiind Y center of box 
 			#### helper function ####
-			# int_box = np.int0(box)
-			# cv2.drawContours(img,[int_box],0,(0,0,255),2)
-			# cv2.imshow("rect",img)
-			# cv2.waitKey(20)
+			if params.imshow_tip==1:
+				int_box = np.int0(box)
+				cv2.drawContours(img,[int_box],0,(0,0,255),2)
+				cv2.imshow("rect",img)
+				cv2.waitKey(20)
 			#### ends ####
 
 			return (Cx,Cy)
@@ -1266,9 +1279,10 @@ class pi_cam_process(rgb_process):
 		#### return: center of a bounding box  
 			x,y,w,h = cv2.boundingRect(cnt)
 			#### helper function ####
-			# cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2)
-			# cv2.imshow("unroated_rect",img)
-			# cv2.waitKey(20)
+			# if params.imshow_tip==1:
+			# 	cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2)
+			# 	cv2.imshow("unroated_rect",img)
+			# 	cv2.waitKey(20)
 			#### ends ####
 			return (x,y,w,h)
 		
@@ -1335,12 +1349,13 @@ class pi_cam_process(rgb_process):
 			vec=np.array(pt)-np.array(center)
 			angle=np.angle(vec[0]+vec[1]*1j,deg=True)
 		##### helper function #####
-			# center_int=(int(center[0]),int(center[1]))
-			# pt_int=(int(pt[0]),int(pt[1]))
-			# cv2.line(img, center_int, pt_int, (255,0,0), 2)
-			# print angle
-			# cv2.imshow("Line",img)
-			# cv2.waitKey(20) 
+			if params.imshow_tip==1:
+				center_int=(int(center[0]),int(center[1]))
+				pt_int=(int(pt[0]),int(pt[1]))
+				cv2.line(img, center_int, pt_int, (255,0,0), 2)
+				print angle
+				cv2.imshow("Line",img)
+				cv2.waitKey(20) 
 		####### ends ##########
 			return angle 
 

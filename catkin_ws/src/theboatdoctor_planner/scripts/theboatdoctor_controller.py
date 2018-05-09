@@ -25,7 +25,7 @@ class TheBoatDoctorController:
         self.minimum_z_gantry_threshold = 0.0
         self.maximum_z_gantry_threshold = 0.333
         self.minimum_turntable_threshold = -math.pi / 2
-        self.maximum_turntable_threshold = math.pi / 2
+        self.maximum_turntable_threshold = math.pi * 2 / 3 
 
         self.reset_pub = rospy.Publisher('/TheBoatDoctor/Reset', Empty, queue_size=1)
         self.home_pub = rospy.Publisher('/TheBoatDoctor/Home', Empty, queue_size=1)
@@ -74,7 +74,7 @@ class TheBoatDoctorController:
         self.home_gantry_pub.publish(empty_msg)
 
         try:
-            done_homing_msg = rospy.wait_for_message('/TheBoatDoctor/done_homing', Bool, timeout = 30)
+            done_homing_msg = rospy.wait_for_message('/TheBoatDoctor/done_homing', Bool, timeout = 10)
             return done_homing_msg.data and done_homing_arm
         except:
             print("Timeout waiting for done_homing_msg.")
@@ -88,7 +88,7 @@ class TheBoatDoctorController:
         self.home_turntable_pub.publish(empty_msg)
 
         try:
-            done_homing_msg = rospy.wait_for_message('/TheBoatDoctor/done_homing', Bool, timeout = 30)
+            done_homing_msg = rospy.wait_for_message('/TheBoatDoctor/done_homing', Bool, timeout = 5)
             return done_homing_msg.data and done_homing_arm
         except:
             print("Timeout waiting for done_homing_msg.")
@@ -104,7 +104,7 @@ class TheBoatDoctorController:
         self.home_pub.publish(empty_msg)
 
         try:
-            done_homing_msg = rospy.wait_for_message('/TheBoatDoctor/done_homing', Bool, timeout = 30)
+            done_homing_msg = rospy.wait_for_message('/TheBoatDoctor/done_homing', Bool, timeout = 10)
             return done_homing_msg.data and done_homing_arm
         except:
             print("Timeout waiting for done_homing_msg.")
@@ -152,7 +152,7 @@ class TheBoatDoctorController:
         self.move_gantry_pub.publish(pose_2d_msg)
 
         try:
-            done_moving_gantry_msg = rospy.wait_for_message('/TheBoatDoctor/done_moving_gantry', Bool, timeout = 30)
+            done_moving_gantry_msg = rospy.wait_for_message('/TheBoatDoctor/done_moving_gantry', Bool, timeout = 10)
             return done_moving_gantry_msg.data
         except:
             print("Timeout waiting for done_moving_gantry_msg.")
@@ -193,7 +193,7 @@ class TheBoatDoctorController:
 
     def get_current_base_position(self):
         try:
-            pose_2d_msg = rospy.wait_for_message('/TheBoatDoctor/ultrasonic_pose', Pose2D, timeout = 3)
+            pose_2d_msg = rospy.wait_for_message('/TheBoatDoctor/ultrasonic_pose', Pose2D, timeout = 1)
             current_base_position = [pose_2d_msg.x,pose_2d_msg.y,pose_2d_msg.theta]
             return current_base_position
         except:
@@ -202,7 +202,7 @@ class TheBoatDoctorController:
 
     def get_current_turntable_degree(self):
         try:
-            joint_state_msg = rospy.wait_for_message('/TheBoatDoctor/joint_states', JointState, timeout = 3)
+            joint_state_msg = rospy.wait_for_message('/TheBoatDoctor/joint_states', JointState, timeout = 1)
             turntable_ind = 0
             for i in xrange(len(joint_state_msg.name)):
                 if(joint_state_msg.name[i] == 'turntable'):
@@ -217,7 +217,7 @@ class TheBoatDoctorController:
 
     def get_current_gantry_position(self):
         try:
-            joint_state_msg = rospy.wait_for_message('/TheBoatDoctor/joint_states', JointState, timeout = 3)
+            joint_state_msg = rospy.wait_for_message('/TheBoatDoctor/joint_states', JointState, timeout = 1)
             x_gantry_ind = 0
             z_gantry_ind = 0
             for i in xrange(len(joint_state_msg.name)):
@@ -240,8 +240,11 @@ class TheBoatDoctorController:
         self.pump_pub.publish(bool_msg)
         self.pump_pub.publish(bool_msg)
         try:
-            pump_status_msg = rospy.wait_for_message('/TheBoatDoctor/pump_status', Bool, timeout = 5)
-            return pump_status_msg.data
+            pump_status_msg = rospy.wait_for_message('/TheBoatDoctor/pump_status', Bool, timeout = 1)
+            if(pump_status_msg.data == bool_msg.data):
+                return True
+            else:
+                return False
         except:
             print("Timeout waiting for pump_status_msg.")
             return False
@@ -257,8 +260,11 @@ class TheBoatDoctorController:
         self.led_pub.publish(bool_msg)
 
         try:
-            led_status_msg = rospy.wait_for_message('/TheBoatDoctor/led_status', Bool, timeout = 3)
-            return led_status_msg.data
+            led_status_msg = rospy.wait_for_message('/TheBoatDoctor/led_status', Bool, timeout = 1)
+            if(led_status_msg.data == bool_msg.data):
+                return True
+            else:
+                return False
         except:
             print("Timeout waiting for led_status_msg.")
             return False
