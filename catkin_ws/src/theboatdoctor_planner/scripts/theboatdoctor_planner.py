@@ -29,7 +29,7 @@ class TheBoatDoctorPlanner:
         ## V3 Offsets
         self.raspberry_pi_camera_vertical_station_v3_x_offset = -0.2
         self.raspberry_pi_camera_vertical_station_v3_z_offset = -0.07
-        self.vertical_station_v3_goal_x_offset = -0.069
+        self.vertical_station_v3_goal_x_offset = -0.15
         self.vertical_station_v3_goal_z_offset = -0.02
 
         ## Breaker Offsets
@@ -50,12 +50,12 @@ class TheBoatDoctorPlanner:
         self.breaker_3_up_x_offset = 0.0
         self.breaker_3_up_z_offset = 0.09
 
-        self.breaker_1_down_x_offset = -0.06
-        self.breaker_1_down_z_offset = -0.03
-        self.breaker_2_down_x_offset = -0.05
-        self.breaker_2_down_z_offset = 0.03
+        self.breaker_1_down_x_offset = -0.05
+        self.breaker_1_down_z_offset = 0.0
+        self.breaker_2_down_x_offset = -0.03
+        self.breaker_2_down_z_offset = 0.06
         self.breaker_3_down_x_offset = 0.0
-        self.breaker_3_down_z_offset = 0.09
+        self.breaker_3_down_z_offset = 0.13
 
         self.corner_breaker_1_turntable_degree_offset = -2.5
         self.corner_breaker_2_turntable_degree_offset = 2.5
@@ -80,7 +80,7 @@ class TheBoatDoctorPlanner:
         self.raspberry_pi_camera_horizontal_station_v1_x_offset = -0.16
         self.raspberry_pi_camera_horizontal_station_v1_z_offset = -0.02
         self.horizontal_station_v1_goal_x_offset = -0.09
-        self.horizontal_station_v1_goal_z_offset = -0.07
+        self.horizontal_station_v1_goal_z_offset = -0.06
 
         ## V3 Offsets
         self.raspberry_pi_camera_horizontal_station_v3_x_offset = -0.17
@@ -660,10 +660,10 @@ class TheBoatDoctorPlanner:
                         self.desired_wrist_angles_in_radians.append(self.breaker_a_goal_wrist_flip_down_theta)
                         self.desired_end_effector_angle_in_radians = 0.0
         else:
-            if(abs(self.desired_station_angle_in_degrees - self.current_station_angle_in_degrees) < self.angle_threshold_in_degrees):
+            if(((self.desired_station_angle_in_degrees - self.current_station_angle_in_degrees) + 180 % 360) - 180 < self.angle_threshold_in_degrees):
                 return
             else:
-                self.desired_end_effector_angle_in_radians = (self.desired_station_angle_in_degrees - self.current_station_angle_in_degrees) * math.pi / 180
+                self.desired_end_effector_angle_in_radians = (((self.desired_station_angle_in_degrees - self.current_station_angle_in_degrees) + 180 % 360) - 180) * math.pi / 180
 
             if(self.actuator == "V3" and self.station_orientation == "vertical"):
                 if(self.desired_end_effector_angle_in_radians > 0):
@@ -826,6 +826,12 @@ class TheBoatDoctorPlanner:
     def get_num_breakers_to_actuate(self):
         return self.num_breakers_to_actuate
 
+    def get_actuation_degree(self):
+        return self.degree
+
+    def set_actuation_degree(self, actuation_degree):
+        self.degree = actuation_degree
+
     def verify_task_is_completed(self):
         if(self.actuator == "A" or self.actuator == "B"):
             self.num_breakers_to_actuate = 0
@@ -848,5 +854,5 @@ class TheBoatDoctorPlanner:
             else:
                 return False
         else: 
-            print("Degree Error = " + str(abs(self.desired_station_angle_in_degrees - self.current_station_angle_in_degrees) % 360))
-            return (abs(self.desired_station_angle_in_degrees - self.current_station_angle_in_degrees) % 360  < self.task_completion_angle_threshold_in_degrees)
+            print("Degree Error = " + str(((self.desired_station_angle_in_degrees - self.current_station_angle_in_degrees) + 180 % 360) - 180))
+            return (((self.desired_station_angle_in_degrees - self.current_station_angle_in_degrees) + 180 % 360) - 180 < self.task_completion_angle_threshold_in_degrees)
