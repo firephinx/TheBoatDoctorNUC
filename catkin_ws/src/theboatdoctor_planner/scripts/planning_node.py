@@ -138,11 +138,14 @@ if __name__ == '__main__':
             if(tbd_planner.get_actuation_degree() > 360):
                 actuation_degree = tbd_planner.get_actuation_degree()
 
-                while(actuation_degree > 360):
+                while(actuation_degree > 0):
 
-                    tbd_planner.set_actuation_degree(270)
+                    if(actuation_degree > 360):
+                        tbd_planner.set_actuation_degree(270)
 
-                    actuation_degree = actuation_degree - 270
+                        actuation_degree = actuation_degree - 270
+                    else:
+                        tbd_planner.set_actuation_degree(actuation_degree)
 
                     tbd_planner.determine_mission_goal()
 
